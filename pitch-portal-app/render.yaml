@@ -1,0 +1,21 @@
+# Render Web Service for Pitch Portal (Node API).
+# Secrets are set in the Render dashboard, not in this file.
+services:
+  - type: web
+    name: apexon-pitch-portal
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REQUIRE_AZURE
+        value: "1"
+      - key: AZURE_TENANT_ID
+        sync: false
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
