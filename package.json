@@ -1,0 +1,12 @@
+{
+  "name": "apexon-pitch-portal",
+  "private": true,
+  "description": "Render entrypoint. The API lives in pitch-portal-app/.",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "postinstall": "npm install --prefix pitch-portal-app",
+    "start": "npm start --prefix pitch-portal-app"
+  }
+}
