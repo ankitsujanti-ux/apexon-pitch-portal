@@ -1,10 +1,12 @@
 // Pitch Portal API: research → use cases → PPT + HTML downloads.
 // POST /pitches starts a job. GET /pitches/:jobId is polled until files are ready.
 import fs from "fs";
+import os from "os";
 import path from "path";
 import crypto from "crypto";
 import express from "express";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 import { research } from "./src/steps/1-research.js";
 import { generateUseCases, selectTopUseCases } from "./src/steps/2-usecases.js";
 import { buildDeck } from "./src/steps/3-deck.js";
@@ -13,10 +15,14 @@ import { slugify } from "./src/lib/slugify.js";
 
 dotenv.config();
 
+const APP_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
-const OUTPUT_DIR = path.resolve("./output");
-const JOBS_DIR = path.join(OUTPUT_DIR, "jobs");
+const OUTPUT_DIR = path.join(APP_ROOT, "output");
+const JOBS_DIR = process.env.RENDER
+  ? path.join(os.tmpdir(), "pitch-portal-jobs")
+  : path.join(OUTPUT_DIR, "jobs");
 const JOB_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const jobsById = new Map();
 
 const app = express();
 app.use((req, res, next) => {
@@ -62,15 +68,20 @@ function jobPath(id) {
 }
 
 function writeJob(job) {
+  jobsById.set(job.id, job);
   fs.mkdirSync(JOBS_DIR, { recursive: true });
   fs.writeFileSync(jobPath(job.id), JSON.stringify(job, null, 2));
   return job;
 }
 
 function readJob(id) {
+  const fromMemory = jobsById.get(id);
+  if (fromMemory) return fromMemory;
   const file = jobPath(id);
   if (!fs.existsSync(file)) return null;
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  const job = JSON.parse(fs.readFileSync(file, "utf8"));
+  jobsById.set(id, job);
+  return job;
 }
 
 function patchJob(id, patch) {
@@ -191,6 +202,10 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
   }
 }
 
+app.get("/", (req, res) => {
+  res.redirect(302, "https://ankitsujanti-ux.github.io/apexon-pitch-portal/");
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -281,7 +296,7 @@ app.post("/pitches", (req, res) => {
     runPipeline(jobId, { companyName, domain, requirement });
   });
 
-  res.status(202).json({ jobId, status: "queued" });
+  res.status(200).json({ jobId, status: "queued" });
 });
 
 const server = app.listen(PORT, "0.0.0.0", () => {
