@@ -2,30 +2,51 @@ import { allowLocalFallback, askAgentOrFallback } from "../lib/azureAgentClient.
 import { extractJson } from "../lib/parseJson.js";
 import { fallbackUseCases } from "../lib/fallbacks.js";
 
+function clip(text, maxChars) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (clean.length <= maxChars) return clean;
+  return clean.slice(0, maxChars).replace(/\s+\S*$/, "");
+}
+
 function normalizeUseCase(uc, i, fallbackUc) {
   const kpis = Array.isArray(uc.kpis)
     ? uc.kpis
         .filter((k) => k?.name)
         .slice(0, 4)
         .map((k) => ({
-          name: String(k.name),
-          why: String(k.why || "A leadership metric for this use case."),
+          name: clip(k.name, 28),
+          why: clip(k.why || "A leadership metric for this use case.", 72),
         }))
     : fallbackUc?.kpis || [];
   const difficulty = ["easier", "moderate", "harder"].includes(uc.difficulty)
     ? uc.difficulty
     : fallbackUc?.difficulty || "moderate";
   return {
-    title: uc.title || fallbackUc?.title || `Use case ${i + 1}`,
-    businessProblem: uc.businessProblem || fallbackUc?.businessProblem || "",
-    benefit: uc.benefit || uc.solutionFit || fallbackUc?.benefit || "",
-    solutionFit: uc.solutionFit || fallbackUc?.solutionFit || "",
+    title: clip(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 52),
+    businessProblem: clip(uc.businessProblem || fallbackUc?.businessProblem || "", 160),
+    benefit: clip(uc.benefit || uc.solutionFit || fallbackUc?.benefit || "", 160),
+    solutionFit: clip(uc.solutionFit || fallbackUc?.solutionFit || "", 120),
     kpis,
-    dataPointer: uc.dataPointer || fallbackUc?.dataPointer || { description: "", availability: "existing" },
+    dataPointer: {
+      description: clip(
+        (typeof uc.dataPointer === "string" ? uc.dataPointer : uc.dataPointer?.description) ||
+          fallbackUc?.dataPointer?.description ||
+          "",
+        90
+      ),
+      availability:
+        (typeof uc.dataPointer === "object" && uc.dataPointer?.availability) ||
+        fallbackUc?.dataPointer?.availability ||
+        "existing",
+      confidence:
+        (typeof uc.dataPointer === "object" && uc.dataPointer?.confidence) ||
+        fallbackUc?.dataPointer?.confidence ||
+        "industry-typical",
+    },
     difficulty,
-    difficultyWhy: uc.difficultyWhy || fallbackUc?.difficultyWhy || "",
+    difficultyWhy: clip(uc.difficultyWhy || fallbackUc?.difficultyWhy || "", 90),
     techComponents: Array.isArray(uc.techComponents)
-      ? uc.techComponents
+      ? uc.techComponents.slice(0, 3)
       : fallbackUc?.techComponents || ["Microsoft Fabric", "Real-Time Intelligence", "Azure AI Foundry"],
     demoScore: uc.demoScore || 8 - i,
   };
@@ -54,28 +75,37 @@ export async function generateUseCases({
   });
 
   const { value: raw, source } = await askAgentOrFallback(
-    `You are briefing ${companyName} leadership (${domain}).
+    `You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
 
 Verified research (treat industry-typical items as unconfirmed):
 ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-Brainstorm more than ${numUseCases} ideas internally, then keep the ${numUseCases} strongest that are:
-1) tied to how ${companyName} actually makes money or runs operations, and
-2) normal and valuable in ${domain}.
-Reject anything that could be pasted onto another industry unchanged.
+Brainstorm like a pre-sales person: walk their plant, store, claims desk, or trading floor in your head. List 8-10 candidate use cases internally that a ${companyName} operator would recognize as THEIR job. Then keep the ${numUseCases} strongest that:
+1) map to how ${companyName} actually makes money, ships product, serves customers, or stays compliant,
+2) are normal and valuable in ${domain} — a plant manager / merchandiser / claims lead would say "that is us",
+3) can be shown in a short demo without inventing systems they do not have.
+
+Reject anything that could be pasted onto another industry unchanged. Reject textbook "data lake" or "360 dashboard" titles unless they name the actual ${companyName} process.
+
+Copy must be slide-ready, not an essay. A VP should read a card in 5 seconds.
 
 Return ONLY JSON:
 {"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
 
-Rules:
-- Plain executive English. A business user should understand every sentence. No unexplained jargon.
-- Each use case: what it is, how the company benefits, 3-4 KPIs with a one-line why, data required, and how easy or hard based on the research (confirmed systems = easier; new or unconfirmed data = harder).
-- difficultyWhy must cite the systems/reporting from research. Do not invent a stack they did not mention.
-- KPIs are the measures leadership would watch. Do not invent current company numbers.
-- overallBenefits: 4-6 company-level outcomes of doing all five together.
-- Produce exactly ${numUseCases} use cases.`,
+Length limits (hard):
+- title: max 8 words. Name the process (e.g. "Allergen hold radar"), not the platform.
+- businessProblem: max 28 words. One pain, in their language.
+- benefit: max 22 words. The outcome they feel.
+- solutionFit: max 18 words.
+- kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
+- dataPointer.description: max 16 words. Name the actual feed (MES, LIMS, POS, claims).
+- difficultyWhy: max 16 words. Cite research systems. Do not invent a stack.
+- overallBenefits: exactly 4 lines, each max 18 words, company-level outcomes of doing all five together.
+- techComponents: max 3 names.
+
+Produce exactly ${numUseCases} use cases.`,
     () => null,
     "usecases"
   );
@@ -97,7 +127,7 @@ Rules:
           useCases,
           topForMockup: useCases.slice(0, numMockupTabs).map((uc) => uc.title),
           overallBenefits: Array.isArray(parsed.overallBenefits)
-            ? parsed.overallBenefits.map(String).filter(Boolean).slice(0, 6)
+            ? parsed.overallBenefits.map((s) => clip(String(s), 110)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
           source,
         };
