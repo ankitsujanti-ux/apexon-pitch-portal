@@ -18,7 +18,7 @@ const AGENT_SCOPE = "https://ai.azure.com/.default";
 const AGENT_BASE_URL =
   "https://fabric-acelerator-poc.services.ai.azure.com/api/projects/fabric-acelerator-project/agents/DemoAgent/endpoint/protocols/openai";
 
-const AGENT_TIMEOUT_MS = 120000;
+const AGENT_TIMEOUT_MS = 180000;
 
 let credential = null;
 let clientPromise = null;
