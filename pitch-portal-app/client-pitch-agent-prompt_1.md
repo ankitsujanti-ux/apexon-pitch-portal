@@ -97,9 +97,9 @@ Hornets **layout**, Harness **theme**. Each of the 5 tabs is a **different scree
 
 - Dark navy canvas, light text, orange active tab underline.
 - Horizontal tabs. Fits the viewport: no page scrollbar.
-- Under every tab title: exactly **2 business sentences** (`tabWhy`) — what this screen is for, and why the floor cares.
-- `tabLayout` is **chosen by the model for this brief**, not a fixed rotation. Allowed screens: `live`, `profile`, `heat`, `table`, `flow`. Prefer five different screens when the five jobs are different. Never default every tab to the same chart.
-- The pipeline **honors** the model's `tabLayout`. It does not invent HTML; it paints the screen the model designed.
+- Under every tab title: exactly **2 business sentences** (`tabWhy`).
+- The model **designs the tab from the brief**. It does not pick from a list of five finished screens. It returns `blocks` (which pieces to show), `lookFirst` (heading in their language), and optional `columns` / `zones` / `recordKind`.
+- The pipeline only **assembles** those pieces so the Apexon theme stays consistent. It honors the model's composition.
 - KPI “i” buttons: two short lines, business language.
 - Sample-data disclaimer. Live simulated figures, not claimed company metrics.
 
