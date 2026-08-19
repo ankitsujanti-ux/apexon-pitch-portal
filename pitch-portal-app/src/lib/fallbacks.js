@@ -298,6 +298,58 @@ export function dashboardCopy(companyName, domain, useCase) {
     };
   }
 
+  if (/brief|governed|next.?best/.test(blob)) {
+    return {
+      kpis: [
+        { value: "5", label: "Sources cited", why: "How many trusted Fabric sources sit behind this briefing.\nEvery number should point back to one of them." },
+        { value: "2", label: "Items needing a call", why: "Recommendations that still need a person to decide.\nThe agent does not act on its own." },
+        { value: "12m", label: "Brief freshness", why: "How recently the briefing was rebuilt from governed data.\nStale briefs should not be used in a walkthrough." },
+        { value: "Governed", label: "Agent status", why: "The agent is limited to approved tables.\nIt will not invent figures from the open web." },
+      ],
+      trend: "Brief refresh cadence",
+      breakdown: "Recommendation mix",
+      bars: [
+        { label: "Inform 58%", w: 180, color: "#1D6EE4" },
+        { label: "Review 29%", w: 110, color: "#FFCA5E" },
+        { label: "Escalate 13%", w: 70, color: "#E54A24" },
+      ],
+      feed: [
+        ["good", "Inform", `${companyName} overnight totals match the Fabric KPI mart.`],
+        ["warn", "Review", "Two quality holds are still open — include in the stand-up."],
+        ["bad", "Escalate", `Line 3 yield dropped versus plan. Owner needs a call.`],
+        ["good", "Inform", "Foundry briefing rebuilt from governed OneLake tables."],
+      ],
+      button: "Refresh the briefing",
+      event: `Simulated briefing refresh for ${companyName} — two items flagged for review.`,
+    };
+  }
+
+  if (/trace|lineage|audit/.test(blob)) {
+    return {
+      kpis: [
+        { value: "4", label: "Lots in trail", why: "Lots currently in the genealogy path being walked.\nThis is the chain from ingredient to shipment." },
+        { value: "100%", label: "Steps documented", why: "Share of hops with a source system behind them.\nGaps are the recall risk." },
+        { value: "2.4m", label: "Last hop age", why: "How recently the latest movement posted.\nOld hops mean the trail is not live." },
+        { value: "Healthy", label: "Genealogy feed", why: "Health of lot, recipe, and shipping feeds.\nGreen means the simulated trail is still updating." },
+      ],
+      trend: "Trail completeness",
+      breakdown: "Hops by confidence",
+      bars: [
+        { label: "Confirmed 81%", w: 200, color: "#1D6EE4" },
+        { label: "Typical 14%", w: 90, color: "#FFCA5E" },
+        { label: "Gap 5%", w: 50, color: "#E54A24" },
+      ],
+      feed: [
+        ["good", "OK Clear", `Lot ${lot}-104 ingredient receipt posted from ERP.`],
+        ["warn", "Watch", "Recipe version missing a signed change — still within control."],
+        ["bad", "Act Gap", `${companyName} shipment ${lot}-882 has an unlinked pallet hop.`],
+        ["good", "OK Clear", "Purview lineage snapshot refreshed."],
+      ],
+      button: "Simulate a lineage gap",
+      event: `Simulated lineage gap for ${companyName} — hop needs a source.`,
+    };
+  }
+
   if (/inventory|demand|ingredient|stock/.test(blob)) {
     return {
       kpis: [
