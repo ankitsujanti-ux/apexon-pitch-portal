@@ -50,22 +50,24 @@ export async function research({ companyName, domain, requirement }) {
   const fallbackText = fallbackResearch({ companyName, domain, requirement });
 
   const { value, source } = await askAgentOrFallback(
-    `You are preparing a leadership briefing on ${companyName} (${domain}).
+    `You are an Apexon pre-sales solution architect walking into ${companyName} (${domain}) tomorrow.
 
-Mandate: "${requirement}"
+Mandate from the account team: "${requirement}"
+
+Think like a pre-sales lead: what does this company actually do, how do they make money, what systems would their operators already have, and what would a ${domain} VP recognize as THEIR world — not a generic data-platform story.
 
 Return ONLY JSON, no markdown:
 {"summary":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
 
 Hard rules:
-- summary: 2-3 sentences on what ${companyName} actually does. Public, checkable facts only.
+- summary: 2 short sentences a business stakeholder would nod at. Public, checkable facts only. Name products, plants, channels, or customers only if public.
 - verifiedFacts: only items you can reasonably attribute to a public source (official site, filings, reputable news). Put the basis in "basis".
-- systems: data platforms, ERP, CRM, MES, LIMS, warehouses, files/APIs this company uses — OR what companies in ${domain} typically use.
+- systems: name the operational systems a ${domain} company like this typically runs (ERP, MES, LIMS, POS, claims, etc.) and what each is used for in THEIR process — not a generic IT list.
 - If a system is not publicly confirmed for ${companyName}, set confidence to "industry-typical" and say so in basis. Never write it as if they confirmed it.
-- reporting: how this industry typically reports (Power BI, Tableau, SAP, batch packs). Same confidence rule.
+- reporting: how THIS industry typically reports today (overnight packs, plant scorecards, Power BI, SAP). Same confidence rule.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
 - Do not assume they already run Microsoft Fabric unless that is public.
-- requirementFit: how the mandate would land, in plain executive English, without inventing systems.`,
+- requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.`,
     () => null,
     "research"
   );
