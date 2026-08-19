@@ -1,12 +1,12 @@
-// 7-slide leadership deck on the Apexon Harness visual system.
-// Slides: 5 use cases, proposed architecture (logos, not a screenshot), overall benefit.
+// Widescreen leadership deck on the Apexon Harness visual system.
+// Order matches the Harness template: title → agenda → architecture → use cases → thank you.
 
 import fs from "fs";
 import path from "path";
 import pptxgen from "pptxgenjs";
 import { getPalette } from "../lib/palette.js";
 import { slugify } from "../lib/slugify.js";
-import { LOGO_PATH } from "../lib/templateTheme.js";
+import { LOGO_PATH, MASTER_BG_PATH } from "../lib/templateTheme.js";
 import { logoKeyForSystem, logoPath } from "../lib/logos.js";
 
 const SLIDE_W = 13.33;
@@ -31,53 +31,32 @@ function truncate(text, maxChars) {
   return clean.slice(0, maxChars).replace(/\s+\S*$/, "") + "...";
 }
 
-function applyMaster(slide, palette, { page, total }) {
-  slide.addShape("rect", {
-    x: 0,
-    y: 0,
-    w: SLIDE_W,
-    h: SLIDE_H,
-    fill: { color: palette.dark },
-  });
-  slide.addShape("rect", {
-    x: 0,
-    y: 7.18,
-    w: SLIDE_W,
-    h: 0.32,
-    fill: { color: palette.primary },
-  });
-  slide.addShape("rect", {
-    x: 0,
-    y: 7.16,
-    w: SLIDE_W,
-    h: 0.035,
-    fill: { color: palette.accent },
-  });
-  slide.addText("Confidential  |  Apexon", {
+function addFooter(slide, palette, { page }) {
+  slide.addText("© Copyright 2026 Apexon. Confidential & Proprietary.", {
     x: MARGIN,
-    y: 7.2,
-    w: 6,
-    h: 0.24,
+    y: 7.18,
+    w: 8.4,
+    h: 0.22,
     fontSize: 10,
     color: "9AA6B8",
     fontFace: palette.fontBody,
   });
-  slide.addText(String(page).padStart(2, "0"), {
-    x: 10.4,
-    y: 7.2,
-    w: 0.7,
-    h: 0.24,
-    fontSize: 10,
-    color: "9AA6B8",
+  slide.addText(String(page), {
+    x: 10.05,
+    y: 7.16,
+    w: 0.45,
+    h: 0.26,
+    fontSize: 12,
+    color: palette.textLight,
     fontFace: palette.fontBody,
     align: "right",
   });
   if (fs.existsSync(LOGO_PATH)) {
-    slide.addImage({ path: LOGO_PATH, x: 11.35, y: 7.2, w: 1.5, h: 0.22 });
+    slide.addImage({ path: LOGO_PATH, x: 10.6, y: 7.14, w: 2.25, h: 0.28 });
   } else {
     slide.addText("APEXON", {
       x: 11.2,
-      y: 7.2,
+      y: 7.16,
       w: 1.7,
       h: 0.24,
       fontSize: 10,
@@ -87,6 +66,207 @@ function applyMaster(slide, palette, { page, total }) {
       align: "right",
     });
   }
+}
+
+function applyMaster(slide, palette, { page, wave = false }) {
+  if (wave && fs.existsSync(MASTER_BG_PATH)) {
+    slide.addImage({ path: MASTER_BG_PATH, x: 0, y: 0, w: SLIDE_W, h: SLIDE_H });
+  } else {
+    slide.addShape("rect", {
+      x: 0,
+      y: 0,
+      w: SLIDE_W,
+      h: SLIDE_H,
+      fill: { color: palette.dark },
+    });
+    slide.addShape("rect", {
+      x: 0,
+      y: 7.16,
+      w: SLIDE_W,
+      h: 0.035,
+      fill: { color: palette.accent },
+    });
+  }
+  addFooter(slide, palette, { page });
+}
+
+function deckNarrative(useCases, companyName, domain, requirement) {
+  return {
+    kicker: truncate(useCases.deckKicker || "Apexon Harness", 28),
+    title: truncate(useCases.deckTitle || `${companyName} operating picture`, 64),
+    subtitle: truncate(useCases.deckSubtitle || requirement || `${domain} leadership walkthrough`, 110),
+    closeLine: truncate(
+      useCases.closeLine || `Walk the live demonstration with ${companyName} next.`,
+      90
+    ),
+  };
+}
+
+function addTitleSlide(slide, palette, { companyName, domain, narrative, page }) {
+  applyMaster(slide, palette, { page, wave: true });
+  slide.addText("PREPARED FOR", {
+    x: MARGIN,
+    y: 1.55,
+    w: 8.8,
+    h: 0.24,
+    fontSize: 11,
+    bold: true,
+    color: palette.accent,
+    fontFace: palette.fontTitle,
+  });
+  slide.addText(truncate(companyName, 42), {
+    x: MARGIN,
+    y: 1.8,
+    w: 10.5,
+    h: 0.36,
+    fontSize: 16,
+    color: "B8C3D4",
+    fontFace: palette.fontBody,
+  });
+  slide.addText(narrative.kicker, {
+    x: MARGIN,
+    y: 2.35,
+    w: 11.5,
+    h: 0.42,
+    fontSize: 22,
+    color: palette.heading,
+    fontFace: palette.fontTitle,
+  });
+  slide.addText(narrative.title, {
+    x: MARGIN,
+    y: 2.82,
+    w: 11.6,
+    h: 1.55,
+    fontSize: 36,
+    bold: true,
+    color: palette.textLight,
+    fontFace: palette.fontTitle,
+    wrap: true,
+    valign: "top",
+  });
+  slide.addText(narrative.subtitle, {
+    x: MARGIN,
+    y: 4.5,
+    w: 11.2,
+    h: 0.7,
+    fontSize: 16,
+    color: "B8C3D4",
+    fontFace: palette.fontBody,
+    wrap: true,
+  });
+  slide.addText(truncate(domain, 40), {
+    x: MARGIN,
+    y: 5.35,
+    w: 8,
+    h: 0.28,
+    fontSize: 13,
+    color: "9AA6B8",
+    fontFace: palette.fontBody,
+  });
+}
+
+function agendaItems({ companyName, requirement, useCases, narrative }) {
+  return [
+    { label: "Why we are here", note: truncate(requirement, 52) },
+    { label: "Proposed architecture", note: "Harness-governed path into Microsoft Fabric" },
+    ...useCases.map((uc) => ({
+      label: slideTitle(uc, companyName),
+      note: truncate(uc.benefit || uc.businessProblem, 52),
+    })),
+    { label: "Discussion and next step", note: narrative.closeLine },
+  ];
+}
+
+function addAgendaSlide(slide, palette, { companyName, requirement, useCases, narrative, page }) {
+  applyMaster(slide, palette, { page, wave: true });
+  slide.addText("Agenda", {
+    x: MARGIN,
+    y: 0.28,
+    w: 8,
+    h: 0.5,
+    fontSize: 32,
+    bold: true,
+    color: palette.heading,
+    fontFace: palette.fontTitle,
+  });
+  const items = agendaItems({ companyName, requirement, useCases, narrative });
+  const mid = Math.ceil(items.length / 2);
+  items.forEach((item, i) => {
+    const col = i < mid ? 0 : 1;
+    const row = i < mid ? i : i - mid;
+    const x = MARGIN + col * 6.4;
+    const y = 1.05 + row * 1.35;
+    slide.addText(String(i + 1).padStart(2, "0"), {
+      x,
+      y,
+      w: 0.7,
+      h: 0.4,
+      fontSize: 22,
+      bold: true,
+      color: palette.accent,
+      fontFace: palette.fontTitle,
+    });
+    slide.addText(truncate(item.label, 36), {
+      x: x + 0.78,
+      y,
+      w: 5.3,
+      h: 0.4,
+      fontSize: 16,
+      bold: true,
+      color: palette.textLight,
+      fontFace: palette.fontTitle,
+      wrap: true,
+    });
+    slide.addText(truncate(item.note, 70), {
+      x: x + 0.78,
+      y: y + 0.4,
+      w: 5.3,
+      h: 0.7,
+      fontSize: 13,
+      color: "B8C3D4",
+      fontFace: palette.fontBody,
+      wrap: true,
+    });
+  });
+}
+
+function addThanksSlide(slide, palette, { companyName, narrative, page }) {
+  applyMaster(slide, palette, { page, wave: true });
+  if (fs.existsSync(LOGO_PATH)) {
+    slide.addImage({ path: LOGO_PATH, x: 4.55, y: 1.85, w: 4.2, h: 0.52 });
+  }
+  slide.addText("Thank you", {
+    x: MARGIN,
+    y: 2.7,
+    w: 12.48,
+    h: 0.7,
+    fontSize: 40,
+    bold: true,
+    color: palette.heading,
+    fontFace: palette.fontTitle,
+    align: "center",
+  });
+  slide.addText(truncate(companyName, 42), {
+    x: MARGIN,
+    y: 3.5,
+    w: 12.48,
+    h: 0.4,
+    fontSize: 18,
+    color: palette.textLight,
+    fontFace: palette.fontTitle,
+    align: "center",
+  });
+  slide.addText(narrative.closeLine, {
+    x: 1.8,
+    y: 4.1,
+    w: 9.7,
+    h: 0.8,
+    fontSize: 16,
+    color: "B8C3D4",
+    fontFace: palette.fontBody,
+    align: "center",
+    wrap: true,
+  });
 }
 
 function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bodyMax = 160 }) {
@@ -160,18 +340,18 @@ function sourceTiles(research, researchStructured) {
   return [...named, ...defaults].slice(0, 8);
 }
 
-function addArchitectureSlide(slide, palette, { companyName, requirement, research, researchStructured, useCases }) {
+function addArchitectureSlide(slide, palette, { companyName, research, researchStructured }) {
   slide.addText("Proposed architecture", {
     x: MARGIN,
-    y: 0.16,
+    y: 0.14,
     w: 9,
-    h: 0.32,
-    fontSize: 20,
+    h: 0.3,
+    fontSize: 22,
     bold: true,
-    color: palette.textLight,
+    color: palette.heading,
     fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(`Harness-governed path for ${companyName}. Sources below are labeled confirmed only when research said so.`, 140), {
+  slide.addText(truncate(`Harness-governed path for ${companyName}. Sources are labeled confirmed only when research said so.`, 140), {
     x: MARGIN,
     y: 0.48,
     w: 12.4,
@@ -536,47 +716,6 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
 }
 
-function addBenefitsSlide(slide, palette, { companyName, useCases, overallBenefits }) {
-  slide.addText("Overall benefit", {
-    x: MARGIN,
-    y: 0.22,
-    w: 12.4,
-    h: 0.36,
-    fontSize: 24,
-    bold: true,
-    color: palette.textLight,
-    fontFace: palette.fontTitle,
-  });
-  slide.addText(truncate(`What ${companyName} leadership walks away with if the five use cases run as one program.`, 110), {
-    x: MARGIN,
-    y: 0.62,
-    w: 12.4,
-    h: 0.28,
-    fontSize: 13,
-    color: "B8C3D4",
-    fontFace: palette.fontBody,
-  });
-
-  const benefits =
-    Array.isArray(overallBenefits) && overallBenefits.length
-      ? overallBenefits.slice(0, 4)
-      : useCases.map((uc) => uc.benefit || uc.title).slice(0, 4);
-  benefits.forEach((item, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    addPanel(slide, palette, {
-      x: MARGIN + col * 6.35,
-      y: 1.08 + row * 2.85,
-      w: 6.15,
-      h: 2.68,
-      kicker: `0${i + 1}`,
-      title: i < useCases.length ? slideTitle(useCases[i], companyName) : "Program outcome",
-      body: item,
-      bodyMax: 200,
-    });
-  });
-}
-
 export async function buildDeck({
   companyName,
   domain,
@@ -598,39 +737,44 @@ export async function buildDeck({
   fs.mkdirSync(path.dirname(finalPath), { recursive: true });
 
   const list = useCases.useCases.slice(0, 5);
-  const total = 7;
+  const narrative = deckNarrative(useCases, companyName, domain, requirement);
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE";
   pres.author = "Apexon";
-  pres.title = `${pptSafe(companyName)} — ${pptSafe(domain)} solutioning`;
+  pres.title = `${pptSafe(narrative.title)} — ${pptSafe(companyName)}`;
   pres.subject = "Apexon Harness-governed Microsoft Fabric pitch";
 
-  list.forEach((uc, i) => {
-    const slide = pres.addSlide();
-    applyMaster(slide, palette, { page: i + 1, total });
-    addUseCaseSlide(slide, palette, uc, i, list.length, companyName);
-  });
+  let page = 1;
 
   {
     const slide = pres.addSlide();
-    applyMaster(slide, palette, { page: 6, total });
-    addArchitectureSlide(slide, palette, {
-      companyName,
-      requirement,
-      research,
-      researchStructured,
-      useCases: list,
-    });
+    addTitleSlide(slide, palette, { companyName, domain, narrative, page });
+    page += 1;
   }
 
   {
     const slide = pres.addSlide();
-    applyMaster(slide, palette, { page: 7, total });
-    addBenefitsSlide(slide, palette, {
-      companyName,
-      useCases: list,
-      overallBenefits: useCases.overallBenefits,
-    });
+    addAgendaSlide(slide, palette, { companyName, requirement, useCases: list, narrative, page });
+    page += 1;
+  }
+
+  {
+    const slide = pres.addSlide();
+    applyMaster(slide, palette, { page });
+    addArchitectureSlide(slide, palette, { companyName, research, researchStructured });
+    page += 1;
+  }
+
+  list.forEach((uc, i) => {
+    const slide = pres.addSlide();
+    applyMaster(slide, palette, { page });
+    addUseCaseSlide(slide, palette, uc, i, list.length, companyName);
+    page += 1;
+  });
+
+  {
+    const slide = pres.addSlide();
+    addThanksSlide(slide, palette, { companyName, narrative, page });
   }
 
   await pres.writeFile({ fileName: finalPath });
