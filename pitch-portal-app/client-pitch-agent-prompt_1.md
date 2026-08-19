@@ -98,12 +98,8 @@ Hornets **layout**, Harness **theme**. Each of the 5 tabs is a **different scree
 - Dark navy canvas, light text, orange active tab underline.
 - Horizontal tabs. Fits the viewport: no page scrollbar.
 - Under every tab title: exactly **2 business sentences** (`tabWhy`) — what this screen is for, and why the floor cares.
-- `tabLayout` must be unique across the five tabs:
-  - `live` — command center (stats, live bars, alerts)
-  - `profile` — one record + next actions
-  - `heat` — zone/line heatmap
-  - `table` — working table with guidance
-  - `flow` — source → Fabric → outcome
+- `tabLayout` is **chosen by the model for this brief**, not a fixed rotation. Allowed screens: `live`, `profile`, `heat`, `table`, `flow`. Prefer five different screens when the five jobs are different. Never default every tab to the same chart.
+- The pipeline **honors** the model's `tabLayout`. It does not invent HTML; it paints the screen the model designed.
 - KPI “i” buttons: two short lines, business language.
 - Sample-data disclaimer. Live simulated figures, not claimed company metrics.
 
