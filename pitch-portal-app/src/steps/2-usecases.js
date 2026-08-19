@@ -58,6 +58,15 @@ function normalizeUseCase(uc, i, fallbackUc) {
   };
 }
 
+function normalizeDeckCopy(parsed, fallback, companyName, domain, requirement) {
+  return {
+    deckKicker: clip(parsed.deckKicker || fallback.deckKicker || "Apexon Harness", 28),
+    deckTitle: clip(parsed.deckTitle || fallback.deckTitle || `${companyName} operating picture`, 64),
+    deckSubtitle: clip(parsed.deckSubtitle || fallback.deckSubtitle || requirement || domain, 110),
+    closeLine: clip(parsed.closeLine || fallback.closeLine || `Walk the live demonstration with ${companyName} next.`, 90),
+  };
+}
+
 export async function generateUseCases({
   companyName,
   domain,
@@ -107,9 +116,13 @@ Pieces you may combine (not a menu of finished screens — you choose which, and
 Do not give every tab the same pieces. Write tabWhy as 2 business sentences.
 
 Return ONLY JSON:
-{"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
+- deckKicker: max 4 words. Title-slide first line (e.g. company or "Harness-Governed").
+- deckTitle: max 8 words. The title slide — THEIR operating problem, not a generic "Data Modernization Solution".
+- deckSubtitle: max 16 words. One line under the title, from THIS mandate.
+- closeLine: max 16 words. Thank-you slide. What we ask them to do next.
 - title: max 8 words.
 - businessProblem: max 28 words.
 - benefit: max 22 words.
@@ -125,7 +138,7 @@ Length limits (hard):
 - overallBenefits: exactly 4 lines, each max 18 words.
 - techComponents: max 3 names.
 
-Produce exactly ${numUseCases} use cases.`,
+Produce exactly ${numUseCases} use cases. Also design the pitch-deck title, subtitle, and close from THIS brief. The agenda is built from your use-case titles — make those titles room-ready.`,
     () => null,
     "usecases"
   );
@@ -149,6 +162,7 @@ Produce exactly ${numUseCases} use cases.`,
           overallBenefits: Array.isArray(parsed.overallBenefits)
             ? parsed.overallBenefits.map((s) => clip(String(s), 110)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
+          ...normalizeDeckCopy(parsed, fallback, companyName, domain, requirement),
           source,
         };
       }
