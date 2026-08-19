@@ -1,7 +1,7 @@
 node_modules/
 .env
 .auth-record.json
-output/
+.ppt-inspect/
 .deploy-staging/
 .deploy-app.zip
 *.pptx
