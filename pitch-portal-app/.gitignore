@@ -6,3 +6,4 @@ output/
 .deploy-app.zip
 *.pptx
 *.log
+src/assets/ppt-media/
