@@ -116,6 +116,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
     console.log(`[${companyName}] Step 1/4 - researching with Azure AI Foundry...`);
     const researchOut = await research({ companyName, domain, requirement });
     const researchResult = researchOut.text;
+    const researchStructured = researchOut.structured || null;
 
     patchJob(jobId, { step: "use-cases" });
     console.log(`[${companyName}] Step 2/4 - generating use cases...`);
@@ -124,6 +125,8 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       domain,
       requirement,
       research: researchResult,
+      numUseCases: 5,
+      numMockupTabs: 5,
     });
     const topUseCases = selectTopUseCases(useCases);
     if (!topUseCases.length) {
@@ -137,6 +140,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       domain,
       requirement,
       research: researchResult,
+      researchStructured,
       useCases,
     });
 
