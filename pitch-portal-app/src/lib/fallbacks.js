@@ -68,6 +68,14 @@ const PACKS = {
       fit: () => "Real-Time Intelligence on Fabric turns line, temperature, and batch events into a live operations board.",
       data: "MES/historian events, batch records, line temperatures",
       availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "Line and batch data typically already exist in MES or a historian for this industry. Treat as typical unless confirmed.",
+      kpis: [
+        { name: "Batches in band", why: "Share of runs staying inside the process window." },
+        { name: "Time to first alert", why: "How fast operations sees a drift." },
+        { name: "Holds opened live", why: "Exceptions caught during the run, not after." },
+        { name: "Feed health", why: "Whether the plant stream is still landing." },
+      ],
       tech: ["Microsoft Fabric", "Eventstream", "Real-Time Intelligence"],
       demoScore: 10,
     },
@@ -165,21 +173,39 @@ PACKS.logistics = PACKS.manufacturing;
 PACKS.telecom = PACKS.manufacturing;
 PACKS.energy = PACKS.manufacturing;
 
-export function fallbackUseCases({ companyName, domain, requirement, numUseCases = 5, numMockupTabs = 3 }) {
+export function fallbackUseCases({ companyName, domain, requirement, numUseCases = 5, numMockupTabs = 5 }) {
   const shapes = PACKS[industryKey(domain, requirement)] || PACKS.manufacturing;
   const useCases = shapes.slice(0, numUseCases).map((shape) => ({
     title: shape.title(companyName, domain),
     businessProblem: shape.problem(companyName, domain),
+    benefit: shape.fit(),
     solutionFit: `${shape.fit()} This maps to: ${sentence(requirement, "the stated Azure platform requirement")}.`,
-    dataPointer: { description: shape.data, availability: shape.availability },
+    kpis: shape.kpis || [
+      { name: "Exceptions in view", why: "What needs a person right now." },
+      { name: "On-time signal", why: "Whether operations are staying inside the window." },
+      { name: "Oldest open item", why: "How long the slowest issue has waited." },
+      { name: "Feed health", why: "Whether the data stream is still landing." },
+    ],
+    dataPointer: { description: shape.data, availability: shape.availability, confidence: "industry-typical" },
+    difficulty: shape.difficulty || (shape.availability === "new" ? "harder" : "moderate"),
+    difficultyWhy:
+      shape.difficultyWhy ||
+      (shape.availability === "new"
+        ? "Would need a new source or join that is not confirmed at this company."
+        : "Uses data this industry usually already holds. Treat as typical unless confirmed."),
     techComponents: shape.tech,
     demoScore: shape.demoScore,
   }));
 
-  const ranked = [...useCases].sort((a, b) => (b.demoScore || 0) - (a.demoScore || 0));
   return {
     useCases,
-    topForMockup: ranked.slice(0, numMockupTabs).map((uc) => uc.title),
+    topForMockup: useCases.slice(0, numMockupTabs).map((uc) => uc.title),
+    overallBenefits: [
+      `One operating picture for ${companyName} instead of overnight packs.`,
+      "Exceptions reach the owner while there is still time to act.",
+      "AI briefings stay on governed data, with a source behind every number.",
+      "Leadership can walk a live demonstration, not a static slide.",
+    ],
   };
 }
 
