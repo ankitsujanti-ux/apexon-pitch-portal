@@ -103,7 +103,7 @@ Hornets **layout**, Harness **theme**. Each of the 5 tabs is a **different scree
 - KPI “i” buttons: two short lines, business language.
 - Sample-data disclaimer. Live simulated figures, not claimed company metrics.
 
-The agent does **not** generate HTML. It only returns `tabWhy` and `tabLayout`. The pipeline builds the screens.
+The agent does **not** generate HTML. It returns `tabWhy`, `lookFirst`, `blocks`, and optional `columns` / `zones` / `recordKind`. The pipeline paints those pieces.
 
 ---
 
