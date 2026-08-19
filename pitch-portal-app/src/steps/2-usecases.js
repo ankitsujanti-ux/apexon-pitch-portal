@@ -84,35 +84,35 @@ ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-Brainstorm like a pre-sales person: walk their plant, store, claims desk, or trading floor in your head. List 8-10 candidate use cases internally that a ${companyName} operator would recognize as THEIR job. Then keep the ${numUseCases} strongest that:
+You are also the demo product designer. For this specific brief, think — then design. Do not start from a template.
+
+Walk ${companyName} like a pre-sales lead. List 8-10 candidate use cases internally that an operator would recognize as THEIR job. Keep the ${numUseCases} strongest that:
 1) map to how ${companyName} actually makes money, ships product, serves customers, or stays compliant,
-2) are normal and valuable in ${domain} — a plant manager / merchandiser / claims lead would say "that is us",
+2) are normal and valuable in ${domain},
 3) can be shown in a short demo without inventing systems they do not have.
 
-Reject anything that could be pasted onto another industry unchanged. Reject textbook "data lake" or "360 dashboard" titles unless they name the actual ${companyName} process.
-
-Copy must be slide-ready, not an essay. A VP should read a card in 5 seconds.
+Then, for EACH kept use case, design its HTML tab as a different business screen — the way Hornets does Overview vs Fan 360 vs Ticketing vs Smart Venue. Ask: what would this person look at first on the floor? Pick the visual that answers that job. Do not put the same chart on every tab.
 
 Return ONLY JSON:
 {"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","tabLayout":"live|profile|heat|table|flow","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
-- title: max 8 words. Name the process (e.g. "Allergen hold radar"), not the platform.
-- businessProblem: max 28 words. One pain, in their language.
-- benefit: max 22 words. The outcome they feel.
-- tabWhy: exactly 2 short sentences a business user would read under the tab title. Sentence 1 = what this screen is for. Sentence 2 = why it matters on the floor. Max 36 words total.
-- tabLayout: pick ONE unique layout per use case. All five must be different. Choose from:
-  live = live command center (clock, live stats, queue bars, alerts) — for holds, lines, waits, real-time ops
-  profile = one record + next actions — for a lot, customer, batch, or briefing
-  heat = zone/line heatmap — for drift, density, coverage, risk by area
-  table = working table with guidance — for demand, inventory, picks, forecasts
-  flow = source → Fabric → outcome path — for genealogy, audit, how data moves
-- Never reuse the same tabLayout twice.
+- title: max 8 words. Name the process, not the platform.
+- businessProblem: max 28 words.
+- benefit: max 22 words.
+- tabWhy: exactly 2 short business sentences. (1) what this tab is for (2) why it matters on the floor. Max 36 words.
+- tabLayout: YOU decide per use case after thinking about this brief. One of:
+  live = live command center (stats, live bars, alerts) when the job is "what is happening now"
+  profile = one record + next actions when the job is "who/what is this, what do I do"
+  heat = zone/line heatmap when the job is "where is the risk"
+  table = working table + guidance when the job is "which rows need a decision"
+  flow = sources → Fabric → outcome when the job is "how it lands / trace a path"
+- Prefer five different tabLayouts when the five jobs are different. Never default every tab to live or to the same chart.
 - solutionFit: max 18 words.
 - kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
-- dataPointer.description: max 16 words. Name the actual feed (MES, LIMS, POS, claims).
-- difficultyWhy: max 16 words. Cite research systems. Do not invent a stack.
-- overallBenefits: exactly 4 lines, each max 18 words, company-level outcomes of doing all five together.
+- dataPointer.description: max 16 words.
+- difficultyWhy: max 16 words. Cite research systems only.
+- overallBenefits: exactly 4 lines, each max 18 words.
 - techComponents: max 3 names.
 
 Produce exactly ${numUseCases} use cases.`,
