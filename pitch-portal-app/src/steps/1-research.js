@@ -69,7 +69,7 @@ Hard rules:
 - Do not assume they already run Microsoft Fabric unless that is public.
 - requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.
 - JSON must parse with JSON.parse. No markdown, no [[1]] citation tokens, no [text](url) links inside values.
-- confidence must be exactly "confirmed" or "industry-typical". Put sources only in basis as a plain URL or site name.`
+- confidence must be exactly "confirmed" or "industry-typical". Put sources only in basis as a plain URL or site name.`,
     () => null,
     "research"
   );
