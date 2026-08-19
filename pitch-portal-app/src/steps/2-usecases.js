@@ -50,7 +50,11 @@ function normalizeUseCase(uc, i, fallbackUc) {
       : fallbackUc?.techComponents || ["Microsoft Fabric", "Real-Time Intelligence", "Azure AI Foundry"],
     demoScore: uc.demoScore || 8 - i,
     tabWhy: clip(uc.tabWhy || `${uc.businessProblem || fallbackUc?.businessProblem || ""} ${uc.benefit || fallbackUc?.benefit || ""}`.trim(), 220),
-    tabLayout: ["live", "profile", "heat", "table", "flow"].includes(uc.tabLayout) ? uc.tabLayout : "",
+    lookFirst: clip(uc.lookFirst || uc.title || "", 48),
+    blocks: Array.isArray(uc.blocks) ? uc.blocks : uc.tabLayout ? [uc.tabLayout] : [],
+    columns: Array.isArray(uc.columns) ? uc.columns.map((c) => clip(c, 18)).slice(0, 4) : [],
+    zones: Array.isArray(uc.zones) ? uc.zones.map((z) => clip(z, 18)).slice(0, 6) : [],
+    recordKind: clip(uc.recordKind || "", 24),
   };
 }
 
@@ -84,34 +88,40 @@ ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-You are also the demo product designer. For this specific brief, think — then design. Do not start from a template.
+You are the pre-sales lead AND the demo designer for this one brief. Think first. There is no five-screen template.
 
-Walk ${companyName} like a pre-sales lead. List 8-10 candidate use cases internally that an operator would recognize as THEIR job. Keep the ${numUseCases} strongest that:
-1) map to how ${companyName} actually makes money, ships product, serves customers, or stays compliant,
-2) are normal and valuable in ${domain},
-3) can be shown in a short demo without inventing systems they do not have.
+Walk ${companyName}. Keep the ${numUseCases} strongest use cases that a ${domain} operator would recognize as THEIR job, addressable by the mandate, without inventing systems.
 
-Then, for EACH kept use case, design its HTML tab as a different business screen — the way Hornets does Overview vs Fan 360 vs Ticketing vs Smart Venue. Ask: what would this person look at first on the floor? Pick the visual that answers that job. Do not put the same chart on every tab.
+Then design each tab from scratch. Hornets is the quality bar (Overview, Fan 360, Ticketing, and Smart Venue are different jobs — not the same chart with a new title). Decide what THIS person would look at. Compose the tab from 1-3 pieces, in the order they should appear. You name the pieces in their language.
+
+Pieces you may combine (not a menu of finished screens — you choose which, and you name the labels):
+- kpis: four numbers they would watch
+- bars: a status mix (you say what the mix is in lookFirst)
+- alerts: exceptions that need a person
+- table: rows that need a decision (you name columns)
+- heat: a map of THEIR areas (you name zones: lines, stands, desks, stores — whatever this business uses)
+- record: one lot / fan / claim / order (you name recordKind)
+- actions: recommended next steps
+- flow: how work moves for this use case
+
+Do not give every tab the same pieces. Write tabWhy as 2 business sentences.
 
 Return ONLY JSON:
-{"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","tabLayout":"live|profile|heat|table|flow","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
+{"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
-- title: max 8 words. Name the process, not the platform.
+- title: max 8 words.
 - businessProblem: max 28 words.
 - benefit: max 22 words.
-- tabWhy: exactly 2 short business sentences. (1) what this tab is for (2) why it matters on the floor. Max 36 words.
-- tabLayout: YOU decide per use case after thinking about this brief. One of:
-  live = live command center (stats, live bars, alerts) when the job is "what is happening now"
-  profile = one record + next actions when the job is "who/what is this, what do I do"
-  heat = zone/line heatmap when the job is "where is the risk"
-  table = working table + guidance when the job is "which rows need a decision"
-  flow = sources → Fabric → outcome when the job is "how it lands / trace a path"
-- Prefer five different tabLayouts when the five jobs are different. Never default every tab to live or to the same chart.
-- solutionFit: max 18 words.
+- tabWhy: exactly 2 short business sentences. Max 36 words.
+- lookFirst: max 8 words. The heading on the main panel, in their words.
+- blocks: 1-3 piece names from the list above.
+- columns: 3-4 headers if table is used, named for this process.
+- zones: up to 6 area names if heat is used, named for this operation.
+- recordKind: one word or short phrase if record is used (Lot, Fan, Claim, Order).
 - kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
 - dataPointer.description: max 16 words.
-- difficultyWhy: max 16 words. Cite research systems only.
+- difficultyWhy: max 16 words.
 - overallBenefits: exactly 4 lines, each max 18 words.
 - techComponents: max 3 names.
 
