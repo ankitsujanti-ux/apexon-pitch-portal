@@ -93,14 +93,21 @@ Visual rules (already in code — keep copy short enough to fit):
 
 ## Step 4 — Interactive HTML (built in code)
 
-Hornets **layout**, Harness **theme**:
+Hornets **layout**, Harness **theme**. Each of the 5 tabs is a **different screen**, not a copy-paste chart.
 
 - Dark navy canvas, light text, orange active tab underline.
-- Horizontal tabs (not a left sidebar). Five tabs, one per use case.
-- Fits the viewport: no page scrollbar.
-- One relevant visual per tab only (sparkline **or** status bars **or** action list **or** lineage table — never a generic line chart plus bar chart on every tab).
+- Horizontal tabs. Fits the viewport: no page scrollbar.
+- Under every tab title: exactly **2 business sentences** (`tabWhy`) — what this screen is for, and why the floor cares.
+- `tabLayout` must be unique across the five tabs:
+  - `live` — command center (stats, live bars, alerts)
+  - `profile` — one record + next actions
+  - `heat` — zone/line heatmap
+  - `table` — working table with guidance
+  - `flow` — source → Fabric → outcome
 - KPI “i” buttons: two short lines, business language.
 - Sample-data disclaimer. Live simulated figures, not claimed company metrics.
+
+The agent does **not** generate HTML. It only returns `tabWhy` and `tabLayout`. The pipeline builds the screens.
 
 ---
 
