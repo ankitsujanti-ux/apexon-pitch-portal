@@ -42,13 +42,23 @@ function preferLayout(useCase) {
 
 export function assignLayouts(useCases) {
   const kinds = ["live", "profile", "heat", "table", "flow"];
+  const list = useCases || [];
+  const fromLlm = list.map((uc) => (kinds.includes(uc.tabLayout) ? uc.tabLayout : ""));
   const used = new Set();
-  return (useCases || []).map((uc, i) => {
-    const asked = kinds.includes(uc.tabLayout) && !used.has(uc.tabLayout) ? uc.tabLayout : "";
-    const want = asked || preferLayout(uc);
-    const pick = want && !used.has(want) ? want : kinds.find((k) => !used.has(k)) || kinds[i % kinds.length];
-    used.add(pick);
-    return pick;
+  return list.map((uc, i) => {
+    const llm = fromLlm[i];
+    if (llm && !used.has(llm)) {
+      used.add(llm);
+      return llm;
+    }
+    const inferred = preferLayout(uc);
+    if (inferred && !used.has(inferred)) {
+      used.add(inferred);
+      return inferred;
+    }
+    const next = kinds.find((k) => !used.has(k)) || llm || inferred || kinds[i % kinds.length];
+    used.add(next);
+    return next;
   });
 }
 
