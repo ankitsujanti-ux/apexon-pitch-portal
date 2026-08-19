@@ -89,7 +89,7 @@ function applyMaster(slide, palette, { page, total }) {
   }
 }
 
-function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent }) {
+function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bodyMax = 160 }) {
   slide.addShape("roundRect", {
     x,
     y,
@@ -114,24 +114,25 @@ function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent }) {
     cursorY += 0.22;
   }
   if (title) {
-    slide.addText(pptSafe(title), {
+    slide.addText(truncate(title, 42), {
       x: x + 0.16,
       y: cursorY,
       w: w - 0.32,
-      h: 0.26,
-      fontSize: 13,
+      h: 0.28,
+      fontSize: 14,
       bold: true,
       color: palette.heading,
       fontFace: palette.fontTitle,
+      wrap: true,
     });
-    cursorY += 0.28;
+    cursorY += 0.3;
   }
-  slide.addText(truncate(body, 520) || " ", {
+  slide.addText(truncate(body, bodyMax) || " ", {
     x: x + 0.16,
     y: cursorY,
     w: w - 0.32,
-    h: h - (cursorY - y) - 0.1,
-    fontSize: 12,
+    h: Math.max(0.28, h - (cursorY - y) - 0.12),
+    fontSize: 13,
     color: palette.textLight,
     fontFace: palette.fontBody,
     valign: "top",
@@ -139,20 +140,16 @@ function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent }) {
   });
 }
 
+function slideTitle(uc, companyName) {
+  const raw = String(uc.title || "Use case");
+  const stripped = raw.replace(new RegExp(`\\s*[\\u2014\\u2013\\-]\\s*${companyName}\\s*$`, "i"), "").trim();
+  return truncate(stripped || raw, 48);
+}
+
 function difficultyLabel(uc) {
   if (uc.difficulty === "easier") return "Easier — data this industry already holds";
   if (uc.difficulty === "harder") return "Harder — new source or unconfirmed join";
   return "Moderate — mix of existing and new work";
-}
-
-function dataBody(uc) {
-  const desc =
-    typeof uc.dataPointer === "string"
-      ? uc.dataPointer
-      : uc.dataPointer?.description || "Operational data typical for this industry";
-  const conf = uc.dataPointer?.confidence === "confirmed" ? "Confirmed at this company." : "Industry-typical unless confirmed.";
-  const avail = uc.dataPointer?.availability === "new" ? "New source or integration." : "Likely already exists.";
-  return `${desc} ${avail} ${conf} ${uc.difficultyWhy || ""}`.trim();
 }
 
 function sourceTiles(research, researchStructured) {
@@ -392,18 +389,18 @@ function addArchitectureSlide(slide, palette, { companyName, requirement, resear
     const x = 0.28 + i * 3.22;
     slide.addShape("roundRect", {
       x,
-      y: 5.76,
+      y: 5.72,
       w: 3.08,
-      h: 1.28,
+      h: 1.22,
       rectRadius: 0.08,
       fill: { color: palette.card },
       line: { color: layer.color, width: 1.25 },
     });
     slide.addText(layer.n, {
       x: x + 0.14,
-      y: 5.86,
+      y: 5.82,
       w: 0.5,
-      h: 0.24,
+      h: 0.22,
       fontSize: 12,
       bold: true,
       color: layer.color,
@@ -411,9 +408,9 @@ function addArchitectureSlide(slide, palette, { companyName, requirement, resear
     });
     slide.addText(layer.title, {
       x: x + 0.64,
-      y: 5.86,
+      y: 5.82,
       w: 2.25,
-      h: 0.24,
+      h: 0.22,
       fontSize: 13,
       bold: true,
       color: palette.textLight,
@@ -421,9 +418,9 @@ function addArchitectureSlide(slide, palette, { companyName, requirement, resear
     });
     slide.addText(layer.body, {
       x: x + 0.14,
-      y: 6.18,
+      y: 6.1,
       w: 2.8,
-      h: 0.7,
+      h: 0.68,
       fontSize: 12,
       color: "B8C3D4",
       fontFace: palette.fontBody,
@@ -435,107 +432,126 @@ function addArchitectureSlide(slide, palette, { companyName, requirement, resear
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   slide.addText(`USE CASE  ${String(index + 1).padStart(2, "0")}  /  ${String(total).padStart(2, "0")}`, {
     x: MARGIN,
-    y: 0.16,
-    w: 4.5,
+    y: 0.18,
+    w: 4.8,
     h: 0.22,
     fontSize: 11,
     bold: true,
     color: palette.accent,
     fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(uc.title, 72), {
-    x: MARGIN,
-    y: 0.38,
-    w: 12.4,
-    h: 0.42,
-    fontSize: 22,
-    bold: true,
-    color: palette.textLight,
-    fontFace: palette.fontTitle,
-    wrap: true,
-  });
-  slide.addText(truncate(companyName, 40), {
-    x: 9.4,
-    y: 0.16,
-    w: 3.5,
+  slide.addText(truncate(companyName, 36), {
+    x: 8.2,
+    y: 0.18,
+    w: 4.7,
     h: 0.22,
     fontSize: 11,
     color: "9AA6B8",
     fontFace: palette.fontBody,
     align: "right",
   });
+  slide.addText(slideTitle(uc, companyName), {
+    x: MARGIN,
+    y: 0.44,
+    w: 12.48,
+    h: 0.46,
+    fontSize: 22,
+    bold: true,
+    color: palette.textLight,
+    fontFace: palette.fontTitle,
+    wrap: true,
+  });
 
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 0.9,
-    w: 6.05,
-    h: 2.35,
-    kicker: "The use case",
-    title: "What we would stand up",
+    y: 1.02,
+    w: 6.2,
+    h: 2.55,
+    kicker: "The business pain",
+    title: "What leadership feels today",
     body: uc.businessProblem,
+    bodyMax: 180,
   });
   addPanel(slide, palette, {
-    x: 6.7,
-    y: 0.9,
-    w: 6.2,
-    h: 2.35,
-    kicker: "Why it matters",
-    title: "How leadership benefits",
+    x: 6.85,
+    y: 1.02,
+    w: 6.05,
+    h: 2.55,
+    kicker: "The move",
+    title: "What they get",
     body: uc.benefit || uc.solutionFit,
     accent: "0E7C66",
+    bodyMax: 180,
   });
 
   const kpis = (uc.kpis || []).slice(0, 4);
-  const kpiW = kpis.length ? (12.48 - (kpis.length - 1) * 0.14) / kpis.length : 3;
+  const kpiW = kpis.length ? (12.48 - (kpis.length - 1) * 0.16) / kpis.length : 3;
   kpis.forEach((kpi, i) => {
     addPanel(slide, palette, {
-      x: MARGIN + i * (kpiW + 0.14),
-      y: 3.38,
+      x: MARGIN + i * (kpiW + 0.16),
+      y: 3.72,
       w: kpiW,
-      h: 1.55,
+      h: 1.48,
       kicker: "KPI",
-      title: truncate(kpi.name, 28),
+      title: kpi.name,
       body: kpi.why,
+      bodyMax: 70,
     });
   });
 
+  const dataLine = typeof uc.dataPointer === "string"
+    ? uc.dataPointer
+    : uc.dataPointer?.description || "Operational data this industry already holds";
+  const stack = Array.isArray(uc.techComponents) ? uc.techComponents.slice(0, 3).join("  ·  ") : "Microsoft Fabric";
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 5.06,
-    w: 8.15,
-    h: 1.95,
-    kicker: "Data required",
-    title: difficultyLabel(uc),
-    body: dataBody(uc),
+    y: 5.36,
+    w: 5.9,
+    h: 1.62,
+    kicker: "Data",
+    title: uc.dataPointer?.availability === "new" ? "New join or source" : "Likely already there",
+    body: dataLine,
+    bodyMax: 110,
   });
   addPanel(slide, palette, {
-    x: 8.78,
-    y: 5.06,
-    w: 4.12,
-    h: 1.95,
+    x: 6.54,
+    y: 5.36,
+    w: 3.2,
+    h: 1.62,
+    kicker: "Effort",
+    title: uc.difficulty === "easier" ? "Easier" : uc.difficulty === "harder" ? "Harder" : "Moderate",
+    body: uc.difficultyWhy || difficultyLabel(uc),
+    bodyMax: 90,
+  });
+  addPanel(slide, palette, {
+    x: 9.94,
+    y: 5.36,
+    w: 2.96,
+    h: 1.62,
     kicker: "On the platform",
-    title: "How we would land it",
-    body: Array.isArray(uc.techComponents) ? uc.techComponents.join("  |  ") : uc.solutionFit,
+    title: "How we land it",
+    body: stack,
     accent: palette.accent,
+    bodyMax: 80,
   });
 }
 
-function addBenefitsSlide(slide, palette, { companyName, useCases, overallBenefits, requirement }) {
+function addBenefitsSlide(slide, palette, { companyName, useCases, overallBenefits }) {
   slide.addText("Overall benefit", {
     x: MARGIN,
-    y: 0.2,
+    y: 0.22,
     w: 12.4,
-    h: 0.4,
+    h: 0.36,
     fontSize: 24,
     bold: true,
     color: palette.textLight,
     fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(`What ${companyName} leadership gets if the five use cases run as one program.`, 140), {
+  slide.addText(truncate(`What ${companyName} leadership walks away with if the five use cases run as one program.`, 110), {
     x: MARGIN,
     y: 0.62,
     w: 12.4,
-    h: 0.3,
+    h: 0.28,
     fontSize: 13,
     color: "B8C3D4",
     fontFace: palette.fontBody,
@@ -543,31 +559,21 @@ function addBenefitsSlide(slide, palette, { companyName, useCases, overallBenefi
 
   const benefits =
     Array.isArray(overallBenefits) && overallBenefits.length
-      ? overallBenefits.slice(0, 6)
-      : useCases.map((uc) => uc.benefit || uc.title);
-  benefits.slice(0, 6).forEach((item, i) => {
-    const col = i % 3;
-    const row = Math.floor(i / 3);
+      ? overallBenefits.slice(0, 4)
+      : useCases.map((uc) => uc.benefit || uc.title).slice(0, 4);
+  benefits.forEach((item, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
     addPanel(slide, palette, {
-      x: MARGIN + col * 4.2,
-      y: 1.05 + row * 2.35,
-      w: 4.05,
-      h: 2.2,
+      x: MARGIN + col * 6.35,
+      y: 1.08 + row * 2.85,
+      w: 6.15,
+      h: 2.68,
       kicker: `0${i + 1}`,
-      title: i < useCases.length ? truncate(useCases[i]?.title, 36) : "Program outcome",
+      title: i < useCases.length ? slideTitle(useCases[i], companyName) : "Program outcome",
       body: item,
+      bodyMax: 200,
     });
-  });
-
-  slide.addText(truncate(requirement, 180), {
-    x: MARGIN,
-    y: 5.85,
-    w: 12.4,
-    h: 1.15,
-    fontSize: 14,
-    color: palette.heading,
-    fontFace: palette.fontBody,
-    wrap: true,
   });
 }
 
@@ -624,7 +630,6 @@ export async function buildDeck({
       companyName,
       useCases: list,
       overallBenefits: useCases.overallBenefits,
-      requirement,
     });
   }
 
