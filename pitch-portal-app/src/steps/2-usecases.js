@@ -49,6 +49,8 @@ function normalizeUseCase(uc, i, fallbackUc) {
       ? uc.techComponents.slice(0, 3)
       : fallbackUc?.techComponents || ["Microsoft Fabric", "Real-Time Intelligence", "Azure AI Foundry"],
     demoScore: uc.demoScore || 8 - i,
+    tabWhy: clip(uc.tabWhy || `${uc.businessProblem || fallbackUc?.businessProblem || ""} ${uc.benefit || fallbackUc?.benefit || ""}`.trim(), 220),
+    tabLayout: ["live", "profile", "heat", "table", "flow"].includes(uc.tabLayout) ? uc.tabLayout : "",
   };
 }
 
@@ -92,12 +94,20 @@ Reject anything that could be pasted onto another industry unchanged. Reject tex
 Copy must be slide-ready, not an essay. A VP should read a card in 5 seconds.
 
 Return ONLY JSON:
-{"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
+{"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","tabLayout":"live|profile|heat|table|flow","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
 - title: max 8 words. Name the process (e.g. "Allergen hold radar"), not the platform.
 - businessProblem: max 28 words. One pain, in their language.
 - benefit: max 22 words. The outcome they feel.
+- tabWhy: exactly 2 short sentences a business user would read under the tab title. Sentence 1 = what this screen is for. Sentence 2 = why it matters on the floor. Max 36 words total.
+- tabLayout: pick ONE unique layout per use case. All five must be different. Choose from:
+  live = live command center (clock, live stats, queue bars, alerts) — for holds, lines, waits, real-time ops
+  profile = one record + next actions — for a lot, customer, batch, or briefing
+  heat = zone/line heatmap — for drift, density, coverage, risk by area
+  table = working table with guidance — for demand, inventory, picks, forecasts
+  flow = source → Fabric → outcome path — for genealogy, audit, how data moves
+- Never reuse the same tabLayout twice.
 - solutionFit: max 18 words.
 - kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
 - dataPointer.description: max 16 words. Name the actual feed (MES, LIMS, POS, claims).
