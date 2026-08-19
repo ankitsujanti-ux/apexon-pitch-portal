@@ -67,7 +67,9 @@ Hard rules:
 - reporting: how THIS industry typically reports today (overnight packs, plant scorecards, Power BI, SAP). Same confidence rule.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
 - Do not assume they already run Microsoft Fabric unless that is public.
-- requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.`,
+- requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.
+- JSON must parse with JSON.parse. No markdown, no [[1]] citation tokens, no [text](url) links inside values.
+- confidence must be exactly "confirmed" or "industry-typical". Put sources only in basis as a plain URL or site name.`
     () => null,
     "research"
   );
