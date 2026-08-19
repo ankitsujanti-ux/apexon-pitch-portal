@@ -77,15 +77,23 @@ Hard length limits:
 
 ## Step 3 — Pitch deck (built in code, Harness theme)
 
-The pipeline builds a 7-slide widescreen PPTX. You do **not** generate the file. You supply the short copy above so the deck can stay professional:
+The pipeline builds a widescreen PPTX in the same narrative as the Apexon Harness template: **title → agenda → architecture → use cases → thank you**. You do **not** generate the file. You design the copy from THIS brief:
 
-1–5. One use case per slide: pain | outcome | 4 KPIs | data / effort / platform  
-6. Proposed architecture (logos + Harness path)  
-7. Four overall benefits  
+- `deckKicker` / `deckTitle` / `deckSubtitle` — title slide, company-specific
+- use-case `title`s — these become the agenda
+- `closeLine` — thank-you slide
+
+Slide order in the file:
+
+1. Title (prepared for the company, Harness wave background)
+2. Agenda (numbered from this brief — not a generic 10-item Harness menu)
+3. Proposed architecture (logos + Harness path, their source names)
+4–8. One use case per slide: pain | outcome | 4 KPIs | data / effort / platform
+9. Thank you
 
 Visual rules (already in code — keep copy short enough to fit):
 
-- Apexon Harness theme: navy `#0B1220` / `#172440`, accent `#E54A24`, Arial/Helvetica.
+- Apexon Harness theme: navy `#0B1220` / `#172440`, accent `#E54A24`, Arial/Helvetica, wave footer, white lockup.
 - Sparse, pre-sales layout. Whitespace over paragraphs. No overflow. No leftover placeholders.
 - If copy is longer than the limits above, it will be clipped. Write it short the first time.
 
