@@ -206,6 +206,10 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       "AI briefings stay on governed data, with a source behind every number.",
       "Leadership can walk a live demonstration, not a static slide.",
     ],
+    deckKicker: "Apexon Harness",
+    deckTitle: `${companyName} operating picture`,
+    deckSubtitle: sentence(requirement, `${domain} leadership walkthrough on Microsoft Fabric`),
+    closeLine: `Walk the live demonstration with ${companyName} next.`,
   };
 }
 
