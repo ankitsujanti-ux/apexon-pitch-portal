@@ -30,66 +30,31 @@ function twoLine(text) {
   return `${escapeHtml(clean.slice(0, 88).replace(/\s+\S*$/, ""))}.<br/>Sample data — not a live company feed.`;
 }
 
-function visualKind(useCase) {
-  const t = `${useCase.title} ${useCase.businessProblem}`.toLowerCase();
-  if (/live|pulse|real.?time|wait|queue|venue/.test(t)) return "line";
-  if (/inventory|demand|stock|cover|fill/.test(t)) return "bars";
-  if (/trace|lineage|audit|lot|genealogy/.test(t)) return "table";
-  if (/quality|hold|exception|defect|label|allergen/.test(t)) return "bars";
-  if (/brief|governed|next.?best|recommend/.test(t)) return "list";
-  return "bars";
+function preferLayout(useCase) {
+  const t = `${useCase.title} ${useCase.businessProblem} ${useCase.solutionFit || ""}`.toLowerCase();
+  if (/hold|exception|live|pulse|queue|command|venue|wait/.test(t)) return "live";
+  if (/lab|release|360|customer|profile|fan|brief|governed|recommend/.test(t)) return "profile";
+  if (/drift|density|heat|section|coverage|zone/.test(t)) return "heat";
+  if (/inventory|demand|forecast|price|ticket|pick|warehouse|stock/.test(t)) return "table";
+  if (/trace|lineage|recall|audit|genealogy|flow/.test(t)) return "flow";
+  return "";
 }
 
-function visualBlock({ copy, kind, tabId }) {
-  if (kind === "line") {
-    return `<article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine(copy.trend + " This is the live signal for this use case.")}</div>
-      <h3>${escapeHtml(copy.trend)}</h3>
-      <svg class="live-line" viewBox="0 0 320 110" width="100%" height="110" aria-hidden="true"></svg>
-    </article>`;
-  }
-  if (kind === "table") {
-    const rows = copy.feed.slice(0, 4)
-      .map(([kindName, label, text]) => `<tr><td><span class="pill ${kindName}">${escapeHtml(label)}</span></td><td>${escapeHtml(text)}</td></tr>`)
-      .join("");
-    return `<article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine("Trace of the latest lots or records. Read status first, then the event.")}</div>
-      <h3>Latest lineage events</h3>
-      <table><thead><tr><th>Status</th><th>Event</th></tr></thead><tbody data-feed>${rows}</tbody></table>
-    </article>`;
-  }
-  if (kind === "list") {
-    const items = copy.feed.slice(0, 4)
-      .map(([kindName, label, text]) => `<li class="nba"><span class="pill ${kindName}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></li>`)
-      .join("");
-    return `<article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine("Recommended next actions from governed data. Highest confidence sits at the top.")}</div>
-      <h3>Next actions</h3>
-      <ul class="nba-list" data-feed>${items}</ul>
-    </article>`;
-  }
-  const bars = copy.bars
-    .map(
-      (b) =>
-        `<div class="bar-row"><span class="nm">${escapeHtml(b.label.split(" ")[0])}</span><span class="track"><span class="fill" style="width:${Math.max(8, Math.round((b.w / 210) * 100))}%;background:${b.color}"></span></span><span class="vv">${escapeHtml(b.label.replace(/^[^\d%]*/, ""))}</span></div>`
-    )
-    .join("");
-  return `<article class="viz">
-    <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-    <div id="${tabId}-viz" class="pop">${twoLine(copy.breakdown + " Read the labels, not color alone.")}</div>
-    <h3>${escapeHtml(copy.breakdown)}</h3>
-    <div class="bars">${bars}</div>
-  </article>`;
+export function assignLayouts(useCases) {
+  const kinds = ["live", "profile", "heat", "table", "flow"];
+  const used = new Set();
+  return (useCases || []).map((uc, i) => {
+    const asked = kinds.includes(uc.tabLayout) && !used.has(uc.tabLayout) ? uc.tabLayout : "";
+    const want = asked || preferLayout(uc);
+    const pick = want && !used.has(want) ? want : kinds.find((k) => !used.has(k)) || kinds[i % kinds.length];
+    used.add(pick);
+    return pick;
+  });
 }
 
-function tabInner({ companyName, domain, useCase, tabId, index }) {
-  const copy = dashboardCopy(companyName, domain, useCase);
-  const kind = visualKind(useCase);
-  const kpiSource = (useCase.kpis && useCase.kpis.length ? useCase.kpis : copy.kpis).slice(0, 4);
-  const kpis = kpiSource
+function kpiRow({ copy, useCase, tabId, count = 4 }) {
+  const kpiSource = (useCase.kpis && useCase.kpis.length ? useCase.kpis : copy.kpis).slice(0, count);
+  return `<div class="kpis">${kpiSource
     .map((k, i) => {
       const value = copy.kpis[i]?.value || ["18", "96%", "42h", "Healthy"][i] || "—";
       const label = k.name || k.label || "Metric";
@@ -101,31 +66,178 @@ function tabInner({ companyName, domain, useCase, tabId, index }) {
         <div class="kpi-label">${escapeHtml(label)}</div>
       </article>`;
     })
-    .join("");
-  const sideFeed = kind === "table" || kind === "list"
-    ? ""
-    : `<article class="side">
-        <h3>What just happened</h3>
-        <ul class="feed" data-feed>${copy.feed
-          .slice(0, 3)
-          .map(([k, label, text]) => `<li><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></li>`)
-          .join("")}</ul>
-      </article>`;
+    .join("")}</div>`;
+}
 
-  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-kind="${kind}">
+function tabWhyHtml(useCase, tabId) {
+  const raw = useCase.tabWhy || `${useCase.businessProblem || ""} ${useCase.benefit || ""}`.trim();
+  return `<p class="why">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-why')" aria-label="Why this tab" style="position:static">i</button>
+    <span id="${tabId}-why" class="pop">${twoLine(raw)}</span>
+    ${twoLine(raw)}
+  </p>`;
+}
+
+function layoutLive({ copy, useCase, tabId, companyName }) {
+  const bars = copy.bars
+    .map(
+      (b) =>
+        `<div class="bar-row"><span class="nm">${escapeHtml(b.label.split(" ")[0])}</span><span class="track"><span class="fill" style="width:${Math.max(8, Math.round((b.w / 210) * 100))}%;background:${b.color}"></span></span><span class="vv">${escapeHtml(b.label.replace(/^[^\d%]*/, ""))}</span></div>`
+    )
+    .join("");
+  const alerts = copy.feed
+    .slice(0, 3)
+    .map(
+      ([k, label, text]) =>
+        `<div class="alert ${k}"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></div>`
+    )
+    .join("");
+  return `${kpiRow({ copy, useCase, tabId })}
+    <div class="stage with-side">
+      <article class="viz">
+        <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
+        <div id="${tabId}-viz" class="pop">${twoLine("Live mix of what needs action now. Bars turn orange or red as risk rises.")}</div>
+        <h3>Live status on the floor</h3>
+        <div class="bars">${bars}</div>
+      </article>
+      <article class="side">
+        <h3>Live alerts</h3>
+        <div class="alerts" data-feed>${alerts}</div>
+      </article>
+    </div>`;
+}
+
+function layoutProfile({ copy, useCase, tabId, companyName }) {
+  const initials = companyName.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "UC";
+  const record = useCase.title.split(/[—–-]/)[0].trim();
+  const attrs = [
+    ["Owner", "Operations lead"],
+    ["Source", copy.kpis[3]?.label || "Feed healthy"],
+    ["Status", copy.kpis[0]?.value || "Open"],
+    ["Last hop", "2 min ago"],
+    ["Data", (typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer) || "Operational feed"],
+    ["Channel", "Plant + warehouse"],
+  ];
+  const actions = copy.feed
+    .slice(0, 4)
+    .map(
+      ([k, label, text], i) =>
+        `<li class="nba"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span><span class="conf">${92 - i * 7}%</span></li>`
+    )
+    .join("");
+  return `<div class="stage with-side">
+      <article class="viz">
+        <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
+        <div id="${tabId}-viz" class="pop">${twoLine("One record, previously split across systems. Read the profile first, then the recommended next action.")}</div>
+        <h3>Unified record</h3>
+        <div class="fan">
+          <div class="avatar">${escapeHtml(initials)}</div>
+          <div>
+            <div class="kpi-value" style="font-size:20px">${escapeHtml(record)}</div>
+            <div class="meta">${escapeHtml(companyName)} · sample record, not a live feed</div>
+          </div>
+        </div>
+        <div class="attr">${attrs
+          .map(([k, v]) => `<div><span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b></div>`)
+          .join("")}</div>
+      </article>
+      <article class="side">
+        <h3>Next actions</h3>
+        <ul class="nba-list" data-feed>${actions}</ul>
+      </article>
+    </div>`;
+}
+
+function layoutHeat({ copy, useCase, tabId }) {
+  const zones = ["Line 1", "Line 2", "Line 3", "Pack", "Warehouse", "QA lab"];
+  const tones = ["good", "warn", "good", "bad", "warn", "good"];
+  const cells = zones
+    .map(
+      (z, i) =>
+        `<div class="cell ${tones[i]}">${escapeHtml(z)}<small>${["Clear", "Watch", "Clear", "Act", "Watch", "Clear"][i]}</small></div>`
+    )
+    .join("");
+  return `${kpiRow({ copy, useCase, tabId })}
+    <article class="viz">
+      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
+      <div id="${tabId}-viz" class="pop">${twoLine("Each cell is a zone. Green is comfortable, amber is filling, red needs a person now.")}</div>
+      <h3>Risk by area</h3>
+      <div class="heat">${cells}</div>
+    </article>`;
+}
+
+function layoutTable({ copy, useCase, tabId }) {
+  const rows = copy.feed.slice(0, 4).map(([k, label, text], i) => {
+    const item = text.split(/[—–.]/)[0].slice(0, 42);
+    return `<tr>
+      <td>${escapeHtml(item || `Record ${i + 1}`)}</td>
+      <td><span class="pill ${k}">${escapeHtml(label)}</span></td>
+      <td>${escapeHtml(["Hold", "Release", "Watch", "Ship"][i])}</td>
+      <td>${escapeHtml(["Owner assigned", "Wait on lab", "Buffer OK", "Ready"][i])}</td>
+    </tr>`;
+  }).join("");
+  return `${kpiRow({ copy, useCase, tabId })}
+    <article class="viz">
+      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
+      <div id="${tabId}-viz" class="pop">${twoLine("Working list for this use case. Status first, then the recommended move.")}</div>
+      <h3>What needs a decision</h3>
+      <table>
+        <thead><tr><th>Record</th><th>Status</th><th>Guidance</th><th>Next step</th></tr></thead>
+        <tbody data-feed>${rows}</tbody>
+      </table>
+    </article>`;
+}
+
+function layoutFlow({ copy, useCase, tabId }) {
+  const raw = typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer;
+  const sources = String(raw || "ERP, MES, files")
+    .split(/,| and | \+ /)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  const sourceLabel = sources.join(" · ") || "Existing systems";
+  return `${kpiRow({ copy, useCase, tabId, count: 4 })}
+    <article class="viz">
+      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
+      <div id="${tabId}-viz" class="pop">${twoLine("Nothing is replaced. Fabric reads what they already run and lands a live view plus AI.")}</div>
+      <h3>How this use case lands</h3>
+      <div class="flow">
+        <div class="node keep"><div class="h">Sources they already have</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
+        <div class="arrow">→</div>
+        <div class="node fabric"><div class="h">Microsoft Fabric</div><div class="s">OneLake · Real-Time Intelligence · AI</div></div>
+        <div class="arrow">→</div>
+        <div class="node out"><div class="h">What the team sees</div><div class="s">${escapeHtml(useCase.benefit || "A live operating view")}</div></div>
+      </div>
+      <ul class="nba-list" data-feed style="margin-top:8px">${copy.feed
+        .slice(0, 2)
+        .map(([k, label, text]) => `<li class="nba"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></li>`)
+        .join("")}</ul>
+    </article>`;
+}
+
+function tabInner({ companyName, domain, useCase, tabId, index, layout }) {
+  const copy = dashboardCopy(companyName, domain, useCase);
+  const body =
+    layout === "live"
+      ? layoutLive({ copy, useCase, tabId, companyName })
+      : layout === "profile"
+        ? layoutProfile({ copy, useCase, tabId, companyName })
+        : layout === "heat"
+          ? layoutHeat({ copy, useCase, tabId })
+          : layout === "table"
+            ? layoutTable({ copy, useCase, tabId })
+            : layoutFlow({ copy, useCase, tabId });
+
+  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${layout}">
     <div class="title-row">
       <div>
-        <p class="kicker">Use case ${index + 1} of 5</p>
+        <p class="kicker">Use case ${index + 1} of 5 · ${layout} view</p>
         <h2>${escapeHtml(useCase.title)}</h2>
-        <p class="sub">${escapeHtml(useCase.benefit || useCase.businessProblem || "")}</p>
+        ${tabWhyHtml(useCase, tabId)}
       </div>
       <button class="primary" type="button">${escapeHtml(copy.button)}</button>
     </div>
-    <div class="kpis">${kpis}</div>
-    <div class="stage ${sideFeed ? "with-side" : ""}">
-      ${visualBlock({ copy, kind, tabId })}
-      ${sideFeed}
-    </div>
+    ${body}
   </section>`;
 }
 
@@ -136,6 +248,7 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
 
   const colors = palette || getPalette(domain, companyName);
   const tabs = topUseCases.slice(0, 5);
+  const layouts = assignLayouts(tabs);
   const apexonSrc = apexonWordmark() || logoDataUri("apexon");
   const fabricSrc = logoDataUri("fabric");
   const nav = tabs
@@ -153,6 +266,7 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
           useCase: uc,
           tabId: `tab-${i}`,
           index: i,
+          layout: layouts[i],
         })}</div>`
     )
     .join("");
@@ -233,7 +347,8 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
   .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex: none; }
   .kicker { margin: 0 0 4px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
   h2 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
-  .sub { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 70ch; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .why { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.4; max-width: 78ch; }
+  .why .info { margin-right: 6px; }
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: none; }
   .kpi, .viz, .side {
     background: var(--card); border: 1px solid var(--blue); border-radius: 12px;
@@ -253,6 +368,32 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
   .feed, .nba-list { list-style: none; margin: 0; padding: 0; }
   .feed li, .nba { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #243556; font-size: 13px; }
   .feed li:last-child, .nba:last-child { border-bottom: 0; }
+  .conf { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--blue60); white-space: nowrap; }
+  .fan { display: flex; gap: 12px; align-items: center; }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex: none;
+    display: grid; place-items: center; font-weight: 800; background: #1D6EE4; color: #fff;
+  }
+  .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; font-size: 12.5px; }
+  .attr span { color: var(--muted); display: block; font-size: 11px; }
+  .heat { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .cell { border-radius: 7px; padding: 12px 6px; text-align: center; font-size: 12px; font-weight: 700; }
+  .cell small { display: block; font-weight: 600; margin-top: 4px; opacity: .9; }
+  .cell.good { background: #0e7c66; color: #fff; }
+  .cell.warn { background: #b8860b; color: #fff; }
+  .cell.bad { background: #E54A24; color: #fff; }
+  .flow { display: flex; align-items: stretch; gap: 8px; }
+  .node { flex: 1; border: 1.5px solid #243556; border-radius: 10px; padding: 12px; background: #0b1220; }
+  .node .h { font-weight: 800; font-size: 13px; }
+  .node .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .node.fabric { border-color: var(--blue); background: #102a4a; }
+  .node.out { border-color: #0e7c66; }
+  .arrow { display: grid; place-items: center; color: var(--blue60); font-size: 22px; font-weight: 800; }
+  .alert { display: flex; gap: 8px; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: 12.5px; border-left: 4px solid; }
+  .alert.good { background: #16351f; border-color: #7ddea0; }
+  .alert.warn { background: #3a2a10; border-color: #ffd48a; }
+  .alert.bad { background: #3a1515; border-color: #ff8d80; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #243556; }
   td { padding: 8px; border-bottom: 1px solid #243556; }
