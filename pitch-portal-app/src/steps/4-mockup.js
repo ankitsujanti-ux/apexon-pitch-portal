@@ -30,35 +30,47 @@ function twoLine(text) {
   return `${escapeHtml(clean.slice(0, 88).replace(/\s+\S*$/, ""))}.<br/>Sample data — not a live company feed.`;
 }
 
-function preferLayout(useCase) {
+const PIECES = ["kpis", "bars", "alerts", "table", "heat", "record", "actions", "flow"];
+
+const LEGACY = {
+  live: ["kpis", "bars", "alerts"],
+  profile: ["record", "actions"],
+  heat: ["kpis", "heat"],
+  table: ["kpis", "table"],
+  flow: ["kpis", "flow"],
+};
+
+function inferPieces(useCase) {
   const t = `${useCase.title} ${useCase.businessProblem} ${useCase.solutionFit || ""}`.toLowerCase();
-  if (/hold|exception|live|pulse|queue|command|venue|wait/.test(t)) return "live";
-  if (/lab|release|360|customer|profile|fan|brief|governed|recommend/.test(t)) return "profile";
-  if (/drift|density|heat|section|coverage|zone/.test(t)) return "heat";
-  if (/inventory|demand|forecast|price|ticket|pick|warehouse|stock/.test(t)) return "table";
-  if (/trace|lineage|recall|audit|genealogy|flow/.test(t)) return "flow";
-  return "";
+  if (/hold|exception|live|pulse|queue|command|venue|wait/.test(t)) return ["kpis", "bars", "alerts"];
+  if (/lab|release|360|customer|profile|fan|brief|governed|recommend/.test(t)) return ["record", "actions"];
+  if (/drift|density|heat|section|coverage|zone/.test(t)) return ["kpis", "heat"];
+  if (/inventory|demand|forecast|price|ticket|pick|warehouse|stock/.test(t)) return ["kpis", "table"];
+  if (/trace|lineage|recall|audit|genealogy/.test(t)) return ["kpis", "flow"];
+  return ["kpis", "bars"];
+}
+
+function normalizePieces(useCase) {
+  let blocks = Array.isArray(useCase.blocks) ? useCase.blocks.map((b) => String(b).toLowerCase().trim()) : [];
+  if (blocks.length === 1 && LEGACY[blocks[0]]) blocks = LEGACY[blocks[0]];
+  blocks = blocks.filter((b) => PIECES.includes(b)).slice(0, 3);
+  if (!blocks.length) blocks = inferPieces(useCase);
+  if (blocks.length === 1 && blocks[0] === "kpis") blocks = [...blocks, "bars"];
+  return blocks;
 }
 
 export function assignLayouts(useCases) {
-  const kinds = ["live", "profile", "heat", "table", "flow"];
-  const list = useCases || [];
-  const fromLlm = list.map((uc) => (kinds.includes(uc.tabLayout) ? uc.tabLayout : ""));
   const used = new Set();
-  return list.map((uc, i) => {
-    const llm = fromLlm[i];
-    if (llm && !used.has(llm)) {
-      used.add(llm);
-      return llm;
+  return (useCases || []).map((uc) => {
+    let blocks = normalizePieces(uc);
+    let key = blocks.join("+");
+    if (used.has(key)) {
+      const extra = PIECES.find((p) => !blocks.includes(p) && p !== "kpis");
+      if (extra) blocks = [...blocks.slice(0, 2), extra].slice(0, 3);
+      key = blocks.join("+");
     }
-    const inferred = preferLayout(uc);
-    if (inferred && !used.has(inferred)) {
-      used.add(inferred);
-      return inferred;
-    }
-    const next = kinds.find((k) => !used.has(k)) || llm || inferred || kinds[i % kinds.length];
-    used.add(next);
-    return next;
+    used.add(key);
+    return blocks;
   });
 }
 
@@ -88,13 +100,22 @@ function tabWhyHtml(useCase, tabId) {
   </p>`;
 }
 
-function layoutLive({ copy, useCase, tabId, companyName }) {
+function pieceBars({ copy, tabId, title }) {
   const bars = copy.bars
     .map(
       (b) =>
         `<div class="bar-row"><span class="nm">${escapeHtml(b.label.split(" ")[0])}</span><span class="track"><span class="fill" style="width:${Math.max(8, Math.round((b.w / 210) * 100))}%;background:${b.color}"></span></span><span class="vv">${escapeHtml(b.label.replace(/^[^\d%]*/, ""))}</span></div>`
     )
     .join("");
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-bars')">i</button>
+    <div id="${tabId}-bars" class="pop">${twoLine("Status mix for this job. Read the labels, not color alone.")}</div>
+    <h3>${escapeHtml(title)}</h3>
+    <div class="bars">${bars}</div>
+  </article>`;
+}
+
+function pieceAlerts({ copy, tabId }) {
   const alerts = copy.feed
     .slice(0, 3)
     .map(
@@ -102,32 +123,37 @@ function layoutLive({ copy, useCase, tabId, companyName }) {
         `<div class="alert ${k}"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></div>`
     )
     .join("");
-  return `${kpiRow({ copy, useCase, tabId })}
-    <div class="stage with-side">
-      <article class="viz">
-        <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-        <div id="${tabId}-viz" class="pop">${twoLine("Live mix of what needs action now. Bars turn orange or red as risk rises.")}</div>
-        <h3>Live status on the floor</h3>
-        <div class="bars">${bars}</div>
-      </article>
-      <article class="side">
-        <h3>Live alerts</h3>
-        <div class="alerts" data-feed>${alerts}</div>
-      </article>
-    </div>`;
+  return `<article class="side">
+    <h3>Needs a person</h3>
+    <div class="alerts" data-feed>${alerts}</div>
+  </article>`;
 }
 
-function layoutProfile({ copy, useCase, tabId, companyName }) {
+function pieceRecord({ copy, useCase, tabId, companyName }) {
   const initials = companyName.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "UC";
-  const record = useCase.title.split(/[—–-]/)[0].trim();
-  const attrs = [
-    ["Owner", "Operations lead"],
-    ["Source", copy.kpis[3]?.label || "Feed healthy"],
-    ["Status", copy.kpis[0]?.value || "Open"],
-    ["Last hop", "2 min ago"],
-    ["Data", (typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer) || "Operational feed"],
-    ["Channel", "Plant + warehouse"],
-  ];
+  const kind = useCase.recordKind || useCase.lookFirst || useCase.title.split(/[—–-]/)[0].trim();
+  const data = typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer;
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-rec')">i</button>
+    <div id="${tabId}-rec" class="pop">${twoLine("One record, previously split across systems. Sample only.")}</div>
+    <h3>${escapeHtml(kind)}</h3>
+    <div class="fan">
+      <div class="avatar">${escapeHtml(initials)}</div>
+      <div>
+        <div class="kpi-value" style="font-size:20px">${escapeHtml(kind)}</div>
+        <div class="meta">${escapeHtml(companyName)} · sample record</div>
+      </div>
+    </div>
+    <div class="attr">
+      <div><span>Status</span><b>${escapeHtml(copy.kpis[0]?.value || "Open")}</b></div>
+      <div><span>Feed</span><b>${escapeHtml(copy.kpis[3]?.label || "Healthy")}</b></div>
+      <div><span>Data</span><b>${escapeHtml(data || "Operational")}</b></div>
+      <div><span>Updated</span><b>2 min ago</b></div>
+    </div>
+  </article>`;
+}
+
+function pieceActions({ copy, tabId }) {
   const actions = copy.feed
     .slice(0, 4)
     .map(
@@ -135,119 +161,103 @@ function layoutProfile({ copy, useCase, tabId, companyName }) {
         `<li class="nba"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span><span class="conf">${92 - i * 7}%</span></li>`
     )
     .join("");
-  return `<div class="stage with-side">
-      <article class="viz">
-        <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-        <div id="${tabId}-viz" class="pop">${twoLine("One record, previously split across systems. Read the profile first, then the recommended next action.")}</div>
-        <h3>Unified record</h3>
-        <div class="fan">
-          <div class="avatar">${escapeHtml(initials)}</div>
-          <div>
-            <div class="kpi-value" style="font-size:20px">${escapeHtml(record)}</div>
-            <div class="meta">${escapeHtml(companyName)} · sample record, not a live feed</div>
-          </div>
-        </div>
-        <div class="attr">${attrs
-          .map(([k, v]) => `<div><span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b></div>`)
-          .join("")}</div>
-      </article>
-      <article class="side">
-        <h3>Next actions</h3>
-        <ul class="nba-list" data-feed>${actions}</ul>
-      </article>
-    </div>`;
+  return `<article class="side">
+    <h3>Next actions</h3>
+    <ul class="nba-list" data-feed>${actions}</ul>
+  </article>`;
 }
 
-function layoutHeat({ copy, useCase, tabId }) {
-  const zones = ["Line 1", "Line 2", "Line 3", "Pack", "Warehouse", "QA lab"];
+function pieceHeat({ useCase, tabId }) {
+  const zones = (useCase.zones && useCase.zones.length ? useCase.zones : ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E", "Zone F"]).slice(0, 6);
   const tones = ["good", "warn", "good", "bad", "warn", "good"];
-  const cells = zones
-    .map(
-      (z, i) =>
-        `<div class="cell ${tones[i]}">${escapeHtml(z)}<small>${["Clear", "Watch", "Clear", "Act", "Watch", "Clear"][i]}</small></div>`
-    )
-    .join("");
-  return `${kpiRow({ copy, useCase, tabId })}
-    <article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine("Each cell is a zone. Green is comfortable, amber is filling, red needs a person now.")}</div>
-      <h3>Risk by area</h3>
-      <div class="heat">${cells}</div>
-    </article>`;
+  const labels = ["Clear", "Watch", "Clear", "Act", "Watch", "Clear"];
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-heat')">i</button>
+    <div id="${tabId}-heat" class="pop">${twoLine("Each cell is an area in this operation. Green is fine, amber needs a look, red needs a person.")}</div>
+    <h3>${escapeHtml(useCase.lookFirst || "Where to look")}</h3>
+    <div class="heat">${zones
+      .map((z, i) => `<div class="cell ${tones[i]}">${escapeHtml(z)}<small>${labels[i]}</small></div>`)
+      .join("")}</div>
+  </article>`;
 }
 
-function layoutTable({ copy, useCase, tabId }) {
+function pieceTable({ copy, useCase, tabId }) {
+  const cols = (useCase.columns && useCase.columns.length ? useCase.columns : ["Record", "Status", "Guidance", "Next step"]).slice(0, 4);
+  while (cols.length < 4) cols.push(["Record", "Status", "Guidance", "Next"][cols.length]);
+  const extra = ["Hold", "Release", "Watch", "Ship"];
+  const next = ["Owner assigned", "Wait on lab", "Buffer OK", "Ready"];
   const rows = copy.feed.slice(0, 4).map(([k, label, text], i) => {
     const item = text.split(/[—–.]/)[0].slice(0, 42);
     return `<tr>
       <td>${escapeHtml(item || `Record ${i + 1}`)}</td>
       <td><span class="pill ${k}">${escapeHtml(label)}</span></td>
-      <td>${escapeHtml(["Hold", "Release", "Watch", "Ship"][i])}</td>
-      <td>${escapeHtml(["Owner assigned", "Wait on lab", "Buffer OK", "Ready"][i])}</td>
+      <td>${escapeHtml(extra[i])}</td>
+      <td>${escapeHtml(next[i])}</td>
     </tr>`;
   }).join("");
-  return `${kpiRow({ copy, useCase, tabId })}
-    <article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine("Working list for this use case. Status first, then the recommended move.")}</div>
-      <h3>What needs a decision</h3>
-      <table>
-        <thead><tr><th>Record</th><th>Status</th><th>Guidance</th><th>Next step</th></tr></thead>
-        <tbody data-feed>${rows}</tbody>
-      </table>
-    </article>`;
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-tbl')">i</button>
+    <div id="${tabId}-tbl" class="pop">${twoLine("Working list for this job. Status first, then the move.")}</div>
+    <h3>${escapeHtml(useCase.lookFirst || "What needs a decision")}</h3>
+    <table>
+      <thead><tr>${cols.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>
+      <tbody data-feed>${rows}</tbody>
+    </table>
+  </article>`;
 }
 
-function layoutFlow({ copy, useCase, tabId }) {
+function pieceFlow({ copy, useCase, tabId }) {
   const raw = typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer;
-  const sources = String(raw || "ERP, MES, files")
-    .split(/,| and | \+ /)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 3);
-  const sourceLabel = sources.join(" · ") || "Existing systems";
-  return `${kpiRow({ copy, useCase, tabId, count: 4 })}
-    <article class="viz">
-      <button class="info" type="button" onclick="toggleInfo('${tabId}-viz')">i</button>
-      <div id="${tabId}-viz" class="pop">${twoLine("Nothing is replaced. Fabric reads what they already run and lands a live view plus AI.")}</div>
-      <h3>How this use case lands</h3>
-      <div class="flow">
-        <div class="node keep"><div class="h">Sources they already have</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
-        <div class="arrow">→</div>
-        <div class="node fabric"><div class="h">Microsoft Fabric</div><div class="s">OneLake · Real-Time Intelligence · AI</div></div>
-        <div class="arrow">→</div>
-        <div class="node out"><div class="h">What the team sees</div><div class="s">${escapeHtml(useCase.benefit || "A live operating view")}</div></div>
-      </div>
-      <ul class="nba-list" data-feed style="margin-top:8px">${copy.feed
-        .slice(0, 2)
-        .map(([k, label, text]) => `<li class="nba"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></li>`)
-        .join("")}</ul>
-    </article>`;
+  const sourceLabel = String(raw || "Existing systems");
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-flow')">i</button>
+    <div id="${tabId}-flow" class="pop">${twoLine("Nothing is replaced. Fabric reads what they already run.")}</div>
+    <h3>${escapeHtml(useCase.lookFirst || "How this lands")}</h3>
+    <div class="flow">
+      <div class="node keep"><div class="h">What they already run</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
+      <div class="arrow">→</div>
+      <div class="node fabric"><div class="h">Microsoft Fabric</div><div class="s">OneLake · Real-Time Intelligence · AI</div></div>
+      <div class="arrow">→</div>
+      <div class="node out"><div class="h">What they see</div><div class="s">${escapeHtml(useCase.benefit || "A live operating view")}</div></div>
+    </div>
+  </article>`;
+}
+
+function renderPiece(name, ctx) {
+  if (name === "kpis") return kpiRow(ctx);
+  if (name === "bars") return pieceBars({ ...ctx, title: ctx.useCase.lookFirst || "Status mix" });
+  if (name === "alerts") return pieceAlerts(ctx);
+  if (name === "record") return pieceRecord(ctx);
+  if (name === "actions") return pieceActions(ctx);
+  if (name === "heat") return pieceHeat(ctx);
+  if (name === "table") return pieceTable(ctx);
+  if (name === "flow") return pieceFlow(ctx);
+  return "";
 }
 
 function tabInner({ companyName, domain, useCase, tabId, index, layout }) {
   const copy = dashboardCopy(companyName, domain, useCase);
-  const body =
-    layout === "live"
-      ? layoutLive({ copy, useCase, tabId, companyName })
-      : layout === "profile"
-        ? layoutProfile({ copy, useCase, tabId, companyName })
-        : layout === "heat"
-          ? layoutHeat({ copy, useCase, tabId })
-          : layout === "table"
-            ? layoutTable({ copy, useCase, tabId })
-            : layoutFlow({ copy, useCase, tabId });
+  const blocks = Array.isArray(layout) ? layout : normalizePieces(useCase);
+  const ctx = { copy, useCase, tabId, companyName, domain };
+  const visuals = blocks.filter((b) => b !== "kpis");
+  const kpis = blocks.includes("kpis") ? kpiRow(ctx) : "";
+  const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
+  const stage =
+    visuals.length >= 2
+      ? `<div class="stage with-side">${panels}</div>`
+      : panels;
 
-  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${layout}">
+  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(blocks.join("+"))}">
     <div class="title-row">
       <div>
-        <p class="kicker">Use case ${index + 1} of 5 · ${layout} view</p>
+        <p class="kicker">Use case ${index + 1} of 5</p>
         <h2>${escapeHtml(useCase.title)}</h2>
         ${tabWhyHtml(useCase, tabId)}
       </div>
       <button class="primary" type="button">${escapeHtml(copy.button)}</button>
     </div>
-    ${body}
+    ${kpis}
+    ${stage}
   </section>`;
 }
 
