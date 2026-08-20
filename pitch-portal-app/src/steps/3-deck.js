@@ -13,6 +13,55 @@ import { normalizeArchitecture } from "../lib/briefFirst.js";
 const SLIDE_W = 13.33;
 const SLIDE_H = 7.5;
 const MARGIN = 0.42;
+const FOOTER_Y = 7.08;
+const LOGO_ASPECT = 192 / 53;
+
+function addBrandLogo(slide, { x, y, h }) {
+  if (!fs.existsSync(LOGO_PATH)) return 0;
+  const w = h * LOGO_ASPECT;
+  slide.addImage({ path: LOGO_PATH, x, y, w, h });
+  return w;
+}
+
+function addFooter(slide, palette, { page }) {
+  slide.addText("© Copyright 2026 Apexon. Confidential & Proprietary.", {
+    x: MARGIN,
+    y: 7.18,
+    w: 8.6,
+    h: 0.22,
+    fontSize: 10,
+    color: "9AA6B8",
+    fontFace: palette.fontBody,
+  });
+  const logoH = 0.22;
+  const logoW = logoH * LOGO_ASPECT;
+  const logoX = SLIDE_W - MARGIN - logoW;
+  slide.addText(String(page), {
+    x: logoX - 0.52,
+    y: 7.16,
+    w: 0.42,
+    h: 0.26,
+    fontSize: 11,
+    color: "9AA6B8",
+    fontFace: palette.fontBody,
+    align: "right",
+  });
+  if (fs.existsSync(LOGO_PATH)) {
+    addBrandLogo(slide, { x: logoX, y: 7.16, h: logoH });
+  } else {
+    slide.addText("APEXON", {
+      x: logoX,
+      y: 7.16,
+      w: logoW,
+      h: 0.24,
+      fontSize: 10,
+      bold: true,
+      color: palette.textLight,
+      fontFace: palette.fontTitle,
+      align: "right",
+    });
+  }
+}
 
 function pptSafe(text) {
   return String(text || "")
@@ -32,43 +81,6 @@ function truncate(text, maxChars) {
   return clean.slice(0, maxChars).replace(/\s+\S*$/, "") + "...";
 }
 
-function addFooter(slide, palette, { page }) {
-  slide.addText("© Copyright 2026 Apexon. Confidential & Proprietary.", {
-    x: MARGIN,
-    y: 7.18,
-    w: 8.4,
-    h: 0.22,
-    fontSize: 10,
-    color: "9AA6B8",
-    fontFace: palette.fontBody,
-  });
-  slide.addText(String(page), {
-    x: 10.05,
-    y: 7.16,
-    w: 0.45,
-    h: 0.26,
-    fontSize: 12,
-    color: palette.textLight,
-    fontFace: palette.fontBody,
-    align: "right",
-  });
-  if (fs.existsSync(LOGO_PATH)) {
-    slide.addImage({ path: LOGO_PATH, x: 10.6, y: 7.14, w: 2.25, h: 0.28 });
-  } else {
-    slide.addText("APEXON", {
-      x: 11.2,
-      y: 7.16,
-      w: 1.7,
-      h: 0.24,
-      fontSize: 10,
-      bold: true,
-      color: palette.textLight,
-      fontFace: palette.fontTitle,
-      align: "right",
-    });
-  }
-}
-
 function applyMaster(slide, palette, { page, wave = false }) {
   if (wave && fs.existsSync(MASTER_BG_PATH)) {
     slide.addImage({ path: MASTER_BG_PATH, x: 0, y: 0, w: SLIDE_W, h: SLIDE_H });
@@ -82,7 +94,7 @@ function applyMaster(slide, palette, { page, wave = false }) {
     });
     slide.addShape("rect", {
       x: 0,
-      y: 7.16,
+      y: FOOTER_Y,
       w: SLIDE_W,
       h: 0.035,
       fill: { color: palette.accent },
@@ -93,7 +105,7 @@ function applyMaster(slide, palette, { page, wave = false }) {
 
 function deckNarrative(useCases, companyName, domain, requirement) {
   return {
-    kicker: truncate(useCases.deckKicker || "Apexon Harness", 28),
+    kicker: truncate(useCases.deckKicker || companyName, 28),
     title: truncate(useCases.deckTitle || `${companyName} operating picture`, 64),
     subtitle: truncate(useCases.deckSubtitle || requirement || `${domain} leadership walkthrough`, 110),
     closeLine: truncate(
@@ -234,7 +246,9 @@ function addAgendaSlide(slide, palette, { companyName, requirement, useCases, na
 function addThanksSlide(slide, palette, { companyName, narrative, page }) {
   applyMaster(slide, palette, { page, wave: true });
   if (fs.existsSync(LOGO_PATH)) {
-    slide.addImage({ path: LOGO_PATH, x: 4.55, y: 1.85, w: 4.2, h: 0.52 });
+    const logoH = 0.48;
+    const logoW = logoH * LOGO_ASPECT;
+    addBrandLogo(slide, { x: (SLIDE_W - logoW) / 2, y: 1.9, h: logoH });
   }
   slide.addText("Thank you", {
     x: MARGIN,
@@ -299,21 +313,22 @@ function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bod
       x: x + 0.16,
       y: cursorY,
       w: w - 0.32,
-      h: 0.28,
-      fontSize: 14,
+      h: 0.36,
+      fontSize: 13,
       bold: true,
       color: palette.heading,
       fontFace: palette.fontTitle,
       wrap: true,
+      valign: "top",
     });
-    cursorY += 0.3;
+    cursorY += 0.38;
   }
   slide.addText(truncate(body, bodyMax) || " ", {
     x: x + 0.16,
     y: cursorY,
     w: w - 0.32,
-    h: Math.max(0.28, h - (cursorY - y) - 0.12),
-    fontSize: 13,
+    h: Math.max(0.28, h - (cursorY - y) - 0.1),
+    fontSize: 12,
     color: palette.textLight,
     fontFace: palette.fontBody,
     valign: "top",
@@ -446,29 +461,38 @@ function addArchitectureSlide(slide, palette, { companyName, domain, requirement
   guards.forEach((layer, i) => {
     const x = 0.28 + i * (gw + 0.14);
     slide.addShape("roundRect", {
-      x, y: 5.62, w: gw, h: 1.32, rectRadius: 0.08,
+      x, y: 5.5, w: gw, h: 1.18, rectRadius: 0.08,
       fill: { color: palette.card }, line: { color: layer.color || "1D6EE4", width: 1.25 },
     });
     slide.addText(String(layer.n || i + 1), {
-      x: x + 0.12, y: 5.72, w: 0.55, h: 0.22, fontSize: 12, bold: true,
+      x: x + 0.12, y: 5.58, w: 0.55, h: 0.2, fontSize: 12, bold: true,
       color: layer.color || palette.accent, fontFace: palette.fontTitle,
     });
     slide.addText(truncate(layer.title, 22), {
-      x: x + 0.7, y: 5.72, w: gw - 0.86, h: 0.22, fontSize: 13, bold: true,
+      x: x + 0.7, y: 5.58, w: gw - 0.86, h: 0.2, fontSize: 13, bold: true,
       color: palette.textLight, fontFace: palette.fontTitle,
     });
     slide.addText(truncate(layer.body, 70), {
-      x: x + 0.12, y: 6.0, w: gw - 0.24, h: 0.8, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
+      x: x + 0.12, y: 5.82, w: gw - 0.24, h: 0.72, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
     });
   });
+}
+
+function moveCopy(uc) {
+  const benefit = pptSafe(uc.benefit);
+  const fit = pptSafe(uc.solutionFit);
+  if (benefit && fit && !benefit.toLowerCase().includes(fit.slice(0, 18).toLowerCase())) {
+    return `${benefit} ${fit}`;
+  }
+  return benefit || fit;
 }
 
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   slide.addText(`USE CASE  ${String(index + 1).padStart(2, "0")}  /  ${String(total).padStart(2, "0")}`, {
     x: MARGIN,
-    y: 0.18,
-    w: 4.8,
-    h: 0.22,
+    y: 0.16,
+    w: 5.2,
+    h: 0.2,
     fontSize: 11,
     bold: true,
     color: palette.accent,
@@ -476,9 +500,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   slide.addText(truncate(companyName, 36), {
     x: 8.2,
-    y: 0.18,
+    y: 0.16,
     w: 4.7,
-    h: 0.22,
+    h: 0.2,
     fontSize: 11,
     color: "9AA6B8",
     fontFace: palette.fontBody,
@@ -486,9 +510,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   slide.addText(slideTitle(uc, companyName), {
     x: MARGIN,
-    y: 0.44,
+    y: 0.38,
     w: 12.48,
-    h: 0.46,
+    h: 0.4,
     fontSize: 22,
     bold: true,
     color: palette.textLight,
@@ -498,9 +522,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
 
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 1.02,
+    y: 0.86,
     w: 6.2,
-    h: 2.55,
+    h: 2.12,
     kicker: "The business pain",
     title: "What leadership feels today",
     body: uc.businessProblem,
@@ -508,12 +532,12 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   addPanel(slide, palette, {
     x: 6.85,
-    y: 1.02,
+    y: 0.86,
     w: 6.05,
-    h: 2.55,
+    h: 2.12,
     kicker: "The move",
     title: "What they get",
-    body: uc.benefit || uc.solutionFit,
+    body: moveCopy(uc),
     accent: "0E7C66",
     bodyMax: 180,
   });
@@ -523,9 +547,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   kpis.forEach((kpi, i) => {
     addPanel(slide, palette, {
       x: MARGIN + i * (kpiW + 0.16),
-      y: 3.72,
+      y: 3.12,
       w: kpiW,
-      h: 1.48,
+      h: 1.42,
       kicker: "KPI",
       title: kpi.name,
       body: kpi.why,
@@ -536,12 +560,12 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   const dataLine = typeof uc.dataPointer === "string"
     ? uc.dataPointer
     : uc.dataPointer?.description || "Operational data this industry already holds";
-  const stack = Array.isArray(uc.techComponents) ? uc.techComponents.slice(0, 3).join("  ·  ") : "Microsoft Fabric";
+  const stack = Array.isArray(uc.techComponents) ? uc.techComponents.slice(0, 3).join(" · ") : "Microsoft Fabric";
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 5.36,
+    y: 4.68,
     w: 5.9,
-    h: 1.62,
+    h: 1.52,
     kicker: "Data",
     title: uc.dataPointer?.availability === "new" ? "New join or source" : "Likely already there",
     body: dataLine,
@@ -549,9 +573,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   addPanel(slide, palette, {
     x: 6.54,
-    y: 5.36,
+    y: 4.68,
     w: 3.2,
-    h: 1.62,
+    h: 1.52,
     kicker: "Effort",
     title: uc.difficulty === "easier" ? "Easier" : uc.difficulty === "harder" ? "Harder" : "Moderate",
     body: uc.difficultyWhy || difficultyLabel(uc),
@@ -559,9 +583,9 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   addPanel(slide, palette, {
     x: 9.94,
-    y: 5.36,
+    y: 4.68,
     w: 2.96,
-    h: 1.62,
+    h: 1.52,
     kicker: "On the platform",
     title: "How we land it",
     body: stack,
