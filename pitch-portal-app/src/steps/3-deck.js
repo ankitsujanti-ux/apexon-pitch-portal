@@ -8,6 +8,7 @@ import { getPalette } from "../lib/palette.js";
 import { slugify } from "../lib/slugify.js";
 import { LOGO_PATH, MASTER_BG_PATH } from "../lib/templateTheme.js";
 import { logoKeyForSystem, logoPath } from "../lib/logos.js";
+import { normalizeArchitecture } from "../lib/briefFirst.js";
 
 const SLIDE_W = 13.33;
 const SLIDE_H = 7.5;
@@ -168,7 +169,7 @@ function addTitleSlide(slide, palette, { companyName, domain, narrative, page })
 function agendaItems({ companyName, requirement, useCases, narrative }) {
   return [
     { label: "Why we are here", note: truncate(requirement, 52) },
-    { label: "Proposed architecture", note: "Harness-governed path into Microsoft Fabric" },
+    { label: "Proposed architecture", note: truncate(requirement, 52) },
     ...useCases.map((uc) => ({
       label: slideTitle(uc, companyName),
       note: truncate(uc.benefit || uc.businessProblem, 52),
@@ -332,279 +333,132 @@ function difficultyLabel(uc) {
   return "Moderate — mix of existing and new work";
 }
 
-function sourceTiles(research, researchStructured) {
-  const fromJson = researchStructured?.systems?.map((s) => s.name).filter(Boolean) || [];
-  const named = fromJson.slice(0, 8);
-  if (named.length >= 4) return named;
-  const defaults = ["ERP", "CRM", "Files / APIs", "Reporting marts", "Quality / ops systems", "Warehouse", "Other RDBMS", "Event feeds"];
-  return [...named, ...defaults].slice(0, 8);
-}
-
-function addArchitectureSlide(slide, palette, { companyName, research, researchStructured }) {
-  slide.addText("Proposed architecture", {
-    x: MARGIN,
-    y: 0.14,
-    w: 9,
-    h: 0.3,
-    fontSize: 22,
-    bold: true,
-    color: palette.heading,
-    fontFace: palette.fontTitle,
+function addArchitectureSlide(slide, palette, { companyName, domain, requirement, researchStructured, architecture, useCases }) {
+  const arch = normalizeArchitecture(architecture, {
+    companyName,
+    domain,
+    requirement,
+    researchStructured,
+    useCases,
   });
-  slide.addText(truncate(`Harness-governed path for ${companyName}. Sources are labeled confirmed only when research said so.`, 140), {
-    x: MARGIN,
-    y: 0.48,
-    w: 12.4,
-    h: 0.28,
-    fontSize: 12,
-    color: "B8C3D4",
-    fontFace: palette.fontBody,
-  });
+  const sources = (arch.sources || []).map((s) => s.name || s).filter(Boolean).slice(0, 8);
+  const stages = arch.stages || [];
+  const target = arch.target || { name: "Target platform", components: [] };
+  const guards = arch.guards || [];
+  const hasGuards = guards.length > 0;
+  const colH = hasGuards ? 4.4 : 5.55;
 
-  const sources = sourceTiles(research, researchStructured);
+  slide.addText(truncate(arch.title || "Proposed architecture", 42), {
+    x: MARGIN, y: 0.14, w: 12.4, h: 0.3, fontSize: 22, bold: true,
+    color: palette.heading, fontFace: palette.fontTitle,
+  });
+  slide.addText(truncate(arch.subtitle || `${companyName}: path for this mandate.`, 140), {
+    x: MARGIN, y: 0.46, w: 12.4, h: 0.28, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody,
+  });
 
   slide.addShape("roundRect", {
-    x: 0.28,
-    y: 0.86,
-    w: 2.55,
-    h: 4.55,
-    rectRadius: 0.08,
-    fill: { color: palette.card },
-    line: { color: "75A2ED", width: 1.25 },
+    x: 0.28, y: 0.82, w: 2.55, h: colH, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: "75A2ED", width: 1.25 },
   });
-  slide.addText("SOURCE SYSTEMS", {
-    x: 0.4,
-    y: 0.96,
-    w: 2.3,
-    h: 0.24,
-    fontSize: 10,
-    bold: true,
-    color: "75A2ED",
-    fontFace: palette.fontTitle,
-    align: "center",
+  slide.addText("SOURCES FOR THIS BRIEF", {
+    x: 0.4, y: 0.9, w: 2.3, h: 0.28, fontSize: 10, bold: true,
+    color: "75A2ED", fontFace: palette.fontTitle, align: "center",
   });
+  const srcH = Math.min(0.86, (colH - 0.5) / Math.max(2, Math.ceil(Math.max(sources.length, 1) / 2)));
   sources.forEach((name, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const x = 0.42 + col * 1.18;
-    const y = 1.3 + row * 0.95;
+    const y = 1.24 + row * (srcH + 0.08);
     slide.addShape("roundRect", {
-      x,
-      y,
-      w: 1.1,
-      h: 0.86,
-      rectRadius: 0.06,
-      fill: { color: "0B1220" },
-      line: { color: "243556", width: 1 },
+      x, y, w: 1.1, h: srcH, rectRadius: 0.06,
+      fill: { color: "0B1220" }, line: { color: "243556", width: 1 },
     });
-    const key = logoKeyForSystem(name);
-    const img = logoPath(key);
-    if (img) {
-      slide.addImage({ path: img, x: x + 0.28, y: y + 0.08, w: 0.54, h: 0.42 });
+    const img = logoPath(logoKeyForSystem(name));
+    if (img && srcH > 0.55) {
+      slide.addImage({ path: img, x: x + 0.28, y: y + 0.06, w: 0.54, h: 0.36 });
     }
     slide.addText(truncate(name, 22), {
-      x: x + 0.04,
-      y: y + 0.52,
-      w: 1.02,
-      h: 0.3,
-      fontSize: 9,
-      color: palette.textLight,
-      fontFace: palette.fontBody,
-      align: "center",
-      wrap: true,
+      x: x + 0.04, y: y + (srcH > 0.55 ? srcH - 0.32 : 0.08), w: 1.02, h: 0.28,
+      fontSize: 9, color: palette.textLight, fontFace: palette.fontBody, align: "center", wrap: true,
     });
   });
 
-  const bands = [
-    { title: "1. DISCOVER & ASSESS", color: "1D6EE4", steps: ["Connect sources", "Validate access (L1)", "Catalog metadata", "Assessment agent", "Validator (L2)", "SME approval (L4)"] },
-    { title: "2. PLAN & APPROVE", color: "0E7C66", steps: ["Use-case planner", "Plan validator (L3)", "Architecture approval (L4)"] },
-    { title: "3. GENERATE DELIVERABLES", color: "E54A24", steps: ["Artifact generator — pipelines, models, docs, Fabric assets"] },
-  ];
-  bands.forEach((band, bi) => {
-    const y = 0.86 + bi * 1.52;
+  const bandH = (colH - (Math.max(stages.length, 1) - 1) * 0.1) / Math.max(1, stages.length);
+  stages.forEach((band, bi) => {
+    const y = 0.82 + bi * (bandH + 0.1);
+    const color = band.color || ["1D6EE4", "0E7C66", "E54A24"][bi] || "1D6EE4";
     slide.addShape("roundRect", {
-      x: 3.0,
-      y,
-      w: 7.05,
-      h: 1.42,
-      rectRadius: 0.08,
-      fill: { color: palette.card },
-      line: { color: band.color, width: 1.25 },
+      x: 3.0, y, w: 7.05, h: bandH, rectRadius: 0.08,
+      fill: { color: palette.card }, line: { color, width: 1.25 },
     });
-    slide.addShape("rect", {
-      x: 3.0,
-      y,
-      w: 0.1,
-      h: 1.42,
-      fill: { color: band.color },
+    slide.addShape("rect", { x: 3.0, y, w: 0.1, h: bandH, fill: { color } });
+    slide.addText(truncate(band.title, 48), {
+      x: 3.22, y: y + 0.06, w: 6.7, h: 0.24, fontSize: 11, bold: true, color, fontFace: palette.fontTitle,
     });
-    slide.addText(band.title, {
-      x: 3.22,
-      y: y + 0.08,
-      w: 6.7,
-      h: 0.24,
-      fontSize: 11,
-      bold: true,
-      color: band.color,
-      fontFace: palette.fontTitle,
-    });
-    const stepW = (6.7 - (band.steps.length - 1) * 0.08) / band.steps.length;
-    band.steps.forEach((step, si) => {
+    const steps = band.steps || [];
+    const stepW = (6.7 - (Math.max(steps.length, 1) - 1) * 0.08) / Math.max(1, steps.length);
+    steps.forEach((step, si) => {
       const sx = 3.22 + si * (stepW + 0.08);
       slide.addShape("roundRect", {
-        x: sx,
-        y: y + 0.38,
-        w: stepW,
-        h: 0.9,
-        rectRadius: 0.06,
-        fill: { color: "0B1220" },
-        line: { color: "243556", width: 1 },
+        x: sx, y: y + 0.34, w: stepW, h: Math.max(0.5, bandH - 0.44), rectRadius: 0.06,
+        fill: { color: "0B1220" }, line: { color: "243556", width: 1 },
       });
-      slide.addText(`${si + 1 + (bi === 1 ? 6 : bi === 2 ? 9 : 0)}`, {
-        x: sx + 0.06,
-        y: y + 0.42,
-        w: 0.28,
-        h: 0.22,
-        fontSize: 10,
-        bold: true,
-        color: band.color,
-        fontFace: palette.fontTitle,
+      slide.addText(String(si + 1), {
+        x: sx + 0.06, y: y + 0.38, w: 0.28, h: 0.2, fontSize: 10, bold: true, color, fontFace: palette.fontTitle,
       });
-      slide.addText(step, {
-        x: sx + 0.08,
-        y: y + 0.64,
-        w: stepW - 0.16,
-        h: 0.56,
-        fontSize: 10,
-        color: palette.textLight,
-        fontFace: palette.fontBody,
-        wrap: true,
+      slide.addText(truncate(step, 48), {
+        x: sx + 0.08, y: y + 0.58, w: stepW - 0.16, h: Math.max(0.32, bandH - 0.7),
+        fontSize: 10, color: palette.textLight, fontFace: palette.fontBody, wrap: true,
       });
     });
   });
 
   slide.addShape("roundRect", {
-    x: 10.2,
-    y: 0.86,
-    w: 2.75,
-    h: 4.55,
-    rectRadius: 0.08,
-    fill: { color: palette.card },
-    line: { color: "A78BFA", width: 1.25 },
+    x: 10.2, y: 0.82, w: 2.75, h: colH, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: "A78BFA", width: 1.25 },
   });
-  slide.addText("TARGET PLATFORM", {
-    x: 10.32,
-    y: 0.96,
-    w: 2.5,
-    h: 0.22,
-    fontSize: 10,
-    bold: true,
-    color: "C4B5FD",
-    fontFace: palette.fontTitle,
-    align: "center",
+  slide.addText("TARGET FOR THIS MANDATE", {
+    x: 10.32, y: 0.9, w: 2.5, h: 0.28, fontSize: 10, bold: true,
+    color: "C4B5FD", fontFace: palette.fontTitle, align: "center",
   });
-  const fabric = logoPath("fabric");
-  if (fabric) {
-    slide.addImage({ path: fabric, x: 11.05, y: 1.28, w: 1.05, h: 0.95 });
-  }
-  slide.addText("Microsoft Fabric", {
-    x: 10.32,
-    y: 2.28,
-    w: 2.5,
-    h: 0.24,
-    fontSize: 13,
-    bold: true,
-    color: palette.textLight,
-    fontFace: palette.fontTitle,
-    align: "center",
+  const targetImg = logoPath(/fabric/i.test(target.name || "") ? "fabric" : logoKeyForSystem(target.name));
+  if (targetImg) slide.addImage({ path: targetImg, x: 11.05, y: 1.28, w: 1.05, h: 0.85 });
+  slide.addText(truncate(target.name || "Target platform", 28), {
+    x: 10.32, y: 2.2, w: 2.5, h: 0.4, fontSize: 13, bold: true,
+    color: palette.textLight, fontFace: palette.fontTitle, align: "center", wrap: true,
   });
-  slide.addText("Extensible to other targets", {
-    x: 10.32,
-    y: 2.52,
-    w: 2.5,
-    h: 0.2,
-    fontSize: 10,
-    color: "9AA6B8",
-    fontFace: palette.fontBody,
-    align: "center",
-  });
-  const targets = [
-    { key: "lakehouse", label: "Lakehouse" },
-    { key: "semantic", label: "Warehouse" },
-    { key: "pipelines", label: "Pipelines" },
-    { key: "ai", label: "Semantic + AI" },
-  ];
-  targets.forEach((t, i) => {
-    const y = 2.86 + i * 0.6;
-    const img = logoPath(t.key);
-    if (img) slide.addImage({ path: img, x: 10.45, y: y, w: 0.42, h: 0.42 });
-    slide.addText(t.label, {
-      x: 10.95,
-      y: y + 0.08,
-      w: 1.8,
-      h: 0.28,
-      fontSize: 12,
-      color: palette.textLight,
-      fontFace: palette.fontBody,
+  (target.components || []).slice(0, 4).forEach((label, i) => {
+    const y = 2.7 + i * 0.55;
+    const img = logoPath(logoKeyForSystem(label));
+    if (img) slide.addImage({ path: img, x: 10.45, y: y, w: 0.36, h: 0.36 });
+    slide.addText(truncate(label, 22), {
+      x: 10.9, y: y + 0.04, w: 1.85, h: 0.3, fontSize: 12, color: palette.textLight, fontFace: palette.fontBody,
     });
   });
 
-  slide.addText("HARNESS GOVERNANCE LAYERS", {
-    x: MARGIN,
-    y: 5.5,
-    w: 6,
-    h: 0.22,
-    fontSize: 10,
-    bold: true,
-    color: "9AA6B8",
-    fontFace: palette.fontTitle,
+  if (!hasGuards) return;
+
+  slide.addText("CONTROLS FOR THIS BRIEF", {
+    x: MARGIN, y: 5.38, w: 8, h: 0.2, fontSize: 10, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
   });
-  const layers = [
-    { n: "L1", title: "Constraint", body: "Trusted inputs only", color: "0E7C66" },
-    { n: "L2", title: "AI validation", body: "Check generated output", color: "1D6EE4" },
-    { n: "L3", title: "Plan check", body: "Check the migration plan", color: "6366F1" },
-    { n: "L4", title: "Quality gate", body: "Ready to run and audit", color: "E54A24" },
-  ];
-  layers.forEach((layer, i) => {
-    const x = 0.28 + i * 3.22;
+  const gw = (12.76 - (guards.length - 1) * 0.14) / guards.length;
+  guards.forEach((layer, i) => {
+    const x = 0.28 + i * (gw + 0.14);
     slide.addShape("roundRect", {
-      x,
-      y: 5.72,
-      w: 3.08,
-      h: 1.22,
-      rectRadius: 0.08,
-      fill: { color: palette.card },
-      line: { color: layer.color, width: 1.25 },
+      x, y: 5.62, w: gw, h: 1.32, rectRadius: 0.08,
+      fill: { color: palette.card }, line: { color: layer.color || "1D6EE4", width: 1.25 },
     });
-    slide.addText(layer.n, {
-      x: x + 0.14,
-      y: 5.82,
-      w: 0.5,
-      h: 0.22,
-      fontSize: 12,
-      bold: true,
-      color: layer.color,
-      fontFace: palette.fontTitle,
+    slide.addText(String(layer.n || i + 1), {
+      x: x + 0.12, y: 5.72, w: 0.55, h: 0.22, fontSize: 12, bold: true,
+      color: layer.color || palette.accent, fontFace: palette.fontTitle,
     });
-    slide.addText(layer.title, {
-      x: x + 0.64,
-      y: 5.82,
-      w: 2.25,
-      h: 0.22,
-      fontSize: 13,
-      bold: true,
-      color: palette.textLight,
-      fontFace: palette.fontTitle,
+    slide.addText(truncate(layer.title, 22), {
+      x: x + 0.7, y: 5.72, w: gw - 0.86, h: 0.22, fontSize: 13, bold: true,
+      color: palette.textLight, fontFace: palette.fontTitle,
     });
-    slide.addText(layer.body, {
-      x: x + 0.14,
-      y: 6.1,
-      w: 2.8,
-      h: 0.68,
-      fontSize: 12,
-      color: "B8C3D4",
-      fontFace: palette.fontBody,
-      wrap: true,
+    slide.addText(truncate(layer.body, 70), {
+      x: x + 0.12, y: 6.0, w: gw - 0.24, h: 0.8, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
     });
   });
 }
@@ -742,7 +596,7 @@ export async function buildDeck({
   pres.layout = "LAYOUT_WIDE";
   pres.author = "Apexon";
   pres.title = `${pptSafe(narrative.title)} — ${pptSafe(companyName)}`;
-  pres.subject = "Apexon Harness-governed Microsoft Fabric pitch";
+  pres.subject = pptSafe(`${companyName} — ${requirement}`);
 
   let page = 1;
 
@@ -761,7 +615,7 @@ export async function buildDeck({
   {
     const slide = pres.addSlide();
     applyMaster(slide, palette, { page });
-    addArchitectureSlide(slide, palette, { companyName, research, researchStructured });
+    addArchitectureSlide(slide, palette, { companyName, domain, requirement, researchStructured, architecture: useCases.architecture, useCases: list });
     page += 1;
   }
 
