@@ -330,7 +330,7 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
     color: #fff;
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-  .brand img { height: 22px; width: auto; display: block; mix-blend-mode: screen; }
+  .brand img { height: 22px; width: auto; display: block; }
   .hub { color: var(--blue60); font-size: 12.5px; border-left: 1px solid rgba(255,255,255,.2); padding-left: 12px; line-height: 1.25; }
   .hub b { color: #fff; }
   .header-link {
