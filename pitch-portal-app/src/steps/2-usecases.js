@@ -1,6 +1,7 @@
 import { allowLocalFallback, askAgentOrFallback } from "../lib/azureAgentClient.js";
 import { extractJson } from "../lib/parseJson.js";
 import { fallbackUseCases } from "../lib/fallbacks.js";
+import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -8,7 +9,7 @@ function clip(text, maxChars) {
   return clean.slice(0, maxChars).replace(/\s+\S*$/, "");
 }
 
-function normalizeUseCase(uc, i, fallbackUc) {
+function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
   const kpis = Array.isArray(uc.kpis)
     ? uc.kpis
         .filter((k) => k?.name)
@@ -47,7 +48,7 @@ function normalizeUseCase(uc, i, fallbackUc) {
     difficultyWhy: clip(uc.difficultyWhy || fallbackUc?.difficultyWhy || "", 90),
     techComponents: Array.isArray(uc.techComponents)
       ? uc.techComponents.slice(0, 3)
-      : fallbackUc?.techComponents || ["Microsoft Fabric", "Real-Time Intelligence", "Azure AI Foundry"],
+      : fallbackUc?.techComponents || defaultTechStack(requirement, domain),
     demoScore: uc.demoScore || 8 - i,
     tabWhy: clip(uc.tabWhy || `${uc.businessProblem || fallbackUc?.businessProblem || ""} ${uc.benefit || fallbackUc?.benefit || ""}`.trim(), 220),
     lookFirst: clip(uc.lookFirst || uc.title || "", 48),
@@ -60,7 +61,7 @@ function normalizeUseCase(uc, i, fallbackUc) {
 
 function normalizeDeckCopy(parsed, fallback, companyName, domain, requirement) {
   return {
-    deckKicker: clip(parsed.deckKicker || fallback.deckKicker || "Apexon Harness", 28),
+    deckKicker: clip(parsed.deckKicker || fallback.deckKicker || companyName, 28),
     deckTitle: clip(parsed.deckTitle || fallback.deckTitle || `${companyName} operating picture`, 64),
     deckSubtitle: clip(parsed.deckSubtitle || fallback.deckSubtitle || requirement || domain, 110),
     closeLine: clip(parsed.closeLine || fallback.closeLine || `Walk the live demonstration with ${companyName} next.`, 90),
@@ -90,55 +91,61 @@ export async function generateUseCases({
   });
 
   const { value: raw, source } = await askAgentOrFallback(
-    `You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
+    `${BRIEF_FIRST_RULE}
+
+You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
 
 Verified research (treat industry-typical items as unconfirmed):
 ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-You are the pre-sales lead AND the demo designer for this one brief. Think first. There is no five-screen template.
+You are the pre-sales lead AND the demo designer for THIS brief only. Internally brainstorm at least two approaches, then keep the one that fits the mandate. There is no five-screen template and no leftover architecture from another deck.
 
 Walk ${companyName}. Keep the ${numUseCases} strongest use cases that a ${domain} operator would recognize as THEIR job, addressable by the mandate, without inventing systems.
 
-Then design each tab from scratch. Hornets is the quality bar (Overview, Fan 360, Ticketing, and Smart Venue are different jobs — not the same chart with a new title). Decide what THIS person would look at. Compose the tab from 1-3 pieces, in the order they should appear. You name the pieces in their language.
+Then design each HTML tab from scratch. Each tab is a different job — not the same chart with a new title. Compose the tab from 1-3 pieces, in the order they should appear. You name the labels in their language.
 
-Pieces you may combine (not a menu of finished screens — you choose which, and you name the labels):
+Pieces you may combine (renderer primitives, not finished screens):
 - kpis: four numbers they would watch
 - bars: a status mix (you say what the mix is in lookFirst)
 - alerts: exceptions that need a person
 - table: rows that need a decision (you name columns)
-- heat: a map of THEIR areas (you name zones: lines, stands, desks, stores — whatever this business uses)
-- record: one lot / fan / claim / order (you name recordKind)
+- heat: a map of THEIR areas (you name zones)
+- record: one object they work (you name recordKind)
 - actions: recommended next steps
 - flow: how work moves for this use case
+
+Also design architecture for THIS mandate: sources they actually run, 2-3 stages named for their process, target platform named in the requirement, optional governance cards only if this brief is about governance. Do not paste Discover / Plan / Generate or L1-L4 unless this requirement is that Harness migration path.
 
 Do not give every tab the same pieces. Write tabWhy as 2 business sentences.
 
 Return ONLY JSON:
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":["Microsoft Fabric"],"demoScore":9}],"overallBenefits":["","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
-- deckKicker: max 4 words. Title-slide first line (e.g. company or "Harness-Governed").
-- deckTitle: max 8 words. The title slide — THEIR operating problem, not a generic "Data Modernization Solution".
-- deckSubtitle: max 16 words. One line under the title, from THIS mandate.
-- closeLine: max 16 words. Thank-you slide. What we ask them to do next.
+- deckKicker: max 4 words. From this company or mandate.
+- deckTitle: max 8 words. THEIR operating problem, not a generic modernization title.
+- deckSubtitle: max 16 words. From THIS mandate.
+- closeLine: max 16 words. Thank-you slide.
+- architecture.stages: 2-3 titles, each 2-6 short steps.
+- architecture.target.name: the platform this requirement asked for.
 - title: max 8 words.
 - businessProblem: max 28 words.
 - benefit: max 22 words.
 - tabWhy: exactly 2 short business sentences. Max 36 words.
-- lookFirst: max 8 words. The heading on the main panel, in their words.
+- lookFirst: max 8 words.
 - blocks: 1-3 piece names from the list above.
 - columns: 3-4 headers if table is used, named for this process.
 - zones: up to 6 area names if heat is used, named for this operation.
-- recordKind: one word or short phrase if record is used (Lot, Fan, Claim, Order).
+- recordKind: one word or short phrase if record is used.
 - kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
 - dataPointer.description: max 16 words.
 - difficultyWhy: max 16 words.
 - overallBenefits: exactly 4 lines, each max 18 words.
-- techComponents: max 3 names.
+- techComponents: max 3 names from this mandate.
 
-Produce exactly ${numUseCases} use cases. Also design the pitch-deck title, subtitle, and close from THIS brief. The agenda is built from your use-case titles — make those titles room-ready.`,
+Produce exactly ${numUseCases} use cases. Design the pitch-deck title, architecture, and close from THIS brief. Use-case titles become the agenda.`,
     () => null,
     "usecases"
   );
@@ -154,7 +161,7 @@ Produce exactly ${numUseCases} use cases. Also design the pitch-deck title, subt
       const useCases = list
         .filter((uc) => uc?.title && uc?.businessProblem)
         .slice(0, numUseCases)
-        .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i]));
+        .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain));
       if (useCases.length >= 3) {
         return {
           useCases,
@@ -163,6 +170,13 @@ Produce exactly ${numUseCases} use cases. Also design the pitch-deck title, subt
             ? parsed.overallBenefits.map((s) => clip(String(s), 110)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
           ...normalizeDeckCopy(parsed, fallback, companyName, domain, requirement),
+          architecture: normalizeArchitecture(parsed.architecture, {
+            companyName,
+            domain,
+            requirement,
+            researchStructured: typeof research === "object" ? research : null,
+            useCases,
+          }),
           source,
         };
       }
