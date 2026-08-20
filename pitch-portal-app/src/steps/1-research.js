@@ -1,6 +1,7 @@
 import { askAgentOrFallback } from "../lib/azureAgentClient.js";
 import { extractJson } from "../lib/parseJson.js";
 import { fallbackResearch } from "../lib/fallbacks.js";
+import { BRIEF_FIRST_RULE } from "../lib/briefFirst.js";
 
 function toText(structured, companyName, domain, requirement) {
   if (!structured || typeof structured !== "object") return "";
@@ -50,11 +51,13 @@ export async function research({ companyName, domain, requirement }) {
   const fallbackText = fallbackResearch({ companyName, domain, requirement });
 
   const { value, source } = await askAgentOrFallback(
-    `You are an Apexon pre-sales solution architect walking into ${companyName} (${domain}) tomorrow.
+    `${BRIEF_FIRST_RULE}
+
+You are an Apexon pre-sales solution architect walking into ${companyName} (${domain}) tomorrow.
 
 Mandate from the account team: "${requirement}"
 
-Think like a pre-sales lead: what does this company actually do, how do they make money, what systems would their operators already have, and what would a ${domain} VP recognize as THEIR world — not a generic data-platform story.
+Think like a pre-sales lead: what does this company actually do, how do they make money, what systems would their operators already have, and what would a ${domain} VP recognize as THEIR world — not a generic data-platform story and not a leftover system list from another deck.
 
 Return ONLY JSON, no markdown:
 {"summary":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
@@ -66,7 +69,7 @@ Hard rules:
 - If a system is not publicly confirmed for ${companyName}, set confidence to "industry-typical" and say so in basis. Never write it as if they confirmed it.
 - reporting: how THIS industry typically reports today (overnight packs, plant scorecards, Power BI, SAP). Same confidence rule.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
-- Do not assume they already run Microsoft Fabric unless that is public.
+- Do not assume they already run Microsoft Fabric, Databricks, or any named platform unless that is public or named in the mandate.
 - requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.
 - JSON must parse with JSON.parse. No markdown, no [[1]] citation tokens, no [text](url) links inside values.
 - confidence must be exactly "confirmed" or "industry-typical". Put sources only in basis as a plain URL or site name.`,
