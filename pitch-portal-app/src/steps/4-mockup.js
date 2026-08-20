@@ -1,5 +1,6 @@
-// Interactive HTML mockup — Hornets layout (horizontal tabs, no page scroll,
-// one relevant visual per tab) on the Apexon Harness dark theme.
+// Interactive HTML mockup — horizontal tabs, no page scroll, one relevant
+// visual per tab, Apexon Harness dark theme. Tab content is composed from
+// the current brief (not a copied Hornets or Harness demo).
 
 import { getPalette } from "../lib/palette.js";
 import { dashboardCopy } from "../lib/fallbacks.js";
