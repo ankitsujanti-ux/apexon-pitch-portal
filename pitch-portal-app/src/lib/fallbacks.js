@@ -2,6 +2,8 @@
 // Content is still company- and domain-specific so the deck and HTML
 // are not empty generic placeholders.
 
+import { inferArchitecture, defaultTechStack } from "./briefFirst.js";
+
 function sentence(text, fallback) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
   return clean || fallback;
@@ -193,7 +195,7 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       (shape.availability === "new"
         ? "Would need a new source or join that is not confirmed at this company."
         : "Uses data this industry usually already holds. Treat as typical unless confirmed."),
-    techComponents: shape.tech,
+    techComponents: defaultTechStack(requirement, domain),
     demoScore: shape.demoScore,
   }));
 
@@ -206,10 +208,11 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       "AI briefings stay on governed data, with a source behind every number.",
       "Leadership can walk a live demonstration, not a static slide.",
     ],
-    deckKicker: "Apexon Harness",
+    deckKicker: companyName,
     deckTitle: `${companyName} operating picture`,
-    deckSubtitle: sentence(requirement, `${domain} leadership walkthrough on Microsoft Fabric`),
+    deckSubtitle: sentence(requirement, `${domain} leadership walkthrough`),
     closeLine: `Walk the live demonstration with ${companyName} next.`,
+    architecture: inferArchitecture({ companyName, domain, requirement, useCases }),
   };
 }
 
