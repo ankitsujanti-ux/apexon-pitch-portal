@@ -107,6 +107,9 @@ function pipelineErrorMessage(err) {
   if (/server had an error processing your request/i.test(raw)) {
     return "Azure AI Foundry had a temporary issue. Click Generate again — the run usually succeeds on retry.";
   }
+  if (/Access denied when connecting to the MCP server/i.test(raw) || /knowledgebases\/.+\/mcp/i.test(raw)) {
+    return "Azure AI Foundry cannot reach its knowledge base (Search MCP 403). In Azure: grant the Foundry project identity Search Index Data Reader on the search service, or remove that knowledge MCP from DemoAgent if this portal should use Bing and the brief only. Then Generate again. No code change needed.";
+  }
   return raw;
 }
 
