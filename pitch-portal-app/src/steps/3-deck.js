@@ -478,10 +478,55 @@ function addArchitectureSlide(slide, palette, { companyName, domain, requirement
   });
 }
 
+function addBulletPanel(slide, palette, { x, y, w, h, kicker, items, accent, itemMax = 130 }) {
+  slide.addShape("roundRect", {
+    x,
+    y,
+    w,
+    h,
+    rectRadius: 0.08,
+    fill: { color: palette.card },
+    line: { color: accent || palette.cardBorder, width: 1 },
+  });
+  slide.addText(pptSafe(kicker), {
+    x: x + 0.16,
+    y: y + 0.11,
+    w: w - 0.32,
+    h: 0.22,
+    fontSize: 11.5,
+    bold: true,
+    color: accent || palette.heading,
+    fontFace: palette.fontTitle,
+  });
+  const rows = (items || []).filter(Boolean).slice(0, 3);
+  if (!rows.length) return;
+  slide.addText(
+    rows.map((text) => ({
+      text: truncate(text, itemMax),
+      options: {
+        bullet: { code: "2022" },
+        fontSize: 11,
+        color: palette.textLight,
+        fontFace: palette.fontBody,
+        breakLine: true,
+        paraSpaceAfter: 4,
+      },
+    })),
+    {
+      x: x + 0.16,
+      y: y + 0.36,
+      w: w - 0.32,
+      h: h - 0.46,
+      valign: "top",
+      wrap: true,
+    }
+  );
+}
+
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   slide.addText(`USE CASE  ${String(index + 1).padStart(2, "0")}  /  ${String(total).padStart(2, "0")}`, {
     x: MARGIN,
-    y: 0.16,
+    y: 0.14,
     w: 5.2,
     h: 0.2,
     fontSize: 11,
@@ -491,7 +536,7 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   slide.addText(truncate(companyName, 36), {
     x: 8.2,
-    y: 0.16,
+    y: 0.14,
     w: 4.7,
     h: 0.2,
     fontSize: 11,
@@ -501,48 +546,146 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   });
   slide.addText(slideTitle(uc, companyName), {
     x: MARGIN,
-    y: 0.38,
+    y: 0.34,
     w: 12.48,
-    h: 0.4,
-    fontSize: 22,
+    h: 0.34,
+    fontSize: 21,
     bold: true,
     color: palette.textLight,
     fontFace: palette.fontTitle,
     wrap: true,
   });
-
-  const explainers = [
-    { kicker: "What it shows", title: "This screen", body: uc.whatItShows || uc.lookFirst || uc.title },
-    { kicker: "Why it matters", title: "The business stake", body: uc.whyItMatters || uc.businessProblem },
-    { kicker: "What you do", title: "The next move", body: uc.action || uc.benefit, accent: "0E7C66" },
-  ];
-  const expW = (12.48 - 2 * 0.16) / 3;
-  explainers.forEach((item, i) => {
-    addPanel(slide, palette, {
-      x: MARGIN + i * (expW + 0.16),
-      y: 0.86,
-      w: expW,
-      h: 1.72,
-      kicker: item.kicker,
-      title: item.title,
-      body: item.body,
-      accent: item.accent,
-      bodyMax: 140,
+  if (uc.subtitle) {
+    slide.addText(truncate(uc.subtitle, 92), {
+      x: MARGIN,
+      y: 0.68,
+      w: 12.48,
+      h: 0.24,
+      fontSize: 12.5,
+      bold: true,
+      color: palette.accent,
+      fontFace: palette.fontTitle,
     });
+  }
+
+  // The challenge reads as a paragraph, not a card of keywords.
+  const challengeY = uc.subtitle ? 0.98 : 0.82;
+  slide.addShape("roundRect", {
+    x: MARGIN,
+    y: challengeY,
+    w: 12.48,
+    h: 0.92,
+    rectRadius: 0.08,
+    fill: { color: palette.card },
+    line: { color: palette.accent, width: 1 },
+  });
+  slide.addText("THE CHALLENGE", {
+    x: MARGIN + 0.18,
+    y: challengeY + 0.14,
+    w: 1.5,
+    h: 0.22,
+    fontSize: 10.5,
+    bold: true,
+    color: palette.accent,
+    fontFace: palette.fontTitle,
+  });
+  slide.addText(truncate(uc.challenge || uc.businessProblem, 400), {
+    x: MARGIN + 1.78,
+    y: challengeY + 0.11,
+    w: 10.5,
+    h: 0.72,
+    fontSize: 11.5,
+    color: palette.textLight,
+    fontFace: palette.fontBody,
+    wrap: true,
+    valign: "top",
   });
 
+  const mainY = challengeY + 1.02;
+  const mainH = 2.42;
+
+  // How we solve it — named moves with a full sentence each.
+  slide.addShape("roundRect", {
+    x: MARGIN,
+    y: mainY,
+    w: 7.28,
+    h: mainH,
+    rectRadius: 0.08,
+    fill: { color: palette.card },
+    line: { color: "75A2ED", width: 1.25 },
+  });
+  slide.addText("HOW WE SOLVE IT", {
+    x: MARGIN + 0.18,
+    y: mainY + 0.12,
+    w: 6.9,
+    h: 0.22,
+    fontSize: 11,
+    bold: true,
+    color: "75A2ED",
+    fontFace: palette.fontTitle,
+  });
+  const moves = (uc.solutionMoves || []).slice(0, 3);
+  const moveH = (mainH - 0.44) / Math.max(moves.length, 1);
+  moves.forEach((move, i) => {
+    slide.addText(
+      [
+        {
+          text: `${pptSafe(move.lead).replace(/[.:]$/, "")}. `,
+          options: { bold: true, color: palette.heading, fontSize: 11.5, fontFace: palette.fontTitle },
+        },
+        {
+          text: truncate(move.detail, 200),
+          options: { color: palette.textLight, fontSize: 11.5, fontFace: palette.fontBody },
+        },
+      ],
+      {
+        x: MARGIN + 0.18,
+        y: mainY + 0.4 + i * moveH,
+        w: 6.92,
+        h: moveH - 0.06,
+        wrap: true,
+        valign: "top",
+      }
+    );
+  });
+
+  const rightX = MARGIN + 7.44;
+  const rightW = 12.9 - 7.44;
+  const worksH = mainH * 0.47;
+  addBulletPanel(slide, palette, {
+    x: rightX,
+    y: mainY,
+    w: rightW,
+    h: worksH,
+    kicker: "Works with what you have",
+    items: uc.worksWith,
+    itemMax: 110,
+  });
+  addBulletPanel(slide, palette, {
+    x: rightX,
+    y: mainY + worksH + 0.1,
+    w: rightW,
+    h: mainH - worksH - 0.1,
+    kicker: "What you get",
+    items: uc.businessValue,
+    accent: "0E7C66",
+    itemMax: 110,
+  });
+
+  // KPIs carry a full explanation, not a two-word label.
   const kpis = (uc.kpis || []).slice(0, 4);
-  const kpiW = kpis.length ? (12.48 - (kpis.length - 1) * 0.16) / kpis.length : 3;
+  const kpiY = mainY + mainH + 0.12;
+  const kpiW = kpis.length ? (12.48 - (kpis.length - 1) * 0.14) / kpis.length : 3;
   kpis.forEach((kpi, i) => {
     addPanel(slide, palette, {
-      x: MARGIN + i * (kpiW + 0.16),
-      y: 2.72,
+      x: MARGIN + i * (kpiW + 0.14),
+      y: kpiY,
       w: kpiW,
-      h: 1.42,
-      kicker: "KPI",
+      h: 1.18,
+      kicker: "KPI impacted",
       title: kpi.name,
       body: kpi.why,
-      bodyMax: 70,
+      bodyMax: 120,
     });
   });
 
@@ -552,36 +695,35 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   const stack = Array.isArray(uc.techComponents) && uc.techComponents.length
     ? uc.techComponents.slice(0, 3).join(" · ")
     : "Named in the mandate";
+  const bottomY = kpiY + 1.3;
+  const bottomH = 6.92 - bottomY;
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 4.28,
-    w: 5.9,
-    h: 1.92,
-    kicker: "Data",
-    title: uc.dataPointer?.availability === "new" ? "New join or source" : "Likely already there",
+    y: bottomY,
+    w: 6.1,
+    h: bottomH,
+    kicker: uc.dataPointer?.availability === "new" ? "Data needed — new source or join" : "Data needed — likely already there",
     body: dataLine,
-    bodyMax: 140,
+    bodyMax: 190,
   });
   addPanel(slide, palette, {
-    x: 6.54,
-    y: 4.28,
-    w: 3.2,
-    h: 1.92,
-    kicker: "Effort",
-    title: uc.difficulty === "easier" ? "Easier" : uc.difficulty === "harder" ? "Harder" : "Moderate",
+    x: MARGIN + 6.24,
+    y: bottomY,
+    w: 3.3,
+    h: bottomH,
+    kicker: `Effort — ${uc.difficulty === "easier" ? "easier" : uc.difficulty === "harder" ? "harder" : "moderate"}`,
     body: uc.difficultyWhy || difficultyLabel(uc),
-    bodyMax: 120,
+    bodyMax: 150,
   });
   addPanel(slide, palette, {
-    x: 9.94,
-    y: 4.28,
-    w: 2.96,
-    h: 1.92,
+    x: MARGIN + 9.68,
+    y: bottomY,
+    w: 2.8,
+    h: bottomH,
     kicker: "How we land it",
-    title: "From this mandate",
-    body: stack,
+    body: uc.proofPoint ? `${stack}. ${uc.proofPoint}` : stack,
     accent: palette.accent,
-    bodyMax: 100,
+    bodyMax: 150,
   });
 }
 
