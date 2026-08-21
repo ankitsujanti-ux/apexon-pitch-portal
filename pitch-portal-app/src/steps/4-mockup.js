@@ -100,18 +100,49 @@ function kpiRow({ copy, useCase, tabId, count = 4 }) {
     .join("")}</div>`;
 }
 
-function briefCards(useCase) {
-  const cards = [
-    ["What it shows", useCase.whatItShows || useCase.lookFirst || useCase.title],
-    ["Why it matters", useCase.whyItMatters || useCase.businessProblem],
-    ["What you do", useCase.action || useCase.benefit],
-  ];
-  return `<div class="brief">${cards
-    .map(
-      ([k, v]) =>
-        `<article class="brief-card"><p class="brief-k">${escapeHtml(k)}</p><p>${escapeHtml(v)}</p></article>`
-    )
-    .join("")}</div>`;
+function narrativeBlock(heading, body) {
+  if (!body) return "";
+  return `<section class="nar"><h4>${escapeHtml(heading)}</h4>${body}</section>`;
+}
+
+function bulletsHtml(items) {
+  const rows = (items || []).filter(Boolean).slice(0, 3);
+  if (!rows.length) return "";
+  return `<ul>${rows.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
+}
+
+// The business case sits beside the visual so a first-time reader understands
+// the use case without anyone presenting it.
+function narrativeColumn(useCase) {
+  const moves = (useCase.solutionMoves || []).slice(0, 3);
+  const movesHtml = moves.length
+    ? `<ul class="moves">${moves
+        .map(
+          (m) =>
+            `<li><b>${escapeHtml(String(m.lead || "The move").replace(/[.:]$/, ""))}.</b> ${escapeHtml(m.detail || "")}</li>`
+        )
+        .join("")}</ul>`
+    : "";
+  const data = typeof useCase.dataPointer === "object" ? useCase.dataPointer?.description : useCase.dataPointer;
+  const dataKicker =
+    useCase.dataPointer?.availability === "new" ? "Data needed — new source or join" : "Data needed — likely already there";
+
+  return `<aside class="narrative">
+    ${narrativeBlock("The challenge", `<p>${escapeHtml(useCase.challenge || useCase.businessProblem || "")}</p>`)}
+    ${narrativeBlock("How we solve it", movesHtml)}
+    ${narrativeBlock("What you get", bulletsHtml(useCase.businessValue))}
+    ${narrativeBlock("Works with what you have", bulletsHtml(useCase.worksWith))}
+    ${narrativeBlock(dataKicker, data ? `<p>${escapeHtml(data)}</p>` : "")}
+  </aside>`;
+}
+
+function screenLead(useCase) {
+  const shows = useCase.whatItShows || useCase.lookFirst || useCase.title;
+  const act = useCase.action || useCase.benefit;
+  return `<div class="lead">
+    <p><span>On this screen</span> ${escapeHtml(shows)}</p>
+    ${act ? `<p><span class="do">What you do</span> ${escapeHtml(act)}</p>` : ""}
+  </div>`;
 }
 
 function pieceBars({ copy, tabId, title }) {
@@ -311,14 +342,20 @@ function tabInner({ companyName, domain, useCase, tabId, index, total, layout, p
   return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(blocks.join("+"))}">
     <div class="title-row">
       <div>
-        <p class="kicker">Screen ${index + 1} of ${total}</p>
+        <p class="kicker">Screen ${index + 1} of ${total} · ${escapeHtml(useCase.lookFirst || domain)}</p>
         <h2>${escapeHtml(useCase.title)}</h2>
+        ${useCase.subtitle ? `<p class="sub">${escapeHtml(useCase.subtitle)}</p>` : ""}
       </div>
-      <button class="primary" type="button">${escapeHtml(copy.button || useCase.action || "Walk this screen")}</button>
+      <button class="primary" type="button">${escapeHtml(copy.button || "Simulate an event")}</button>
     </div>
-    ${briefCards(useCase)}
-    ${kpis}
-    ${stage}
+    <div class="split">
+      ${narrativeColumn(useCase)}
+      <div class="canvas">
+        ${screenLead(useCase)}
+        ${kpis}
+        ${stage}
+      </div>
+    </div>
   </section>`;
 }
 
@@ -433,12 +470,29 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .view-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; gap: 10px; }
   .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex: none; }
   .kicker { margin: 0 0 4px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-  h2 { margin: 0 0 4px; font-size: 20px; line-height: 1.2; }
-  .brief { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; flex: none; }
-  .brief-card { background: var(--card); border: 1px solid var(--blue); border-radius: 10px; padding: 10px 12px; }
-  .brief-k { margin: 0 0 4px; color: var(--accent); font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  .brief-card p { margin: 0; color: #d7deea; font-size: 13px; line-height: 1.35; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: none; }
+  h2 { margin: 0 0 3px; font-size: 19px; line-height: 1.2; }
+  .sub { margin: 0; color: var(--accent); font-size: 12.5px; font-weight: 700; }
+  .split { flex: 1; min-height: 0; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 12px; }
+  .narrative {
+    min-height: 0; overflow-y: auto; padding-right: 6px;
+    display: flex; flex-direction: column; gap: 9px;
+    scrollbar-width: thin; scrollbar-color: #2d3f63 transparent;
+  }
+  .narrative::-webkit-scrollbar { width: 6px; }
+  .narrative::-webkit-scrollbar-thumb { background: #2d3f63; border-radius: 3px; }
+  .nar { background: var(--card); border: 1px solid var(--blue); border-radius: 10px; padding: 10px 12px; }
+  .nar h4 { margin: 0 0 6px; color: var(--accent); font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .nar p { margin: 0; color: #d7deea; font-size: 12.5px; line-height: 1.5; }
+  .nar ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .nar li { color: #d7deea; font-size: 12.5px; line-height: 1.45; padding-left: 12px; position: relative; }
+  .nar li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue60); }
+  .nar .moves li b { color: #fff; }
+  .canvas { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  .lead { flex: none; border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; display: flex; flex-direction: column; gap: 4px; }
+  .lead p { margin: 0; color: #c8d2e2; font-size: 12.5px; line-height: 1.45; }
+  .lead span { color: var(--accent); font-weight: 800; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; margin-right: 6px; }
+  .lead span.do { color: #7ddea0; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: none; }
   .kpi, .viz, .side {
     background: var(--card); border: 1px solid var(--blue); border-radius: 12px;
     padding: 12px 14px; position: relative;
@@ -524,8 +578,9 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
     color: var(--muted); font-size: 11.5px; max-width: 1220px; width: 100%; margin: 0 auto;
   }
   footer img { height: 16px; width: auto; }
-  @media (max-width: 960px) {
-    .kpis, .stage.with-side, .brief { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 1100px) {
+    .kpis, .stage.with-side { grid-template-columns: 1fr 1fr; }
+    .split { grid-template-columns: 1fr; }
     .title-row { flex-direction: column; }
   }
 </style>
