@@ -731,7 +731,7 @@ function layoutEvidence(slide, palette, uc) {
   });
   const stack = Array.isArray(uc.techComponents) && uc.techComponents.length
     ? uc.techComponents.slice(0, 3).join(" · ")
-    : "Named in the mandate";
+    : "Runs on the platform you choose — nothing here depends on one.";
   addPanel(slide, palette, {
     x: MARGIN, y: 2.74, w: 4.06, h: 2.0,
     kicker: uc.dataPointer?.availability === "new" ? "Data needed — new source" : "Data needed — already there",
