@@ -127,12 +127,25 @@ function narrativeColumn(useCase) {
   const dataKicker =
     useCase.dataPointer?.availability === "new" ? "Data needed — new source or join" : "Data needed — likely already there";
 
+  const assumptions = (useCase.assumptions || []).slice(0, 3);
+  const evidenceHtml = assumptions.length
+    ? `<ul class="ev">${assumptions
+        .map(
+          (a) =>
+            `<li><span class="tag ${a.confidence === "confirmed" ? "ok" : "typ"}">${
+              a.confidence === "confirmed" ? "Confirmed" : "Industry-typical"
+            }</span> ${escapeHtml(a.claim)}${a.basis ? ` <em>${escapeHtml(a.basis)}</em>` : ""}</li>`
+        )
+        .join("")}</ul>`
+    : "";
+
   return `<aside class="narrative">
     ${narrativeBlock("The challenge", `<p>${escapeHtml(useCase.challenge || useCase.businessProblem || "")}</p>`)}
     ${narrativeBlock("How we solve it", movesHtml)}
     ${narrativeBlock("What you get", bulletsHtml(useCase.businessValue))}
     ${narrativeBlock("Works with what you have", bulletsHtml(useCase.worksWith))}
     ${narrativeBlock(dataKicker, data ? `<p>${escapeHtml(data)}</p>` : "")}
+    ${narrativeBlock("What is verified", evidenceHtml)}
   </aside>`;
 }
 
@@ -359,7 +372,7 @@ function tabInner({ companyName, domain, useCase, tabId, index, total, layout, p
   </section>`;
 }
 
-export async function buildMockup({ companyName, domain, requirement = "", topUseCases, palette, deckFileName }) {
+export async function buildMockup({ companyName, domain, requirement = "", topUseCases, palette, deckFileName, evidenceNote = "" }) {
   if (!companyName || !domain || !Array.isArray(topUseCases) || topUseCases.length === 0) {
     throw new Error("buildMockup requires companyName, domain, and a non-empty topUseCases array");
   }
@@ -458,6 +471,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
     color: var(--muted); font-size: 12px; background: #0a1220;
   }
   .sample b { color: var(--accent); }
+  .ev-note { color: #7d8ba3; border-left: 1px solid #2d3f63; padding-left: 8px; margin-left: 4px; }
   .page-info { position: relative; }
   main {
     flex: 1; min-height: 0; overflow: hidden;
@@ -487,6 +501,12 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .nar li { color: #d7deea; font-size: 12.5px; line-height: 1.45; padding-left: 12px; position: relative; }
   .nar li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue60); }
   .nar .moves li b { color: #fff; }
+  .nar .ev li { padding-left: 0; }
+  .nar .ev li::before { display: none; }
+  .nar .ev em { color: #8e9ab0; font-style: normal; display: block; margin-top: 2px; font-size: 11.5px; }
+  .tag { display: inline-block; border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 800; margin-right: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .tag.ok { background: #16351f; color: #7ddea0; }
+  .tag.typ { background: #3a2a10; color: #ffd48a; }
   .canvas { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
   .lead { flex: none; border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; display: flex; flex-direction: column; gap: 4px; }
   .lead p { margin: 0; color: #c8d2e2; font-size: 12.5px; line-height: 1.45; }
@@ -599,7 +619,9 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
     <button class="info" type="button" onclick="toggleInfo('page-i')" aria-label="About this demonstration" style="position:static">i</button>
     <span id="page-i" class="pop">Each tab is one job from this brief: what the screen shows, why it matters, and what to do next.<br/>Figures are sample only — not a live system.</span>
   </span>
-  <b>Sample data</b> — walkthrough for ${escapeHtml(companyName)}. Not live company figures.
+  <b>Sample data</b> — walkthrough for ${escapeHtml(companyName)}. Not live company figures.${
+    evidenceNote ? ` <span class="ev-note">${escapeHtml(evidenceNote)}</span>` : ""
+  }
 </p>
 <main>${panels}</main>
 <footer>${apexonSrc ? `<img src="${apexonSrc}" alt="" />` : ""} ${escapeHtml(footerLine)}</footer>
