@@ -128,7 +128,12 @@ export function inferArchitecture({
   const fromResearch = (researchStructured?.systems || []).map((s) => s.name).filter(Boolean);
   const sources = uniqueNames([...fromResearch, ...domainSources(domain, requirement)]).slice(0, 8);
   const platform = platformFromRequirement(requirement, domain);
-  const jobs = (useCases || []).map((uc) => uc.title).filter(Boolean).slice(0, 3);
+  // Titles often carry a "— Company" suffix; repeating it on every bullet of
+  // the architecture slide is noise.
+  const jobs = (useCases || [])
+    .map((uc) => String(uc.title || "").replace(/\s*[\u2014\u2013-]\s*[^\u2014\u2013-]*$/, "").trim() || uc.title)
+    .filter(Boolean)
+    .slice(0, 3);
   const req = reqText(requirement, domain);
 
   let stages;
@@ -161,8 +166,11 @@ export function inferArchitecture({
     : [];
 
   return {
-    title: "Proposed architecture",
-    subtitle: clip(`${companyName}: path for this mandate. Sources are confirmed only when research said so.`, 140),
+    title: "How this would work",
+    subtitle: clip(
+      `What ${companyName} would put in place to deliver this, and the systems it builds on.`,
+      140
+    ),
     sources: sources.map((name) => ({ name, role: "" })),
     stages,
     target: platform,
