@@ -101,11 +101,34 @@ Also design:
 - The **title-slide** copy (`deckKicker`, `deckTitle`, `deckSubtitle`, `closeLine`) from this brief.
 - The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Do not paste Discover / Plan / Generate or L1–L4 unless this mandate is that Harness migration path.
 - Each **HTML screen** from scratch: `whatItShows`, `whyItMatters`, `action`, plus 1–3 visual primitives. Different mix per tab. Name entities and steps in their language. Do not put Fabric/Harness in labels unless the mandate names them.
+- A **`slideLayout`** for every use case, chosen for that use case's story and varied across the set (see below).
+
+### Plain English
+
+Write for a smart executive who does not work in this function. Short sentences. Say “the line stops”, not “throughput degradation events occur”. No stacked jargon, no three-noun phrases, no consultant filler. If a term is unavoidable, explain it in the same sentence. A reader should never have to re-read a sentence.
+
+### One idea per slide
+
+Every use-case slide showing challenge + moves + works-with + value + 4 KPIs + data + effort is what makes all five slides look identical and unreadable. So pick the layout that fits each use case's story, and vary it across the five:
+
+| `slideLayout` | Use when | Shows |
+| --- | --- | --- |
+| `challenge` | the pain is the compelling part | challenge statement, 3 moves, value |
+| `impact` | leadership cares about the numbers | 4 KPIs large, one-line stake, value |
+| `shift` | the change in working is the point | today vs after, side by side, value |
+| `journey` | the story is a path or flow | 4 numbered steps, works-with, value |
+| `evidence` | feasibility is the real question | data, effort, how we land it, value |
+
+Each layout renders only **part** of the content so the slide stays readable. Write every field anyway — the builder picks what that layout needs.
+
+### The HTML is the product, not the deck
+
+The mockup shows the working software. Do **not** restate the challenge or the business case there — that is the deck's job, and repeating it makes the screen unreadable. Each screen gets one short caption (`whatItShows`) and the visual.
 
 Return JSON only, exactly 5 use cases:
 
 ```json
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
 ```
 
 ### Write explanations, not labels
@@ -119,7 +142,8 @@ This is the single most important rule for content. Fragments like “Payment su
 - `kpis`: exactly 4. `name` 2–4 words. `why` 12–20 words as a full sentence saying what it tells leadership. No invented current numbers.
 - `dataPointer.description`: 12–25 words naming the data and where it usually lives.
 - `difficultyWhy`: 12–25 words.
-- `whatItShows` / `whyItMatters` / `action`: 15–30 words each.
+- `whatItShows`: 12–22 words, **one** sentence — the screen's only caption. `whyItMatters` / `action`: 12–22 words each.
+- `slideLayout`: exactly one of `challenge`, `impact`, `shift`, `journey`, `evidence`. Vary across the five use cases.
 - `businessProblem`: 25–40 words. `benefit`: 20–35 words.
 - `proofPoint`: one sentence of industry evidence, or `""` if not confident.
 - `title`: max 9 words. `subtitle`: 6–12 words — the promise of this use case.
@@ -136,22 +160,19 @@ This is the single most important rule for content. Fragments like “Payment su
 
 ## Step 3 — Pitch deck (built in code)
 
-Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief. Each use-case slide is laid out as:
+Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief.
 
-1. Title + subtitle (the promise)
-2. **THE CHALLENGE** — the paragraph, full width
-3. **HOW WE SOLVE IT** — the 3 named moves with their explanations
-4. **Works with what you have** and **What you get** — bullets, right column
-5. **KPI impacted** ×4 — metric plus what it tells leadership
-6. **Data needed**, **Effort**, **How we land it**
+Every use-case slide carries a common header (index, title, subtitle, accent rule) and a one-line evidence strip. The body is whichever composition `slideLayout` selects — `challenge`, `impact`, `shift`, `journey`, or `evidence`. The five slides must not share one composition.
+
+Aim for roughly 150 words of body copy per slide. If a layout feels full, cut copy rather than shrinking type.
 
 ## Step 4 — Interactive HTML (built in code)
 
-Hornets is a **quality bar** (explained screens, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
+Hornets is a **quality bar** (clear screens, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
 
-- Dark navy canvas. Horizontal tabs. Fits the viewport.
-- Left column of every screen carries the business case: the challenge, how we solve it, what you get, works with what you have, data needed.
-- Right column carries the screen itself, led by “On this screen” and “What you do”.
+- Dark navy canvas. Horizontal tabs that ellipsis rather than clip. Fits the viewport, no page scroll.
+- One type scale for the whole page. No ad-hoc font sizes.
+- This is the **product**, not the deck. One short caption (`whatItShows`) per screen, then the visual. No challenge, no business case, no “what is verified” block — those live in the PPT.
 - Visuals come from `blocks` for this job (`compare`, `timeline`, `entities`, table, heat, record, flow, and so on) — not the same KPI strip on every tab.
 - Sample data is simulated, never claimed as live company metrics.
 
@@ -164,3 +185,5 @@ Hornets is a **quality bar** (explained screens, no page scroll, horizontal tabs
 - Invent company facts, metrics, or systems.
 - Copy Harness product architecture, Hornets screens, or a prior client’s wording into a new brief.
 - Write long paragraphs that will overflow a slide.
+- Put the same composition on all five use-case slides.
+- Repeat the deck's business case inside the HTML mockup.
