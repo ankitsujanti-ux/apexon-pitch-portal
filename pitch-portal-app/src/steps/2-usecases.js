@@ -3,7 +3,7 @@ import { fallbackUseCases } from "../lib/fallbacks.js";
 import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
 import { runReasoning } from "../lib/reasoningPasses.js";
 
-export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
+export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -154,7 +154,29 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
     entities: Array.isArray(uc.entities) ? uc.entities.map((e) => clip(typeof e === "string" ? e : e?.name, 22)).filter(Boolean).slice(0, 6) : [],
     steps: Array.isArray(uc.steps) ? uc.steps.map((s) => clip(s, 36)).filter(Boolean).slice(0, 4) : [],
     recordKind: clip(uc.recordKind || "", 24),
+    slideLayout: String(uc.slideLayout || "").toLowerCase().trim(),
   };
+}
+
+const DECK_LAYOUTS = ["challenge", "impact", "shift", "journey", "evidence"];
+
+// Guarantee neighbouring slides differ even when the agent picks the same
+// layout for everything, which is what made all five look identical.
+function spreadLayouts(useCases) {
+  const used = new Set();
+  useCases.forEach((uc, i) => {
+    const asked = DECK_LAYOUTS.includes(uc.slideLayout) ? uc.slideLayout : null;
+    let chosen = asked && !used.has(asked) ? asked : null;
+    if (!chosen) {
+      chosen =
+        DECK_LAYOUTS.find((l) => !used.has(l) && l !== useCases[i - 1]?.slideLayout) ||
+        DECK_LAYOUTS[i % DECK_LAYOUTS.length];
+    }
+    used.add(chosen);
+    if (used.size === DECK_LAYOUTS.length) used.clear();
+    uc.slideLayout = chosen;
+  });
+  return useCases;
 }
 
 function stackForBrief(list, fallbackList, requirement, domain) {
@@ -226,10 +248,19 @@ For EVERY use case, explain the whole story the way a solution architect would o
 - kpis: exactly 4. Each name is the metric; each why is a full sentence saying what the metric tells leadership and why it moves with this change.
 - proofPoint: one sentence of industry evidence or a comparable pattern, only if you are confident. Otherwise "".
 
-Then design each HTML screen for that job. Do not reuse one chart with a new title.
-- whatItShows: 1-2 sentences describing what is on this screen.
-- whyItMatters: 1-2 sentences on the business stake.
-- action: 1-2 sentences on what the user does with it.
+PLAIN ENGLISH. Write for a smart executive who does not work in this function. Short sentences. Say "the line stops" not "throughput degradation events occur". No stacked jargon, no three-noun phrases, no consultant filler. If a term is unavoidable, explain it in the same sentence. A reader should never have to re-read a sentence.
+
+Choose a slideLayout for EACH use case — pick the one that suits ITS story, and vary it across the set so no two neighbouring slides look alike:
+- "challenge" — the problem is the point. Use when the pain is the compelling part.
+- "impact" — the metrics are the point. Use when leadership cares about the numbers moving.
+- "shift" — today versus after, side by side. Use when the change in the way of working is the point.
+- "journey" — the sequence of steps. Use when the story is a path or flow.
+- "evidence" — data, effort, and what is proven. Use when feasibility is the real question.
+Each layout shows only PART of the content, so the slide stays readable. Write all fields anyway.
+
+Then design each HTML screen. The HTML is the working product, NOT the deck — do not restate the challenge or the business case there. It shows the software.
+- whatItShows: ONE short sentence naming what is on the screen. This is the only caption the screen gets.
+- whyItMatters / action: one sentence each, used elsewhere. Keep them plain.
 
 Compose the visual from 1-3 primitives, named in THEIR language. Different mix per tab. Add entities (plants, lots, stores, claims — THEIR objects) and steps (a 3-4 step path) when that screen needs them.
 
@@ -251,7 +282,8 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - kpis: exactly 4. name 2-4 words. why 12-20 words, a full sentence. No invented current numbers.
 - dataPointer.description: 12-25 words.
 - difficultyWhy: 12-25 words.
-- whatItShows / whyItMatters / action: 15-30 words each.
+- whatItShows: 12-22 words, ONE sentence. whyItMatters / action: 12-22 words each.
+- slideLayout: exactly one of challenge, impact, shift, journey, evidence. Vary across use cases.
 - businessProblem: 25-40 words. benefit: 20-35 words.
 - title: max 9 words. subtitle: 6-12 words, the promise of this use case.
 - deckKicker: max 4 words. deckTitle: max 9 words. deckSubtitle: max 18 words. closeLine: max 18 words.
@@ -306,6 +338,7 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
         .slice(0, numUseCases)
         .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain));
       if (useCases.length >= 3) {
+        spreadLayouts(useCases);
         attachEvidence(useCases, verification);
         return {
           useCases,
@@ -337,7 +370,7 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
     );
   }
 
-  return { ...fallback, source: "fallback" };
+  return { ...fallback, useCases: spreadLayouts(fallback.useCases || []), source: "fallback" };
 }
 
 // Claims are labelled, never silently upgraded. An honest "industry-typical"
