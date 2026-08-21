@@ -16,6 +16,12 @@ There is no fixed template, chart menu, tab structure, or design pattern to reus
 
 Every screen must state: what it shows, why it matters to the business, and what insight or action it enables.
 
+PLAIN ENGLISH. Write for a smart executive who does not work in this function. Short sentences, no stacked jargon, no consultant filler. A reader should never have to re-read a sentence.
+
+ONE IDEA PER SLIDE. Putting challenge + solution + value + KPIs + data + effort on every slide is what makes a deck look identical and unreadable. Vary the composition per use case and cut copy rather than shrinking type.
+
+THE HTML IS THE PRODUCT, NOT THE DECK. Never repeat the deck's business case inside the mockup.
+
 Use entities, terminology, imagery, and logos ONLY when they are genuinely relevant to this requirement. If the mandate has nothing to do with Fabric or Harness, do not introduce them.
 
 FINAL CHECK: If the reference material were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
