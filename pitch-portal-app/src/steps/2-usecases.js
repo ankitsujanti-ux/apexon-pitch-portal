@@ -2,6 +2,7 @@ import { allowLocalFallback } from "../lib/azureAgentClient.js";
 import { fallbackUseCases } from "../lib/fallbacks.js";
 import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
 import { runReasoning } from "../lib/reasoningPasses.js";
+import { TONE_RULE, lintUseCases } from "../lib/toneGuard.js";
 
 export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
 
@@ -248,7 +249,7 @@ For EVERY use case, explain the whole story the way a solution architect would o
 - kpis: exactly 4. Each name is the metric; each why is a full sentence saying what the metric tells leadership and why it moves with this change.
 - proofPoint: one sentence of industry evidence or a comparable pattern, only if you are confident. Otherwise "".
 
-PLAIN ENGLISH. Write for a smart executive who does not work in this function. Short sentences. Say "the line stops" not "throughput degradation events occur". No stacked jargon, no three-noun phrases, no consultant filler. If a term is unavoidable, explain it in the same sentence. A reader should never have to re-read a sentence.
+${TONE_RULE}
 
 Choose a slideLayout for EACH use case — pick the one that suits ITS story, and vary it across the set so no two neighbouring slides look alike:
 - "challenge" — the problem is the point. Use when the pain is the compelling part.
@@ -267,7 +268,7 @@ Compose the visual from 1-3 primitives, named in THEIR language. Different mix p
 Primitives (the HTML builder can only paint these — choose which, do not invent other chart types):
 - kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
 
-Do not put Fabric, Harness, or OneLake in techComponents, flow, or labels unless the mandate names them.
+Put a product or platform name in techComponents, flow, or labels only if the requirement itself names one. Otherwise describe the capability in plain words.
 
 Also design architecture for THIS mandate: sources they run, 2-3 stages named for their process, target = platform named in the requirement (or "Target platform" if none), guards only if this brief is about governance.
 
