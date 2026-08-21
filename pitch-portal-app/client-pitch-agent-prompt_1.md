@@ -87,44 +87,53 @@ Also design:
 Return JSON only, exactly 5 use cases:
 
 ```json
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","whatItShows":"","whyItMatters":"","action":"","tabWhy":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
 ```
 
-Hard length limits:
+### Write explanations, not labels
 
-- `whatItShows`, `whyItMatters`, `action`: max 18 words each.
-- `deckKicker`: max 4 words. From this company or mandate — not a leftover product name.
-- `deckTitle`: max 8 words. Their operating problem.
-- `deckSubtitle`: max 16 words. From this mandate.
-- `closeLine`: max 16 words. Thank-you slide.
+This is the single most important rule for content. Fragments like “Payment success”, “Ask clarifier”, or “Less time to pay” are a **failed** answer. A reader who knows nothing about the project must understand the use case from the text alone. The limits below are **minimums**.
+
+- `challenge`: 35–55 words, at least 2 sentences. What goes wrong today, in their operation, and the consequence.
+- `solutionMoves`: exactly 3. Each has a 2–4 word `lead` and an 18–30 word `detail` written as a full sentence.
+- `worksWith`: 2–3 full sentences, 10–18 words each, on how this sits alongside systems they already run.
+- `businessValue`: 3 full sentences, 10–18 words each. Money, risk, time, or experience — not adjectives.
+- `kpis`: exactly 4. `name` 2–4 words. `why` 12–20 words as a full sentence saying what it tells leadership. No invented current numbers.
+- `dataPointer.description`: 12–25 words naming the data and where it usually lives.
+- `difficultyWhy`: 12–25 words.
+- `whatItShows` / `whyItMatters` / `action`: 15–30 words each.
+- `businessProblem`: 25–40 words. `benefit`: 20–35 words.
+- `proofPoint`: one sentence of industry evidence, or `""` if not confident.
+- `title`: max 9 words. `subtitle`: 6–12 words — the promise of this use case.
+- `deckKicker`: max 4 words. `deckTitle`: max 9 words. `deckSubtitle`: max 18 words. `closeLine`: max 18 words.
 - `architecture.stages`: 2–3 stages, each 2–6 short steps, named for this process.
 - `architecture.target`: the platform this requirement asked for (Fabric only if the mandate says Fabric).
 - `architecture.guards`: 0–4 cards. Omit if this brief is not about governance.
-- `title`: max 8 words. Name the process, not the platform. Do not append the company name.
-- `businessProblem`: max 28 words.
-- `benefit`: max 22 words.
-- `solutionFit`: max 18 words.
-- `tabWhy`: 2 business sentences. Max 36 words.
 - `lookFirst`: max 8 words.
 - `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`, `compare`, `timeline`, `entities`. Unique mix per tab.
-- `kpis`: exactly 4. `name` max 4 words. `why` max 10 words. No invented current numbers.
-- `dataPointer.description`: max 16 words.
-- `difficultyWhy`: max 16 words.
-- `overallBenefits`: exactly 4 lines, each max 18 words.
+- `overallBenefits`: exactly 4 lines, 12–20 words each.
 - `techComponents`: max 3 names from this mandate.
 
 ---
 
 ## Step 3 — Pitch deck (built in code)
 
-Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief. Each use-case slide leads with what the screen shows, why it matters, and what to do.
+Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief. Each use-case slide is laid out as:
+
+1. Title + subtitle (the promise)
+2. **THE CHALLENGE** — the paragraph, full width
+3. **HOW WE SOLVE IT** — the 3 named moves with their explanations
+4. **Works with what you have** and **What you get** — bullets, right column
+5. **KPI impacted** ×4 — metric plus what it tells leadership
+6. **Data needed**, **Effort**, **How we land it**
 
 ## Step 4 — Interactive HTML (built in code)
 
-Hornets is a **quality bar** (different jobs, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
+Hornets is a **quality bar** (explained screens, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
 
 - Dark navy canvas. Horizontal tabs. Fits the viewport.
-- Every tab has a three-part brief: what it shows, why it matters, what you do.
+- Left column of every screen carries the business case: the challenge, how we solve it, what you get, works with what you have, data needed.
+- Right column carries the screen itself, led by “On this screen” and “What you do”.
 - Visuals come from `blocks` for this job (`compare`, `timeline`, `entities`, table, heat, record, flow, and so on) — not the same KPI strip on every tab.
 - Sample data is simulated, never claimed as live company metrics.
 
