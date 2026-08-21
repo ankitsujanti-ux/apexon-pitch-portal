@@ -6,6 +6,7 @@ import { getPalette } from "../lib/palette.js";
 import { dashboardCopy } from "../lib/fallbacks.js";
 import { logoDataUri as apexonWordmark } from "../lib/templateTheme.js";
 import { platformFromRequirement } from "../lib/briefFirst.js";
+import { toChars, toLabel, toSentences } from "../lib/text.js";
 
 function escapeHtml(str) {
   return String(str || "")
@@ -16,10 +17,15 @@ function escapeHtml(str) {
 }
 
 function shortLabel(title) {
-  const clean = String(title || "Use case").replace(/[\u201C\u201D]/g, '"').trim();
-  const first = clean.split(/[:—–|-]/)[0].trim();
-  if (first.length <= 26) return first;
-  return first.slice(0, 24).replace(/\s+\S*$/, "") + "...";
+  return toLabel(String(title || "Use case").replace(/[\u201C\u201D]/g, '"'), 4);
+}
+
+// Panel headings are labels, not sentences. The model writes lookFirst as an
+// instruction ("Start with the newest defect spike that is spreading"), so it
+// gets reduced to the noun phrase rather than chopped mid-clause.
+function vizHeading(useCase, fallback) {
+  const label = toLabel(useCase.lookFirst || "", 5);
+  return label || fallback;
 }
 
 function twoLine(text) {
@@ -103,9 +109,7 @@ function kpiRow({ copy, useCase, tabId, count = 4 }) {
 // This is a product mock, not the pitch deck. The deck carries the business
 // case; here we show what the working screen looks like with one short caption.
 function screenCaption(useCase) {
-  const raw = String(useCase.whatItShows || useCase.lookFirst || useCase.title || "").replace(/\s+/g, " ").trim();
-  const first = raw.split(/(?<=\.)\s+/)[0] || raw;
-  const caption = first.length > 132 ? `${first.slice(0, 130).replace(/\s+\S*$/, "")}...` : first;
+  const caption = toSentences(useCase.whatItShows || useCase.title || "", 150);
   return caption ? `<p class="caption">${escapeHtml(caption)}</p>` : "";
 }
 
@@ -126,7 +130,7 @@ function pieceBars({ copy, tabId, title }) {
 
 function pieceAlerts({ copy, tabId }) {
   const alerts = copy.feed
-    .slice(0, 3)
+    .slice(0, 5)
     .map(
       ([k, label, text]) =>
         `<div class="alert ${k}"><span class="pill ${k}">${escapeHtml(label)}</span><span>${escapeHtml(text)}</span></div>`
@@ -140,12 +144,13 @@ function pieceAlerts({ copy, tabId }) {
 
 function pieceRecord({ copy, useCase, tabId, companyName }) {
   const initials = companyName.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "UC";
-  const kind = useCase.recordKind || useCase.lookFirst || useCase.title.split(/[—–-]/)[0].trim();
+  const kind = useCase.recordKind || vizHeading(useCase, toLabel(useCase.title, 4));
   const data = typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer;
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-rec')">i</button>
     <div id="${tabId}-rec" class="pop">${twoLine("One record, previously split across systems. Sample only.")}</div>
     <h3>${escapeHtml(kind)}</h3>
+    <div class="rec-body">
     <div class="fan">
       <div class="avatar">${escapeHtml(initials)}</div>
       <div>
@@ -158,6 +163,7 @@ function pieceRecord({ copy, useCase, tabId, companyName }) {
       <div><span>Feed</span><b>${escapeHtml(copy.kpis[3]?.label || "Healthy")}</b></div>
       <div><span>Data</span><b>${escapeHtml(data || "Operational")}</b></div>
       <div><span>Updated</span><b>2 min ago</b></div>
+    </div>
     </div>
   </article>`;
 }
@@ -183,7 +189,7 @@ function pieceHeat({ useCase, tabId }) {
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-heat')">i</button>
     <div id="${tabId}-heat" class="pop">${twoLine("Each cell is an area in this operation. Green is fine, amber needs a look, red needs a person.")}</div>
-    <h3>${escapeHtml(useCase.lookFirst || "Where to look")}</h3>
+    <h3>${escapeHtml(vizHeading(useCase, "Where to look"))}</h3>
     <div class="heat">${zones
       .map((z, i) => `<div class="cell ${tones[i]}">${escapeHtml(z)}<small>${labels[i]}</small></div>`)
       .join("")}</div>
@@ -195,8 +201,11 @@ function pieceTable({ copy, useCase, tabId }) {
   while (cols.length < 4) cols.push(["Record", "Status", "Guidance", "Next"][cols.length]);
   const extra = ["Hold", "Release", "Watch", "Ship"];
   const next = ["Owner assigned", "Wait on lab", "Buffer OK", "Ready"];
-  const rows = copy.feed.slice(0, 4).map(([k, label, text], i) => {
-    const item = text.split(/[—–.]/)[0].slice(0, 42);
+  // A working list with four rows reads like a placeholder. Cycle the sample
+  // feed so the table looks like a real queue and fills its panel.
+  const feed = copy.feed.length ? Array.from({ length: 7 }, (_, i) => copy.feed[i % copy.feed.length]) : [];
+  const rows = feed.map(([k, label, text], i) => {
+    const item = toChars(text.split(/[—–.]/)[0], 44, { ellipsis: false });
     return `<tr>
       <td>${escapeHtml(item || `Record ${i + 1}`)}</td>
       <td><span class="pill ${k}">${escapeHtml(label)}</span></td>
@@ -207,7 +216,7 @@ function pieceTable({ copy, useCase, tabId }) {
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-tbl')">i</button>
     <div id="${tabId}-tbl" class="pop">${twoLine("Working list for this job. Status first, then the move.")}</div>
-    <h3>${escapeHtml(useCase.lookFirst || "What needs a decision")}</h3>
+    <h3>${escapeHtml(vizHeading(useCase, "What needs a decision"))}</h3>
     <table>
       <thead><tr>${cols.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>
       <tbody data-feed>${rows}</tbody>
@@ -222,7 +231,7 @@ function pieceFlow({ useCase, tabId, platformName }) {
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-flow')">i</button>
     <div id="${tabId}-flow" class="pop">${twoLine("Work moves from systems they already run into one operating view. Sample only.")}</div>
-    <h3>${escapeHtml(useCase.lookFirst || "How this lands")}</h3>
+    <h3>${escapeHtml(vizHeading(useCase, "How this lands"))}</h3>
     <div class="flow">
       <div class="node keep"><div class="h">What they already run</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
       <div class="arrow">→</div>
@@ -252,7 +261,7 @@ function pieceTimeline({ useCase, tabId }) {
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-tl')">i</button>
     <div id="${tabId}-tl" class="pop">${twoLine("The operating path for this job. Follow left to right.")}</div>
-    <h3>${escapeHtml(useCase.lookFirst || "How the job runs")}</h3>
+    <h3>${escapeHtml(vizHeading(useCase, "How the job runs"))}</h3>
     <ol class="timeline">${steps
       .map((s, i) => `<li><span>${i + 1}</span><b>${escapeHtml(s)}</b></li>`)
       .join("")}</ol>
@@ -266,7 +275,7 @@ function pieceEntities({ useCase, companyName, tabId }) {
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-ent')">i</button>
     <div id="${tabId}-ent" class="pop">${twoLine("Objects this team already knows. Tiles are labels, not product logos.")}</div>
-    <h3>${escapeHtml(useCase.lookFirst || "What this screen works on")}</h3>
+    <h3>${escapeHtml(vizHeading(useCase, "What this screen works on"))}</h3>
     <div class="entities">${items
       .map((name) => {
         const initials = String(name).replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "•";
@@ -278,7 +287,7 @@ function pieceEntities({ useCase, companyName, tabId }) {
 
 function renderPiece(name, ctx) {
   if (name === "kpis") return kpiRow(ctx);
-  if (name === "bars") return pieceBars({ ...ctx, title: ctx.useCase.lookFirst || "Status mix" });
+  if (name === "bars") return pieceBars({ ...ctx, title: vizHeading(ctx.useCase, "Status mix") });
   if (name === "alerts") return pieceAlerts(ctx);
   if (name === "record") return pieceRecord(ctx);
   if (name === "actions") return pieceActions(ctx);
@@ -298,15 +307,14 @@ function tabInner({ companyName, domain, useCase, tabId, index, total, layout, p
   const visuals = blocks.filter((b) => b !== "kpis");
   const kpis = blocks.includes("kpis") ? kpiRow(ctx) : "";
   const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
-  const stage =
-    visuals.length >= 2
-      ? `<div class="stage with-side">${panels}</div>`
-      : panels;
+  // Always staged, even for a single visual. Left unwrapped it kept its natural
+  // height and left most of the screen empty.
+  const stage = `<div class="stage${visuals.length >= 2 ? " with-side" : ""}">${panels}</div>`;
 
   return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(blocks.join("+"))}">
     <div class="title-row">
       <div>
-        <p class="kicker">Screen ${index + 1} of ${total} · ${escapeHtml(useCase.lookFirst || domain)}</p>
+        <p class="kicker">Screen ${index + 1} of ${total} · ${escapeHtml(toLabel(domain, 4))}</p>
         <h2>${escapeHtml(useCase.title)}</h2>
         ${useCase.subtitle ? `<p class="sub">${escapeHtml(useCase.subtitle)}</p>` : ""}
       </div>
@@ -451,16 +459,25 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   }
   .kpi-value { font-size: var(--fs-value); font-weight: 800; color: var(--heading); letter-spacing: -0.4px; }
   .kpi-label { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-small); font-weight: 700; }
-  .viz h3, .side h3 { margin: 0 0 8px; padding-right: 22px; color: #d7deea; font-size: var(--fs-h3); font-weight: 700; }
+  .viz h3, .side h3 { margin: 0 0 10px; padding-right: 22px; color: #d7deea; font-size: var(--fs-h3); font-weight: 700; flex: none; }
   .stage { flex: 1; min-height: 0; display: grid; gap: 12px; }
   .stage.with-side { grid-template-columns: 1.35fr 0.85fr; }
-  .viz, .side { min-height: 0; overflow: hidden; }
-  .bar-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: var(--fs-body); }
+  /* Panels are columns so their content can claim the leftover height instead
+     of sitting at the top of an over-tall box. */
+  .viz, .side { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .viz > *:last-child, .side > *:last-child { flex: 1; min-height: 0; }
+  .heat, .entities, .timeline, .flow, .compare, .bars, .feed, .tablewrap { min-height: 0; }
+  .bars { display: flex; flex-direction: column; justify-content: space-evenly; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-body); }
   .nm { width: 72px; flex: none; color: #d7deea; }
   .track { flex: 1; height: 14px; background: #0b1220; border-radius: 8px; overflow: hidden; }
   .fill { display: block; height: 100%; border-radius: 8px; }
   .vv { width: 48px; text-align: right; font-weight: 700; color: var(--heading); }
-  .feed, .nba-list { list-style: none; margin: 0; padding: 0; }
+  .feed, .nba-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-evenly; }
+  .alerts { display: flex; flex-direction: column; justify-content: space-evenly; }
+  .rec-body { display: flex; flex-direction: column; justify-content: space-evenly; }
+  .tablewrap { display: block; }
+  table tbody tr { height: 1px; }
   .feed li, .nba { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #243556; font-size: var(--fs-body); }
   .feed li:last-child, .nba:last-child { border-bottom: 0; }
   .conf { margin-left: auto; font-size: var(--fs-micro); font-weight: 700; color: var(--blue60); white-space: nowrap; }
@@ -472,32 +489,40 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .meta { color: var(--muted); font-size: var(--fs-small); margin-top: 4px; }
   .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; font-size: var(--fs-small); }
   .attr span { color: var(--muted); display: block; font-size: var(--fs-micro); }
-  .heat { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-  .cell { border-radius: 7px; padding: 12px 6px; text-align: center; font-size: var(--fs-small); font-weight: 700; }
+  .heat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-content: stretch; }
+  .cell { border-radius: 7px; padding: 12px 6px; text-align: center; font-size: var(--fs-small); font-weight: 700; display: flex; flex-direction: column; justify-content: center; }
   .cell small { display: block; font-weight: 600; margin-top: 4px; opacity: .9; }
   .cell.good { background: #0e7c66; color: #fff; }
   .cell.warn { background: #b8860b; color: #fff; }
   .cell.bad { background: #E54A24; color: #fff; }
-  .flow { display: flex; align-items: stretch; gap: 8px; }
+  /* Nodes keep their own height and the group centres. Stretching them to the
+     full panel left three tall boxes with text stranded at the top. */
+  .flow { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .flow .node { display: flex; flex-direction: column; justify-content: center; }
   .node { flex: 1; border: 1.5px solid #243556; border-radius: 10px; padding: 12px; background: #0b1220; }
   .node .h { font-weight: 800; font-size: var(--fs-body); }
   .node .s { font-size: var(--fs-small); color: var(--muted); margin-top: 4px; }
   .node.mid { border-color: var(--blue); background: #102a4a; }
   .node.out { border-color: #0e7c66; }
   .arrow { display: grid; place-items: center; color: var(--blue60); font-size: var(--fs-h2); font-weight: 800; }
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: calc(100% - 28px); }
-  .compare .col { background: #0b1220; border-radius: 10px; padding: 12px; border: 1px solid #243556; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .compare .col { background: #0b1220; border-radius: 10px; padding: 12px; border: 1px solid #243556; display: flex; flex-direction: column; }
   .compare h4 { margin: 0 0 8px; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; }
   .compare .before h4 { color: #ffd48a; }
   .compare .after h4 { color: #7ddea0; }
   .compare p { margin: 0; color: #d7deea; font-size: var(--fs-body); line-height: 1.4; }
-  .timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .timeline li { background: #0b1220; border-radius: 10px; padding: 12px; min-height: 0; }
-  .timeline span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); font-size: var(--fs-small); font-weight: 800; margin-bottom: 8px; }
-  .entities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  /* A vertical path. As four columns in a narrow side panel these became tall,
+     mostly-empty slivers; as rows they fill the panel and read in order. */
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 8px; align-content: stretch; }
+  .timeline li {
+    background: #0b1220; border-radius: 10px; padding: 10px 12px; min-height: 0;
+    display: flex; align-items: center; gap: 11px;
+  }
+  .timeline span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); font-size: var(--fs-small); font-weight: 800; margin: 0; flex: none; }
+  .entities { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-content: stretch; }
   .entity { display: flex; gap: 10px; align-items: center; background: #0b1220; border-radius: 10px; padding: 10px; }
   .entity span { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #1D6EE4; font-weight: 800; font-size: var(--fs-small); flex: none; }
-  .alert { display: flex; gap: 8px; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: var(--fs-small); border-left: 4px solid; }
+  .alert { display: flex; gap: 8px; padding: 9px 10px; border-radius: 8px; margin: 0; font-size: var(--fs-small); border-left: 4px solid; align-items: flex-start; }
   .alert.good { background: #16351f; border-color: #7ddea0; }
   .alert.warn { background: #3a2a10; border-color: #ffd48a; }
   .alert.bad { background: #3a1515; border-color: #ff8d80; }
