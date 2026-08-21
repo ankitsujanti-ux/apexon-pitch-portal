@@ -9,6 +9,24 @@ function sentence(text, fallback) {
   return clean || fallback;
 }
 
+function fallbackVisual(i, label, companyName) {
+  const screens = [
+    `<div class="row"><article class="viz"><h3>${label}</h3><div class="heat"><div class="cell bad">A<small>Act</small></div><div class="cell warn">B<small>Watch</small></div><div class="cell good">C<small>Clear</small></div><div class="cell warn">D<small>Watch</small></div><div class="cell good">E<small>Clear</small></div><div class="cell good">F<small>Clear</small></div></div></article><article class="side"><h3>Needs a person</h3><div class="alerts"><div class="alert bad"><span class="pill bad">Act</span><span>Oldest item on ${label} still open.</span></div><div class="alert warn"><span class="pill warn">Watch</span><span>Signal drifted this hour.</span></div></div></article></div>`,
+    `<div class="row eq"><article class="viz"><h3>One record</h3><div class="gauge"><div class="kpi-value">Open</div><p class="meta">${companyName} · sample</p></div></article><article class="side"><h3>Next actions</h3><ul class="queue"><li><span class="n">1</span><span>Assign an owner</span></li><li><span class="n">2</span><span>Act in the window</span></li><li><span class="n">3</span><span>Record the outcome</span></li></ul></article></div>`,
+    `<div class="stack"><div class="kpis"><article class="kpi"><div class="kpi-value">18</div><div class="kpi-label">Open</div></article><article class="kpi"><div class="kpi-value">96%</div><div class="kpi-label">On time</div></article><article class="kpi"><div class="kpi-value">42h</div><div class="kpi-label">Oldest</div></article><article class="kpi"><div class="kpi-value">OK</div><div class="kpi-label">Feed</div></article></div><article class="viz"><h3>${label}</h3><div class="funnel"><div class="step" style="width:100%">Seen</div><div class="step" style="width:78%">Owned</div><div class="step" style="width:52%">Acting</div><div class="step" style="width:31%">Closed</div></div></article></div>`,
+    `<div class="row"><article class="viz"><h3>Today vs the move</h3><div class="compare"><div class="col before"><h4>Today</h4><p>The team waits on last night's pack.</p></div><div class="col after"><h4>After</h4><p>${label} is a live view with an owner.</p></div></div></article><article class="side"><h3>Path</h3><ol class="timeline"><li><span>1</span><b>See it</b></li><li><span>2</span><b>Own it</b></li><li><span>3</span><b>Act</b></li><li><span>4</span><b>Close</b></li></ol></article></div>`,
+    `<div class="board"><div class="col"><h4>Waiting</h4><p>Two lots idle.</p></div><div class="col"><h4>In play</h4><p>Owner assigned.</p></div><div class="col"><h4>Done</h4><p>Closed this shift.</p></div></div>`,
+  ];
+  const slides = [
+    { idea: "Where to look first", regions: [{ kind: "quote", span: 12, kicker: "The point", body: `${label} shows what is outside the expected range right now.` }, { kind: "list", span: 12, kicker: "What that is worth", items: ["Caught inside the window.", "Less time reconciling packs.", "One number with a source."] }] },
+    { idea: "The numbers leadership watches", regions: [{ kind: "kpis", span: 12 }] },
+    { idea: "Today versus after", regions: [{ kind: "compare", span: 12, kicker: "Today", title: "After", items: ["Overnight packs.", "A live view with an owner."] }] },
+    { idea: "The path the work takes", regions: [{ kind: "steps", span: 12, items: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"] }] },
+    { idea: "What we can prove", regions: [{ kind: "pair", span: 6, kicker: "Data", body: "Uses feeds this industry already captures." }, { kind: "callout", span: 6, kicker: "Effort", body: "Join and surface — nothing is replaced." }] },
+  ];
+  return { screenHtml: screens[i % screens.length], slide: slides[i % slides.length] };
+}
+
 function industryKey(domain, requirement) {
   const t = `${domain} ${requirement}`.toLowerCase();
   if (/food|beverage|chocolate|cocoa|confection|bakery|dairy|snack/.test(t)) return "food";
@@ -227,6 +245,7 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       action: fit,
       lookFirst: label,
       blocks: layouts[i] || ["table", "actions"],
+      ...fallbackVisual(i, label, companyName),
       slideLayout: ["challenge", "impact", "shift", "journey", "evidence"][i % 5],
       entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
       steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
