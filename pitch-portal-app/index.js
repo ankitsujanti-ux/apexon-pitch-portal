@@ -129,10 +129,6 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       domain,
       requirement,
       research: researchResult,
-      numUseCases: 5,
-      numMockupTabs: 5,
-      // The reasoning pipeline takes several minutes, so the portal shows which
-      // pass is running instead of sitting on one opaque "use-cases" label.
       onStep: (label) => {
         console.log(`[${companyName}]   reasoning: ${label}...`);
         patchJob(jobId, { step: "use-cases", detail: label });
