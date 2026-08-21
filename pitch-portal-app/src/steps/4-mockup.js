@@ -1,6 +1,6 @@
 // Interactive HTML mockup — horizontal tabs, no page scroll. Each screen
 // explains what it shows, why it matters, and what to do, then paints a
-// layout chosen for this brief (not a copied Hornets or Harness demo).
+// layout chosen for this brief.
 
 import { getPalette } from "../lib/palette.js";
 import { dashboardCopy } from "../lib/fallbacks.js";
@@ -226,7 +226,7 @@ function pieceFlow({ useCase, tabId, platformName }) {
     <div class="flow">
       <div class="node keep"><div class="h">What they already run</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
       <div class="arrow">→</div>
-      <div class="node fabric"><div class="h">${escapeHtml(mid)}</div><div class="s">${escapeHtml((useCase.techComponents || []).slice(1, 3).join(" · ") || "Governed join")}</div></div>
+      <div class="node mid"><div class="h">${escapeHtml(mid)}</div><div class="s">${escapeHtml((useCase.techComponents || []).slice(1, 3).join(" · ") || "Governed join")}</div></div>
       <div class="arrow">→</div>
       <div class="node out"><div class="h">What they see</div><div class="s">${escapeHtml(useCase.benefit || "A live operating view")}</div></div>
     </div>
@@ -482,7 +482,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .node { flex: 1; border: 1.5px solid #243556; border-radius: 10px; padding: 12px; background: #0b1220; }
   .node .h { font-weight: 800; font-size: var(--fs-body); }
   .node .s { font-size: var(--fs-small); color: var(--muted); margin-top: 4px; }
-  .node.fabric { border-color: var(--blue); background: #102a4a; }
+  .node.mid { border-color: var(--blue); background: #102a4a; }
   .node.out { border-color: #0e7c66; }
   .arrow { display: grid; place-items: center; color: var(--blue60); font-size: var(--fs-h2); font-weight: 800; }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: calc(100% - 28px); }
