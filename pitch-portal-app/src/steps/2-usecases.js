@@ -3,8 +3,9 @@ import { fallbackUseCases } from "../lib/fallbacks.js";
 import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
 import { runReasoning } from "../lib/reasoningPasses.js";
 import { TONE_RULE, lintUseCases } from "../lib/toneGuard.js";
+import { clampCount, MAX_SCREENS, MIN_SCREENS } from "../lib/designContract.js";
 
-export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
+export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -156,7 +157,25 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
     steps: Array.isArray(uc.steps) ? uc.steps.map((s) => clip(s, 36)).filter(Boolean).slice(0, 4) : [],
     recordKind: clip(uc.recordKind || "", 24),
     slideLayout: String(uc.slideLayout || "").toLowerCase().trim(),
+    screenHtml: typeof uc.screenHtml === "string" ? uc.screenHtml.slice(0, 14000) : "",
+    slide: normalizeSlide(uc.slide),
   };
+}
+
+function normalizeSlide(raw) {
+  if (!raw || typeof raw !== "object") return { idea: "", regions: [] };
+  const regions = (Array.isArray(raw.regions) ? raw.regions : [])
+    .map((r) => ({
+      kind: String(r?.kind || "pair").toLowerCase().trim(),
+      span: Number(r?.span) || 6,
+      kicker: clip(r?.kicker, 28),
+      title: clip(r?.title, 42),
+      body: clip(r?.body, 280),
+      items: (Array.isArray(r?.items) ? r.items : []).map((s) => clip(s, 140)).filter(Boolean).slice(0, 5),
+      accent: ["good", "warn", "accent", "mute"].includes(r?.accent) ? r.accent : "",
+    }))
+    .slice(0, 4);
+  return { idea: clip(raw.idea, 90), regions };
 }
 
 const DECK_LAYOUTS = ["challenge", "impact", "shift", "journey", "evidence"];
@@ -205,8 +224,8 @@ export async function generateUseCases({
   domain,
   requirement,
   research,
-  numUseCases = 5,
-  numMockupTabs = 5,
+  numUseCases = 0,
+  numMockupTabs = 0,
   onStep,
 }) {
   if (!companyName || !domain || !requirement || !research) {
@@ -215,16 +234,19 @@ export async function generateUseCases({
     );
   }
 
+  const asked = numUseCases ? clampCount(numUseCases, 5) : 0;
+  const fallbackCount = asked || 5;
   const fallback = fallbackUseCases({
     companyName,
     domain,
     requirement,
-    numUseCases,
-    numMockupTabs,
+    numUseCases: fallbackCount,
+    numMockupTabs: numMockupTabs || fallbackCount,
   });
 
-  const draftPrompt = (reasoning) =>
-    `${BRIEF_FIRST_RULE}
+  const draftPrompt = (reasoning, n) => {
+    const count = n || asked || 5;
+    return `${BRIEF_FIRST_RULE}
 
 You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
 
@@ -263,9 +285,11 @@ Then design each HTML screen. The HTML is the working product, NOT the deck — 
 - whatItShows: ONE short sentence naming what is on the screen. This is the only caption the screen gets.
 - whyItMatters / action: one sentence each, used elsewhere. Keep them plain.
 
-Compose the visual from 1-3 primitives, named in THEIR language. Different mix per tab. Add entities (plants, lots, stores, claims — THEIR objects) and steps (a 3-4 step path) when that screen needs them.
+Compose the visual from 1-3 primitives in blocks as a fallback, AND write screenHtml as the real screen using the allowed design-system classes (row, stack, viz, heat, board, funnel, queue, compare, timeline, and so on). Neighbouring screens must not share a structure. The HTML is the working product, NOT the deck.
 
-Primitives (the HTML builder can only paint these — choose which, do not invent other chart types):
+Then compose the PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ.
+
+Primitives (fallback only, if screenHtml is rejected):
 - kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
 
 Put a product or platform name in techComponents, flow, or labels only if the requirement itself names one. Otherwise describe the capability in plain words.
@@ -295,7 +319,8 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - overallBenefits: exactly 4 lines, 12-20 words each.
 - techComponents: max 3 names from this mandate only.
 
-Produce exactly ${numUseCases} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`;
+Produce exactly ${count} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`;
+  };
 
   let parsed = null;
   let verification = null;
@@ -308,7 +333,7 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
       domain,
       requirement,
       research,
-      count: numUseCases,
+      count: asked,
       draft: null,
       draftPrompt,
       schema: PACKAGE_SCHEMA,
@@ -334,16 +359,18 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
         : Array.isArray(parsed)
           ? parsed
           : [];
+      const want = asked || clampCount(list.length, 5);
+      const tabs = numMockupTabs || want;
       const useCases = list
         .filter((uc) => uc?.title && uc?.businessProblem)
-        .slice(0, numUseCases)
+        .slice(0, want)
         .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain));
-      if (useCases.length >= 3) {
+      if (useCases.length >= MIN_SCREENS) {
         spreadLayouts(useCases);
         attachEvidence(useCases, verification);
         return {
           useCases,
-          topForMockup: useCases.slice(0, numMockupTabs).map((uc) => uc.title),
+          topForMockup: useCases.slice(0, tabs).map((uc) => uc.title),
           overallBenefits: Array.isArray(parsed.overallBenefits)
             ? parsed.overallBenefits.map((s) => clip(String(s), 130)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
@@ -412,5 +439,5 @@ export function selectTopUseCases(useCasesResult) {
     .map((title) => useCases.find((uc) => uc.title === title))
     .filter(Boolean);
   if (picked.length) return picked;
-  return (useCases || []).slice(0, 5);
+  return (useCases || []).slice(0, MAX_SCREENS);
 }
