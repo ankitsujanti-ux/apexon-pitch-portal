@@ -232,11 +232,12 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
           basis: "Assumed from industry norms — validate in discovery before committing.",
         },
       ],
-      whatItShows: `The ${label.toLowerCase()} view for ${companyName}: current status, what is outside the expected range, and who owns each open item.`,
+      whatItShows: `${label} for ${companyName} — what is outside the expected range right now, and who owns it.`,
       whyItMatters: problem,
       action: fit,
       lookFirst: label,
       blocks: layouts[i] || ["table", "actions"],
+      slideLayout: ["challenge", "impact", "shift", "journey", "evidence"][i % 5],
       entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
       steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
       kpis: shape.kpis || [
