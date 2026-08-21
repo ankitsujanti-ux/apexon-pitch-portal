@@ -1,11 +1,11 @@
-// Interactive HTML mockup — horizontal tabs, no page scroll, one relevant
-// visual per tab, Apexon Harness dark theme. Tab content is composed from
-// the current brief (not a copied Hornets or Harness demo).
+// Interactive HTML mockup — horizontal tabs, no page scroll. Each screen
+// explains what it shows, why it matters, and what to do, then paints a
+// layout chosen for this brief (not a copied Hornets or Harness demo).
 
 import { getPalette } from "../lib/palette.js";
 import { dashboardCopy } from "../lib/fallbacks.js";
-import { logoDataUri } from "../lib/logos.js";
 import { logoDataUri as apexonWordmark } from "../lib/templateTheme.js";
+import { platformFromRequirement } from "../lib/briefFirst.js";
 
 function escapeHtml(str) {
   return String(str || "")
@@ -31,7 +31,7 @@ function twoLine(text) {
   return `${escapeHtml(clean.slice(0, 88).replace(/\s+\S*$/, ""))}.<br/>Sample data — not a live company feed.`;
 }
 
-const PIECES = ["kpis", "bars", "alerts", "table", "heat", "record", "actions", "flow"];
+const PIECES = ["kpis", "bars", "alerts", "table", "heat", "record", "actions", "flow", "compare", "timeline", "entities"];
 
 const LEGACY = {
   live: ["kpis", "bars", "alerts"],
@@ -41,29 +41,37 @@ const LEGACY = {
   flow: ["kpis", "flow"],
 };
 
-function inferPieces(useCase) {
+const INFER_BY_INDEX = [
+  ["alerts", "table"],
+  ["record", "actions"],
+  ["heat", "entities"],
+  ["compare", "timeline"],
+  ["timeline", "flow"],
+];
+
+function inferPieces(useCase, index = 0) {
   const t = `${useCase.title} ${useCase.businessProblem} ${useCase.solutionFit || ""}`.toLowerCase();
-  if (/hold|exception|live|pulse|queue|command|venue|wait/.test(t)) return ["kpis", "bars", "alerts"];
-  if (/lab|release|360|customer|profile|fan|brief|governed|recommend/.test(t)) return ["record", "actions"];
-  if (/drift|density|heat|section|coverage|zone/.test(t)) return ["kpis", "heat"];
-  if (/inventory|demand|forecast|price|ticket|pick|warehouse|stock/.test(t)) return ["kpis", "table"];
-  if (/trace|lineage|recall|audit|genealogy/.test(t)) return ["kpis", "flow"];
-  return ["kpis", "bars"];
+  if (/compare|before|after|vs/.test(t)) return ["compare", "actions"];
+  if (/hold|exception|queue/.test(t)) return ["alerts", "table"];
+  if (/lab|release|360|customer|profile|brief|recommend/.test(t)) return ["record", "actions"];
+  if (/drift|density|section|coverage|zone|plant|line/.test(t)) return ["heat", "kpis"];
+  if (/inventory|demand|forecast|price|warehouse|stock/.test(t)) return ["table", "entities"];
+  if (/trace|lineage|recall|audit|path|journey/.test(t)) return ["timeline", "flow"];
+  return INFER_BY_INDEX[index % INFER_BY_INDEX.length];
 }
 
-function normalizePieces(useCase) {
+function normalizePieces(useCase, index = 0) {
   let blocks = Array.isArray(useCase.blocks) ? useCase.blocks.map((b) => String(b).toLowerCase().trim()) : [];
   if (blocks.length === 1 && LEGACY[blocks[0]]) blocks = LEGACY[blocks[0]];
   blocks = blocks.filter((b) => PIECES.includes(b)).slice(0, 3);
-  if (!blocks.length) blocks = inferPieces(useCase);
-  if (blocks.length === 1 && blocks[0] === "kpis") blocks = [...blocks, "bars"];
+  if (!blocks.length) blocks = inferPieces(useCase, index);
   return blocks;
 }
 
 export function assignLayouts(useCases) {
   const used = new Set();
-  return (useCases || []).map((uc) => {
-    let blocks = normalizePieces(uc);
+  return (useCases || []).map((uc, i) => {
+    let blocks = normalizePieces(uc, i);
     let key = blocks.join("+");
     if (used.has(key)) {
       const extra = PIECES.find((p) => !blocks.includes(p) && p !== "kpis");
@@ -92,13 +100,18 @@ function kpiRow({ copy, useCase, tabId, count = 4 }) {
     .join("")}</div>`;
 }
 
-function tabWhyHtml(useCase, tabId) {
-  const raw = useCase.tabWhy || `${useCase.businessProblem || ""} ${useCase.benefit || ""}`.trim();
-  return `<p class="why">
-    <button class="info" type="button" onclick="toggleInfo('${tabId}-why')" aria-label="Why this tab" style="position:static">i</button>
-    <span id="${tabId}-why" class="pop">${twoLine(raw)}</span>
-    ${twoLine(raw)}
-  </p>`;
+function briefCards(useCase) {
+  const cards = [
+    ["What it shows", useCase.whatItShows || useCase.lookFirst || useCase.title],
+    ["Why it matters", useCase.whyItMatters || useCase.businessProblem],
+    ["What you do", useCase.action || useCase.benefit],
+  ];
+  return `<div class="brief">${cards
+    .map(
+      ([k, v]) =>
+        `<article class="brief-card"><p class="brief-k">${escapeHtml(k)}</p><p>${escapeHtml(v)}</p></article>`
+    )
+    .join("")}</div>`;
 }
 
 function pieceBars({ copy, tabId, title }) {
@@ -207,20 +220,64 @@ function pieceTable({ copy, useCase, tabId }) {
   </article>`;
 }
 
-function pieceFlow({ copy, useCase, tabId }) {
+function pieceFlow({ useCase, tabId, platformName }) {
   const raw = typeof useCase.dataPointer === "object" ? useCase.dataPointer.description : useCase.dataPointer;
   const sourceLabel = String(raw || "Existing systems");
+  const mid = (useCase.techComponents && useCase.techComponents[0]) || platformName || "Operating platform";
   return `<article class="viz">
     <button class="info" type="button" onclick="toggleInfo('${tabId}-flow')">i</button>
-    <div id="${tabId}-flow" class="pop">${twoLine("Nothing is replaced. Fabric reads what they already run.")}</div>
+    <div id="${tabId}-flow" class="pop">${twoLine("Work moves from systems they already run into one operating view. Sample only.")}</div>
     <h3>${escapeHtml(useCase.lookFirst || "How this lands")}</h3>
     <div class="flow">
       <div class="node keep"><div class="h">What they already run</div><div class="s">${escapeHtml(sourceLabel)}</div></div>
       <div class="arrow">→</div>
-      <div class="node fabric"><div class="h">Microsoft Fabric</div><div class="s">OneLake · Real-Time Intelligence · AI</div></div>
+      <div class="node fabric"><div class="h">${escapeHtml(mid)}</div><div class="s">${escapeHtml((useCase.techComponents || []).slice(1, 3).join(" · ") || "Governed join")}</div></div>
       <div class="arrow">→</div>
       <div class="node out"><div class="h">What they see</div><div class="s">${escapeHtml(useCase.benefit || "A live operating view")}</div></div>
     </div>
+  </article>`;
+}
+
+function pieceCompare({ useCase, tabId }) {
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-cmp')">i</button>
+    <div id="${tabId}-cmp" class="pop">${twoLine("Left is how this job runs today. Right is the move this brief enables.")}</div>
+    <h3>Today vs the move</h3>
+    <div class="compare">
+      <div class="col before"><h4>Today</h4><p>${escapeHtml(useCase.businessProblem || "Work is split across systems.")}</p></div>
+      <div class="col after"><h4>The move</h4><p>${escapeHtml(useCase.benefit || useCase.action || "One view they can act on.")}</p></div>
+    </div>
+  </article>`;
+}
+
+function pieceTimeline({ useCase, tabId }) {
+  const steps = (useCase.steps && useCase.steps.length
+    ? useCase.steps
+    : ["See the exception", "Assign an owner", "Act in the window", "Close the loop"]).slice(0, 4);
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-tl')">i</button>
+    <div id="${tabId}-tl" class="pop">${twoLine("The operating path for this job. Follow left to right.")}</div>
+    <h3>${escapeHtml(useCase.lookFirst || "How the job runs")}</h3>
+    <ol class="timeline">${steps
+      .map((s, i) => `<li><span>${i + 1}</span><b>${escapeHtml(s)}</b></li>`)
+      .join("")}</ol>
+  </article>`;
+}
+
+function pieceEntities({ useCase, companyName, tabId }) {
+  const items = (useCase.entities && useCase.entities.length
+    ? useCase.entities
+    : [companyName, useCase.recordKind || "Record", "Owner", "Shift"]).slice(0, 6);
+  return `<article class="viz">
+    <button class="info" type="button" onclick="toggleInfo('${tabId}-ent')">i</button>
+    <div id="${tabId}-ent" class="pop">${twoLine("Objects this team already knows. Tiles are labels, not product logos.")}</div>
+    <h3>${escapeHtml(useCase.lookFirst || "What this screen works on")}</h3>
+    <div class="entities">${items
+      .map((name) => {
+        const initials = String(name).replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase() || "•";
+        return `<div class="entity"><span>${escapeHtml(initials)}</span><b>${escapeHtml(name)}</b></div>`;
+      })
+      .join("")}</div>
   </article>`;
 }
 
@@ -233,13 +290,16 @@ function renderPiece(name, ctx) {
   if (name === "heat") return pieceHeat(ctx);
   if (name === "table") return pieceTable(ctx);
   if (name === "flow") return pieceFlow(ctx);
+  if (name === "compare") return pieceCompare(ctx);
+  if (name === "timeline") return pieceTimeline(ctx);
+  if (name === "entities") return pieceEntities(ctx);
   return "";
 }
 
-function tabInner({ companyName, domain, useCase, tabId, index, layout }) {
+function tabInner({ companyName, domain, useCase, tabId, index, total, layout, platformName }) {
   const copy = dashboardCopy(companyName, domain, useCase);
-  const blocks = Array.isArray(layout) ? layout : normalizePieces(useCase);
-  const ctx = { copy, useCase, tabId, companyName, domain };
+  const blocks = Array.isArray(layout) ? layout : normalizePieces(useCase, index);
+  const ctx = { copy, useCase, tabId, companyName, domain, platformName };
   const visuals = blocks.filter((b) => b !== "kpis");
   const kpis = blocks.includes("kpis") ? kpiRow(ctx) : "";
   const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
@@ -251,18 +311,18 @@ function tabInner({ companyName, domain, useCase, tabId, index, layout }) {
   return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(blocks.join("+"))}">
     <div class="title-row">
       <div>
-        <p class="kicker">Use case ${index + 1} of 5</p>
+        <p class="kicker">Screen ${index + 1} of ${total}</p>
         <h2>${escapeHtml(useCase.title)}</h2>
-        ${tabWhyHtml(useCase, tabId)}
       </div>
-      <button class="primary" type="button">${escapeHtml(copy.button)}</button>
+      <button class="primary" type="button">${escapeHtml(copy.button || useCase.action || "Walk this screen")}</button>
     </div>
+    ${briefCards(useCase)}
     ${kpis}
     ${stage}
   </section>`;
 }
 
-export async function buildMockup({ companyName, domain, topUseCases, palette, deckFileName }) {
+export async function buildMockup({ companyName, domain, requirement = "", topUseCases, palette, deckFileName }) {
   if (!companyName || !domain || !Array.isArray(topUseCases) || topUseCases.length === 0) {
     throw new Error("buildMockup requires companyName, domain, and a non-empty topUseCases array");
   }
@@ -270,8 +330,12 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
   const colors = palette || getPalette(domain, companyName);
   const tabs = topUseCases.slice(0, 5);
   const layouts = assignLayouts(tabs);
-  const apexonSrc = apexonWordmark() || logoDataUri("apexon");
-  const fabricSrc = logoDataUri("fabric");
+  const apexonSrc = apexonWordmark();
+  const platform = platformFromRequirement(requirement, domain);
+  const platformName = platform.name === "Target platform" ? "" : platform.name;
+  const footerLine = platformName
+    ? `${platform.name} · ${platform.components.slice(0, 2).join(" · ")}`
+    : "Apexon walkthrough · sample data";
   const nav = tabs
     .map(
       (uc, i) =>
@@ -287,7 +351,9 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
           useCase: uc,
           tabId: `tab-${i}`,
           index: i,
+          total: tabs.length,
           layout: layouts[i],
+          platformName,
         })}</div>`
     )
     .join("");
@@ -300,7 +366,7 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>${escapeHtml(companyName)} | Apexon AI Innovation Hub</title>
+<title>${escapeHtml(companyName)} | ${escapeHtml(domain)} walkthrough</title>
 <style>
   :root {
     --navy: #${colors.primary};
@@ -367,9 +433,11 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
   .view-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; gap: 10px; }
   .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex: none; }
   .kicker { margin: 0 0 4px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-  h2 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
-  .why { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.4; max-width: 78ch; }
-  .why .info { margin-right: 6px; }
+  h2 { margin: 0 0 4px; font-size: 20px; line-height: 1.2; }
+  .brief { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; flex: none; }
+  .brief-card { background: var(--card); border: 1px solid var(--blue); border-radius: 10px; padding: 10px 12px; }
+  .brief-k { margin: 0 0 4px; color: var(--accent); font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .brief-card p { margin: 0; color: #d7deea; font-size: 13px; line-height: 1.35; }
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: none; }
   .kpi, .viz, .side {
     background: var(--card); border: 1px solid var(--blue); border-radius: 12px;
@@ -411,6 +479,18 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
   .node.fabric { border-color: var(--blue); background: #102a4a; }
   .node.out { border-color: #0e7c66; }
   .arrow { display: grid; place-items: center; color: var(--blue60); font-size: 22px; font-weight: 800; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: calc(100% - 28px); }
+  .compare .col { background: #0b1220; border-radius: 10px; padding: 12px; border: 1px solid #243556; }
+  .compare h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  .compare .before h4 { color: #ffd48a; }
+  .compare .after h4 { color: #7ddea0; }
+  .compare p { margin: 0; color: #d7deea; font-size: 13.5px; line-height: 1.4; }
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .timeline li { background: #0b1220; border-radius: 10px; padding: 12px; min-height: 0; }
+  .timeline span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+  .entities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .entity { display: flex; gap: 10px; align-items: center; background: #0b1220; border-radius: 10px; padding: 10px; }
+  .entity span { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #1D6EE4; font-weight: 800; font-size: 12px; flex: none; }
   .alert { display: flex; gap: 8px; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: 12.5px; border-left: 4px solid; }
   .alert.good { background: #16351f; border-color: #7ddea0; }
   .alert.warn { background: #3a2a10; border-color: #ffd48a; }
@@ -443,9 +523,9 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
     flex: 0 0 28px; padding: 0 22px; display: flex; align-items: center; gap: 8px;
     color: var(--muted); font-size: 11.5px; max-width: 1220px; width: 100%; margin: 0 auto;
   }
-  footer img { height: 16px; mix-blend-mode: screen; }
+  footer img { height: 16px; width: auto; }
   @media (max-width: 960px) {
-    .kpis, .stage.with-side { grid-template-columns: 1fr 1fr; }
+    .kpis, .stage.with-side, .brief { grid-template-columns: 1fr 1fr; }
     .title-row { flex-direction: column; }
   }
 </style>
@@ -454,7 +534,7 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
 <header>
   <div class="brand">
     ${apexonSrc ? `<img src="${apexonSrc}" alt="Apexon" />` : "<strong>Apexon</strong>"}
-    <span class="hub">AI Innovation Hub · <b>${escapeHtml(companyName)}</b></span>
+    <span class="hub">${escapeHtml(domain)} walkthrough · <b>${escapeHtml(companyName)}</b></span>
   </div>
   ${deckLink}
 </header>
@@ -462,12 +542,12 @@ export async function buildMockup({ companyName, domain, topUseCases, palette, d
 <p class="sample">
   <span class="page-info">
     <button class="info" type="button" onclick="toggleInfo('page-i')" aria-label="About this demonstration" style="position:static">i</button>
-    <span id="page-i" class="pop">Built for ${escapeHtml(companyName)} leadership to walk the five use cases.<br/>Figures are sample only — not a live system.</span>
+    <span id="page-i" class="pop">Each tab is one job from this brief: what the screen shows, why it matters, and what to do next.<br/>Figures are sample only — not a live system.</span>
   </span>
-  <b>Sample data</b> — illustrative mock-up of how the delivered dashboards could look. Not live ${escapeHtml(companyName)} figures.
+  <b>Sample data</b> — walkthrough for ${escapeHtml(companyName)}. Not live company figures.
 </p>
 <main>${panels}</main>
-<footer>${fabricSrc ? `<img src="${fabricSrc}" alt="" />` : ""} Microsoft Fabric · Real-Time Intelligence · Azure AI Foundry · Harness</footer>
+<footer>${apexonSrc ? `<img src="${apexonSrc}" alt="" />` : ""} ${escapeHtml(footerLine)}</footer>
 <script>
 function showTab(id) {
   document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
