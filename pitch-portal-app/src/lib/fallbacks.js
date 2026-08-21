@@ -31,27 +31,27 @@ export function fallbackResearch({ companyName, domain, requirement }) {
 
 Typical systems include ERP (orders and inventory), MES or a production historian (line events), LIMS or quality systems (lab results and holds), WMS (warehouse), and supplier portals. The useful data is already there: batch records, temperatures, quality checks, cocoa or ingredient inventory, and customer orders. It is rarely in one place in time to act.
 
-"${req}" would bring those sources into Microsoft Fabric, stream line and quality events with Real-Time Intelligence, and let a governed Foundry agent brief operations without bypassing food-safety controls (FDA, HACCP, allergen labeling, lot traceability).`,
+The mandate here is "${req}". That means joining those sources and putting line and quality events in front of the plant while a run can still be corrected. Every food-safety control stays in place: FDA, HACCP, allergen labeling, and lot traceability.`,
     health: `${companyName} operates in ${domain}. Work centers on patients or members, encounters, claims, quality measures, and staffing. Delays in seeing exceptions (denials, census spikes, missed SLAs) show up as cost and risk.
 
 Typical systems include EHR/EMR, claims platforms, ERP, scheduling, and quality registries. PHI and payer data already exist but sit behind access controls and batch reports.
 
-"${req}" would land those sources in a governed Fabric lakehouse, add real-time operational views where they are allowed, and use Foundry agents only on approved data with audit trails (HIPAA, payer rules, retention).`,
+The mandate here is "${req}". That means bringing those sources together and showing exceptions where the rules allow it. Only approved data is used, and every step leaves an audit trail under HIPAA, payer rules, and retention policy.`,
     finance: `${companyName} is a ${domain} business. Revenue depends on transactions, risk, customer servicing, and staying inside regulatory bounds. Overnight reports are too slow when fraud, liquidity, or service exceptions move during the day.
 
 Typical systems include core banking or card processing, CRM, payment switches, data warehouses, and case-management tools. Transaction, customer, and risk data already exist.
 
-"${req}" would unify those feeds in Fabric, surface live exceptions with Real-Time Intelligence, and keep AI briefings inside existing controls (PCI, SOX, model risk, access logs).`,
+The mandate here is "${req}". That means joining those feeds and surfacing exceptions during the day rather than overnight. Every decision stays inside existing controls: PCI, SOX, model risk, and access logging.`,
     retail: `${companyName} sells in ${domain}. The operating problem is matching demand, stock, and fulfillment while promotions and supply shift during the day.
 
 Typical systems include POS, e-commerce, ERP, WMS, and loyalty/CRM. Sales, inventory, and fulfillment events already exist but land in separate reports.
 
-"${req}" would stream sell-through and inventory into Fabric, flag stockouts and delays in real time, and let a Foundry agent brief merchants without inventing numbers.`,
+The mandate here is "${req}". That means bringing sell-through and inventory together, then flagging stockouts and late deliveries while they can still be fixed. Merchants get a briefing built only from numbers that exist.`,
     manufacturing: `${companyName} is a ${domain} organization. Plants, suppliers, and planners need to see what is happening on the line and in the order book, not yesterday's snapshot.
 
 Typical systems include ERP, MES, quality/QMS, WMS, and machine historians. Orders, inventory, OEE, and quality events already exist.
 
-"${req}" would land those sources in Fabric, turn event streams into a live operations board with Real-Time Intelligence, and keep AI-assisted decisions inside governance (access, lineage, audit).`,
+The mandate here is "${req}". That means joining those sources and turning line and order events into one operating picture. Every assisted decision stays inside governance: access control, lineage, and audit.`,
   };
 
   packs.insurance = packs.finance;
@@ -78,7 +78,6 @@ const PACKS = {
         { name: "Holds opened live", why: "Exceptions caught during the run rather than after, which is where scrap and rework are avoided." },
         { name: "Feed health", why: "Whether the plant stream is still landing, since a stale board quietly stops being trusted." },
       ],
-      tech: ["Microsoft Fabric", "Eventstream", "Real-Time Intelligence"],
       demoScore: 10,
     },
     {
@@ -87,7 +86,6 @@ const PACKS = {
       fit: () => "Streaming rules flag holds as they happen and route them to the quality owner.",
       data: "LIMS/quality checks, allergen and lot records",
       availability: "existing",
-      tech: ["Microsoft Fabric", "Azure AI Foundry", "Data Activator"],
       demoScore: 9,
     },
     {
@@ -96,7 +94,6 @@ const PACKS = {
       fit: () => "Orders, inventory, and supplier receipts sit in one view so planners see what is changing now.",
       data: "ERP inventory, purchase orders, warehouse receipts",
       availability: "existing",
-      tech: ["Microsoft Fabric", "OneLake", "Power BI"],
       demoScore: 8,
     },
     {
@@ -105,7 +102,6 @@ const PACKS = {
       fit: () => "A governed briefing summarizes trusted operational data in plain language, with a source behind each number.",
       data: "KPI marts, quality summaries, production totals",
       availability: "existing",
-      tech: ["Azure AI Foundry", "Microsoft Fabric", "OneLake"],
       demoScore: 7,
     },
     {
@@ -114,7 +110,6 @@ const PACKS = {
       fit: () => "Lot, recipe, and shipping lineage stay in one auditable trail when quality or a retailer asks.",
       data: "Lot genealogy, shipping, recipe/BOM",
       availability: "new",
-      tech: ["Microsoft Fabric", "Purview", "OneLake"],
       demoScore: 6,
     },
   ],
@@ -125,7 +120,6 @@ const PACKS = {
       fit: () => "Event streams become a live operations board leaders can act on.",
       data: "Plant, order, and event telemetry",
       availability: "existing",
-      tech: ["Microsoft Fabric", "Eventstream", "Real-Time Intelligence"],
       demoScore: 10,
     },
     {
@@ -134,7 +128,6 @@ const PACKS = {
       fit: () => "Streaming rules and AI agents flag exceptions as they happen and route them to the right owner.",
       data: "Quality, SLA, and incident records",
       availability: "existing",
-      tech: ["Microsoft Fabric", "Azure AI Foundry", "Data Activator"],
       demoScore: 9,
     },
     {
@@ -143,7 +136,6 @@ const PACKS = {
       fit: () => "Sales, inventory, and supply signals sit in one view so planners see what is changing now.",
       data: "Orders, inventory, and supplier feeds",
       availability: "existing",
-      tech: ["Microsoft Fabric", "OneLake", "Power BI"],
       demoScore: 8,
     },
     {
@@ -152,7 +144,6 @@ const PACKS = {
       fit: () => "A governed briefing summarizes trusted operational data in plain language, with a source behind each number.",
       data: "KPI marts and operational summaries",
       availability: "existing",
-      tech: ["Azure AI Foundry", "Microsoft Fabric", "OneLake"],
       demoScore: 7,
     },
     {
@@ -161,7 +152,6 @@ const PACKS = {
       fit: () => "Lineage, access, and audit history stay in one trail when auditors or customers ask.",
       data: "Lineage, access logs, and master data",
       availability: "new",
-      tech: ["Microsoft Fabric", "Purview", "OneLake"],
       demoScore: 6,
     },
   ],
