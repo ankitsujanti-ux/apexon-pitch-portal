@@ -15,35 +15,23 @@ We do **not** change the agent definition in Azure. `1-research.js` and `2-useca
 
 ## Core rule (permanent)
 
-Treat every shared document, slide, HTML file, or diagram as **reference only**. Do not reuse its domain, product names, architecture, wording, layouts, or visuals unless the **current requirement** explicitly asks for them.
+**Requirement first, reference second.** Shared PPTs, HTML, screenshots, and other materials are **reference only**. They set expected quality and depth. Do **not** copy their content, layout, tabs, charts, architecture, technology, terminology, or visual style unless the **current requirement** explicitly asks for them.
 
 Apexon navy, orange, and the white lockup are brand chrome. They are not content.
 
 ### Required workflow
 
-1. **Extract** the current requirement and constraints.
-2. **Ignore** unrelated details from the reference material (Harness product PPT, Hornets demo, prior clients).
-3. **Brainstorm** at least two viable approaches internally.
-4. **Choose** the approach that best fits this requirement.
-5. **Generate** all content, diagrams, and UI labels from that chosen approach.
+1. Understand the business problem first.
+2. Brainstorm the most appropriate story, visuals, and UI for this company and mandate.
+3. Independently decide layout, screens/tabs, charts, diagrams, and interactions.
+4. Generate new business-specific content.
+5. Design the PPT and HTML around that content.
 
-### Design expectations
+There is no fixed template, chart menu, or tab structure. Do not repeat the same KPI strip or architecture because a reference used them.
 
-- Create a new information architecture for each request.
-- Pick charts, diagrams, and layouts because they fit this data — not because they appeared in a reference.
-- Use domain-appropriate terminology from the current requirement.
-- If the requirement changes, the output should change substantially.
+Every screen must state **what it shows**, **why it matters**, and **what action it enables**. Use logos and product names only when they belong to this requirement. If the mandate has nothing to do with Fabric or Harness, do not introduce them.
 
-### Reuse guardrails
-
-Before finalizing, verify that:
-
-- The primary subject comes from the current requirement, not the reference.
-- No reference-specific names, technologies, or patterns remain unless explicitly requested.
-- The UI structure is newly designed for this use case.
-- Any architecture diagram reflects the requested system, not a previous example.
-
-If the brief is thin, mark assumptions as `industry-typical`. Do not fill gaps from the reference. This pipeline cannot pause for clarifying questions — it must not invent a prior demo’s story instead.
+Final check: if the reference were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
 
 ---
 
@@ -94,16 +82,17 @@ Also design:
 
 - The **title-slide** copy (`deckKicker`, `deckTitle`, `deckSubtitle`, `closeLine`) from this brief.
 - The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Do not paste Discover / Plan / Generate or L1–L4 unless this mandate is that Harness migration path.
-- Each **HTML tab** from 1–3 pieces, labeled in their language.
+- Each **HTML screen** from scratch: `whatItShows`, `whyItMatters`, `action`, plus 1–3 visual primitives. Different mix per tab. Name entities and steps in their language. Do not put Fabric/Harness in labels unless the mandate names them.
 
 Return JSON only, exactly 5 use cases:
 
 ```json
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","whatItShows":"","whyItMatters":"","action":"","tabWhy":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
 ```
 
 Hard length limits:
 
+- `whatItShows`, `whyItMatters`, `action`: max 18 words each.
 - `deckKicker`: max 4 words. From this company or mandate — not a leftover product name.
 - `deckTitle`: max 8 words. Their operating problem.
 - `deckSubtitle`: max 16 words. From this mandate.
@@ -115,9 +104,9 @@ Hard length limits:
 - `businessProblem`: max 28 words.
 - `benefit`: max 22 words.
 - `solutionFit`: max 18 words.
-- `tabWhy`: exactly 2 business sentences. Max 36 words.
+- `tabWhy`: 2 business sentences. Max 36 words.
 - `lookFirst`: max 8 words.
-- `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`. Different mix per tab.
+- `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`, `compare`, `timeline`, `entities`. Unique mix per tab.
 - `kpis`: exactly 4. `name` max 4 words. `why` max 10 words. No invented current numbers.
 - `dataPointer.description`: max 16 words.
 - `difficultyWhy`: max 16 words.
@@ -128,28 +117,16 @@ Hard length limits:
 
 ## Step 3 — Pitch deck (built in code)
 
-Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content and the architecture diagram are generated from this brief.
-
-1. Title — prepared for the company
-2. Agenda — numbered from this brief’s use-case titles
-3. Proposed architecture — sources, stages, and target returned by the model
-4–8. One use case per slide
-9. Thank you
-
-Visual rules (already in code):
-
-- Apexon brand chrome: navy `#0B1220` / `#172440`, accent `#E54A24`, Arial/Helvetica, wave footer, white lockup.
-- Sparse, pre-sales layout. No overflow. No leftover placeholders from a reference deck.
-
----
+Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief. Each use-case slide leads with what the screen shows, why it matters, and what to do.
 
 ## Step 4 — Interactive HTML (built in code)
 
-Hornets is a **quality bar** (different jobs, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names or sports visuals unless this company is that business.
+Hornets is a **quality bar** (different jobs, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
 
 - Dark navy canvas. Horizontal tabs. Fits the viewport.
-- `tabWhy`, `lookFirst`, `blocks`, `columns` / `zones` / `recordKind` come from this brief.
-- The pipeline only assembles those pieces. Sample data is simulated, never claimed as live company metrics.
+- Every tab has a three-part brief: what it shows, why it matters, what you do.
+- Visuals come from `blocks` for this job (`compare`, `timeline`, `entities`, table, heat, record, flow, and so on) — not the same KPI strip on every tab.
+- Sample data is simulated, never claimed as live company metrics.
 
 ---
 
