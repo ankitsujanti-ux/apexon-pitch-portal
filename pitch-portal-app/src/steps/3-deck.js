@@ -1,5 +1,5 @@
-// Widescreen leadership deck on the Apexon Harness visual system.
-// Order matches the Harness template: title → agenda → architecture → use cases → thank you.
+// Widescreen leadership deck on Apexon brand chrome.
+// Order: title → agenda → architecture → use cases → thank you.
 
 import fs from "fs";
 import path from "path";
@@ -478,15 +478,6 @@ function addArchitectureSlide(slide, palette, { companyName, domain, requirement
   });
 }
 
-function moveCopy(uc) {
-  const benefit = pptSafe(uc.benefit);
-  const fit = pptSafe(uc.solutionFit);
-  if (benefit && fit && !benefit.toLowerCase().includes(fit.slice(0, 18).toLowerCase())) {
-    return `${benefit} ${fit}`;
-  }
-  return benefit || fit;
-}
-
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   slide.addText(`USE CASE  ${String(index + 1).padStart(2, "0")}  /  ${String(total).padStart(2, "0")}`, {
     x: MARGIN,
@@ -520,26 +511,24 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
     wrap: true,
   });
 
-  addPanel(slide, palette, {
-    x: MARGIN,
-    y: 0.86,
-    w: 6.2,
-    h: 2.12,
-    kicker: "The business pain",
-    title: "What leadership feels today",
-    body: uc.businessProblem,
-    bodyMax: 180,
-  });
-  addPanel(slide, palette, {
-    x: 6.85,
-    y: 0.86,
-    w: 6.05,
-    h: 2.12,
-    kicker: "The move",
-    title: "What they get",
-    body: moveCopy(uc),
-    accent: "0E7C66",
-    bodyMax: 180,
+  const explainers = [
+    { kicker: "What it shows", title: "This screen", body: uc.whatItShows || uc.lookFirst || uc.title },
+    { kicker: "Why it matters", title: "The business stake", body: uc.whyItMatters || uc.businessProblem },
+    { kicker: "What you do", title: "The next move", body: uc.action || uc.benefit, accent: "0E7C66" },
+  ];
+  const expW = (12.48 - 2 * 0.16) / 3;
+  explainers.forEach((item, i) => {
+    addPanel(slide, palette, {
+      x: MARGIN + i * (expW + 0.16),
+      y: 0.86,
+      w: expW,
+      h: 1.72,
+      kicker: item.kicker,
+      title: item.title,
+      body: item.body,
+      accent: item.accent,
+      bodyMax: 140,
+    });
   });
 
   const kpis = (uc.kpis || []).slice(0, 4);
@@ -547,7 +536,7 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   kpis.forEach((kpi, i) => {
     addPanel(slide, palette, {
       x: MARGIN + i * (kpiW + 0.16),
-      y: 3.12,
+      y: 2.72,
       w: kpiW,
       h: 1.42,
       kicker: "KPI",
@@ -560,37 +549,39 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   const dataLine = typeof uc.dataPointer === "string"
     ? uc.dataPointer
     : uc.dataPointer?.description || "Operational data this industry already holds";
-  const stack = Array.isArray(uc.techComponents) ? uc.techComponents.slice(0, 3).join(" · ") : "Microsoft Fabric";
+  const stack = Array.isArray(uc.techComponents) && uc.techComponents.length
+    ? uc.techComponents.slice(0, 3).join(" · ")
+    : "Named in the mandate";
   addPanel(slide, palette, {
     x: MARGIN,
-    y: 4.68,
+    y: 4.28,
     w: 5.9,
-    h: 1.52,
+    h: 1.92,
     kicker: "Data",
     title: uc.dataPointer?.availability === "new" ? "New join or source" : "Likely already there",
     body: dataLine,
-    bodyMax: 110,
+    bodyMax: 140,
   });
   addPanel(slide, palette, {
     x: 6.54,
-    y: 4.68,
+    y: 4.28,
     w: 3.2,
-    h: 1.52,
+    h: 1.92,
     kicker: "Effort",
     title: uc.difficulty === "easier" ? "Easier" : uc.difficulty === "harder" ? "Harder" : "Moderate",
     body: uc.difficultyWhy || difficultyLabel(uc),
-    bodyMax: 90,
+    bodyMax: 120,
   });
   addPanel(slide, palette, {
     x: 9.94,
-    y: 4.68,
+    y: 4.28,
     w: 2.96,
-    h: 1.52,
-    kicker: "On the platform",
-    title: "How we land it",
+    h: 1.92,
+    kicker: "How we land it",
+    title: "From this mandate",
     body: stack,
     accent: palette.accent,
-    bodyMax: 80,
+    bodyMax: 100,
   });
 }
 
