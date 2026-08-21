@@ -100,62 +100,13 @@ function kpiRow({ copy, useCase, tabId, count = 4 }) {
     .join("")}</div>`;
 }
 
-function narrativeBlock(heading, body) {
-  if (!body) return "";
-  return `<section class="nar"><h4>${escapeHtml(heading)}</h4>${body}</section>`;
-}
-
-function bulletsHtml(items) {
-  const rows = (items || []).filter(Boolean).slice(0, 3);
-  if (!rows.length) return "";
-  return `<ul>${rows.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
-}
-
-// The business case sits beside the visual so a first-time reader understands
-// the use case without anyone presenting it.
-function narrativeColumn(useCase) {
-  const moves = (useCase.solutionMoves || []).slice(0, 3);
-  const movesHtml = moves.length
-    ? `<ul class="moves">${moves
-        .map(
-          (m) =>
-            `<li><b>${escapeHtml(String(m.lead || "The move").replace(/[.:]$/, ""))}.</b> ${escapeHtml(m.detail || "")}</li>`
-        )
-        .join("")}</ul>`
-    : "";
-  const data = typeof useCase.dataPointer === "object" ? useCase.dataPointer?.description : useCase.dataPointer;
-  const dataKicker =
-    useCase.dataPointer?.availability === "new" ? "Data needed — new source or join" : "Data needed — likely already there";
-
-  const assumptions = (useCase.assumptions || []).slice(0, 3);
-  const evidenceHtml = assumptions.length
-    ? `<ul class="ev">${assumptions
-        .map(
-          (a) =>
-            `<li><span class="tag ${a.confidence === "confirmed" ? "ok" : "typ"}">${
-              a.confidence === "confirmed" ? "Confirmed" : "Industry-typical"
-            }</span> ${escapeHtml(a.claim)}${a.basis ? ` <em>${escapeHtml(a.basis)}</em>` : ""}</li>`
-        )
-        .join("")}</ul>`
-    : "";
-
-  return `<aside class="narrative">
-    ${narrativeBlock("The challenge", `<p>${escapeHtml(useCase.challenge || useCase.businessProblem || "")}</p>`)}
-    ${narrativeBlock("How we solve it", movesHtml)}
-    ${narrativeBlock("What you get", bulletsHtml(useCase.businessValue))}
-    ${narrativeBlock("Works with what you have", bulletsHtml(useCase.worksWith))}
-    ${narrativeBlock(dataKicker, data ? `<p>${escapeHtml(data)}</p>` : "")}
-    ${narrativeBlock("What is verified", evidenceHtml)}
-  </aside>`;
-}
-
-function screenLead(useCase) {
-  const shows = useCase.whatItShows || useCase.lookFirst || useCase.title;
-  const act = useCase.action || useCase.benefit;
-  return `<div class="lead">
-    <p><span>On this screen</span> ${escapeHtml(shows)}</p>
-    ${act ? `<p><span class="do">What you do</span> ${escapeHtml(act)}</p>` : ""}
-  </div>`;
+// This is a product mock, not the pitch deck. The deck carries the business
+// case; here we show what the working screen looks like with one short caption.
+function screenCaption(useCase) {
+  const raw = String(useCase.whatItShows || useCase.lookFirst || useCase.title || "").replace(/\s+/g, " ").trim();
+  const first = raw.split(/(?<=\.)\s+/)[0] || raw;
+  const caption = first.length > 132 ? `${first.slice(0, 130).replace(/\s+\S*$/, "")}...` : first;
+  return caption ? `<p class="caption">${escapeHtml(caption)}</p>` : "";
 }
 
 function pieceBars({ copy, tabId, title }) {
@@ -361,14 +312,9 @@ function tabInner({ companyName, domain, useCase, tabId, index, total, layout, p
       </div>
       <button class="primary" type="button">${escapeHtml(copy.button || "Simulate an event")}</button>
     </div>
-    <div class="split">
-      ${narrativeColumn(useCase)}
-      <div class="canvas">
-        ${screenLead(useCase)}
-        ${kpis}
-        ${stage}
-      </div>
-    </div>
+    ${screenCaption(useCase)}
+    ${kpis}
+    ${stage}
   </section>`;
 }
 
@@ -427,6 +373,14 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
     --blue60: #75A2ED;
     --heading: #${colors.heading};
     --muted: #9AA6B8;
+    /* One type scale for the whole page — no ad-hoc font sizes. */
+    --fs-h2: 20px;
+    --fs-h3: 13.5px;
+    --fs-body: 13px;
+    --fs-small: 12px;
+    --fs-kicker: 10.5px;
+    --fs-micro: 11px;
+    --fs-value: 26px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
@@ -447,28 +401,31 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .brand img { height: 22px; width: auto; display: block; }
-  .hub { color: var(--blue60); font-size: 12.5px; border-left: 1px solid rgba(255,255,255,.2); padding-left: 12px; line-height: 1.25; }
+  .hub { color: var(--blue60); font-size: var(--fs-small); border-left: 1px solid rgba(255,255,255,.2); padding-left: 12px; line-height: 1.25; }
   .hub b { color: #fff; }
   .header-link {
     color: #fff; text-decoration: none; border: 1px solid rgba(117,162,237,.4);
-    background: rgba(29,110,228,.18); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    background: rgba(29,110,228,.18); padding: 6px 12px; border-radius: 999px; font-size: var(--fs-small); font-weight: 700;
   }
   nav.tabs {
-    flex: 0 0 44px;
+    flex: 0 0 46px;
     background: #0f1830;
     display: flex; align-items: stretch;
     padding: 0 14px;
     overflow: hidden;
   }
   .tab {
-    color: #b9c2d6; padding: 0 18px; font-size: 13.5px; font-weight: 700;
+    color: #b9c2d6; padding: 0 16px; font-size: var(--fs-h3); font-weight: 700;
     cursor: pointer; border: 0; background: none; border-bottom: 3px solid transparent;
+    /* Tabs share the bar and ellipsis instead of clipping mid-word. */
+    flex: 1 1 0; min-width: 0; max-width: 240px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
   }
   .tab:hover { color: #fff; }
   .tab.active { color: #fff; border-bottom-color: var(--accent); }
   .sample {
     flex: 0 0 28px; margin: 0; padding: 0 22px; display: flex; align-items: center; gap: 8px;
-    color: var(--muted); font-size: 12px; background: #0a1220;
+    color: var(--muted); font-size: var(--fs-small); background: #0a1220;
   }
   .sample b { color: var(--accent); }
   .ev-note { color: #7d8ba3; border-left: 1px solid #2d3f63; padding-left: 8px; margin-left: 4px; }
@@ -483,119 +440,94 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .view.active { display: flex; flex-direction: column; }
   .view-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; gap: 10px; }
   .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex: none; }
-  .kicker { margin: 0 0 4px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-  h2 { margin: 0 0 3px; font-size: 19px; line-height: 1.2; }
-  .sub { margin: 0; color: var(--accent); font-size: 12.5px; font-weight: 700; }
-  .split { flex: 1; min-height: 0; display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 12px; }
-  .narrative {
-    min-height: 0; overflow-y: auto; padding-right: 6px;
-    display: flex; flex-direction: column; gap: 9px;
-    scrollbar-width: thin; scrollbar-color: #2d3f63 transparent;
-  }
-  .narrative::-webkit-scrollbar { width: 6px; }
-  .narrative::-webkit-scrollbar-thumb { background: #2d3f63; border-radius: 3px; }
-  .nar { background: var(--card); border: 1px solid var(--blue); border-radius: 10px; padding: 10px 12px; }
-  .nar h4 { margin: 0 0 6px; color: var(--accent); font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  .nar p { margin: 0; color: #d7deea; font-size: 12.5px; line-height: 1.5; }
-  .nar ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
-  .nar li { color: #d7deea; font-size: 12.5px; line-height: 1.45; padding-left: 12px; position: relative; }
-  .nar li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue60); }
-  .nar .moves li b { color: #fff; }
-  .nar .ev li { padding-left: 0; }
-  .nar .ev li::before { display: none; }
-  .nar .ev em { color: #8e9ab0; font-style: normal; display: block; margin-top: 2px; font-size: 11.5px; }
-  .tag { display: inline-block; border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 800; margin-right: 6px; text-transform: uppercase; letter-spacing: .04em; }
-  .tag.ok { background: #16351f; color: #7ddea0; }
-  .tag.typ { background: #3a2a10; color: #ffd48a; }
-  .canvas { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
-  .lead { flex: none; border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; display: flex; flex-direction: column; gap: 4px; }
-  .lead p { margin: 0; color: #c8d2e2; font-size: 12.5px; line-height: 1.45; }
-  .lead span { color: var(--accent); font-weight: 800; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; margin-right: 6px; }
-  .lead span.do { color: #7ddea0; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: none; }
+  .kicker { margin: 0 0 4px; color: var(--accent); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+  h2 { margin: 0; font-size: var(--fs-h2); line-height: 1.25; font-weight: 700; }
+  .sub { margin: 3px 0 0; color: var(--accent); font-size: var(--fs-body); font-weight: 700; }
+  .caption { margin: 0; color: var(--muted); font-size: var(--fs-body); line-height: 1.45; max-width: 96ch; flex: none; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: none; }
   .kpi, .viz, .side {
     background: var(--card); border: 1px solid var(--blue); border-radius: 12px;
     padding: 12px 14px; position: relative;
   }
-  .kpi-value { font-size: 26px; font-weight: 800; color: var(--heading); letter-spacing: -0.4px; }
-  .kpi-label { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; font-weight: 700; }
-  .viz h3, .side h3 { margin: 0 0 8px; padding-right: 22px; color: #d7deea; font-size: 14px; }
+  .kpi-value { font-size: var(--fs-value); font-weight: 800; color: var(--heading); letter-spacing: -0.4px; }
+  .kpi-label { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-small); font-weight: 700; }
+  .viz h3, .side h3 { margin: 0 0 8px; padding-right: 22px; color: #d7deea; font-size: var(--fs-h3); font-weight: 700; }
   .stage { flex: 1; min-height: 0; display: grid; gap: 12px; }
   .stage.with-side { grid-template-columns: 1.35fr 0.85fr; }
   .viz, .side { min-height: 0; overflow: hidden; }
-  .bar-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 13px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: var(--fs-body); }
   .nm { width: 72px; flex: none; color: #d7deea; }
   .track { flex: 1; height: 14px; background: #0b1220; border-radius: 8px; overflow: hidden; }
   .fill { display: block; height: 100%; border-radius: 8px; }
   .vv { width: 48px; text-align: right; font-weight: 700; color: var(--heading); }
   .feed, .nba-list { list-style: none; margin: 0; padding: 0; }
-  .feed li, .nba { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #243556; font-size: 13px; }
+  .feed li, .nba { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #243556; font-size: var(--fs-body); }
   .feed li:last-child, .nba:last-child { border-bottom: 0; }
-  .conf { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--blue60); white-space: nowrap; }
+  .conf { margin-left: auto; font-size: var(--fs-micro); font-weight: 700; color: var(--blue60); white-space: nowrap; }
   .fan { display: flex; gap: 12px; align-items: center; }
   .avatar {
     width: 48px; height: 48px; border-radius: 50%; flex: none;
     display: grid; place-items: center; font-weight: 800; background: #1D6EE4; color: #fff;
   }
-  .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-  .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; font-size: 12.5px; }
-  .attr span { color: var(--muted); display: block; font-size: 11px; }
+  .meta { color: var(--muted); font-size: var(--fs-small); margin-top: 4px; }
+  .attr { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 12px; font-size: var(--fs-small); }
+  .attr span { color: var(--muted); display: block; font-size: var(--fs-micro); }
   .heat { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-  .cell { border-radius: 7px; padding: 12px 6px; text-align: center; font-size: 12px; font-weight: 700; }
+  .cell { border-radius: 7px; padding: 12px 6px; text-align: center; font-size: var(--fs-small); font-weight: 700; }
   .cell small { display: block; font-weight: 600; margin-top: 4px; opacity: .9; }
   .cell.good { background: #0e7c66; color: #fff; }
   .cell.warn { background: #b8860b; color: #fff; }
   .cell.bad { background: #E54A24; color: #fff; }
   .flow { display: flex; align-items: stretch; gap: 8px; }
   .node { flex: 1; border: 1.5px solid #243556; border-radius: 10px; padding: 12px; background: #0b1220; }
-  .node .h { font-weight: 800; font-size: 13px; }
-  .node .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .node .h { font-weight: 800; font-size: var(--fs-body); }
+  .node .s { font-size: var(--fs-small); color: var(--muted); margin-top: 4px; }
   .node.fabric { border-color: var(--blue); background: #102a4a; }
   .node.out { border-color: #0e7c66; }
-  .arrow { display: grid; place-items: center; color: var(--blue60); font-size: 22px; font-weight: 800; }
+  .arrow { display: grid; place-items: center; color: var(--blue60); font-size: var(--fs-h2); font-weight: 800; }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: calc(100% - 28px); }
   .compare .col { background: #0b1220; border-radius: 10px; padding: 12px; border: 1px solid #243556; }
-  .compare h4 { margin: 0 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  .compare h4 { margin: 0 0 8px; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; }
   .compare .before h4 { color: #ffd48a; }
   .compare .after h4 { color: #7ddea0; }
-  .compare p { margin: 0; color: #d7deea; font-size: 13.5px; line-height: 1.4; }
+  .compare p { margin: 0; color: #d7deea; font-size: var(--fs-body); line-height: 1.4; }
   .timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .timeline li { background: #0b1220; border-radius: 10px; padding: 12px; min-height: 0; }
-  .timeline span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); font-size: 12px; font-weight: 800; margin-bottom: 8px; }
+  .timeline span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); font-size: var(--fs-small); font-weight: 800; margin-bottom: 8px; }
   .entities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .entity { display: flex; gap: 10px; align-items: center; background: #0b1220; border-radius: 10px; padding: 10px; }
-  .entity span { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #1D6EE4; font-weight: 800; font-size: 12px; flex: none; }
-  .alert { display: flex; gap: 8px; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: 12.5px; border-left: 4px solid; }
+  .entity span { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: #1D6EE4; font-weight: 800; font-size: var(--fs-small); flex: none; }
+  .alert { display: flex; gap: 8px; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: var(--fs-small); border-left: 4px solid; }
   .alert.good { background: #16351f; border-color: #7ddea0; }
   .alert.warn { background: #3a2a10; border-color: #ffd48a; }
   .alert.bad { background: #3a1515; border-color: #ff8d80; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #243556; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+  th { text-align: left; color: var(--muted); font-size: var(--fs-micro); text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #243556; }
   td { padding: 8px; border-bottom: 1px solid #243556; }
-  .pill { flex: none; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+  .pill { flex: none; border-radius: 999px; padding: 2px 8px; font-size: var(--fs-micro); font-weight: 700; }
   .good { background: #16351f; color: #7ddea0; }
   .warn { background: #3a2a10; color: #ffd48a; }
   .bad { background: #3a1515; color: #ff8d80; }
   .primary {
     background: var(--accent); color: #fff; border: 0; padding: 9px 16px;
-    border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    border-radius: 8px; font-size: var(--fs-body); font-weight: 700; cursor: pointer; white-space: nowrap;
   }
   .info {
     position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; border: 0;
-    border-radius: 50%; background: var(--heading); color: var(--navy2); font-weight: 700; cursor: pointer; font-size: 11px;
+    border-radius: 50%; background: var(--heading); color: var(--navy2); font-weight: 700; cursor: pointer; font-size: var(--fs-micro);
   }
   .pop {
     display: none; position: absolute; right: 8px; top: 30px; z-index: 5;
-    width: 230px; background: #080d18; color: #fff; font-size: 12px; line-height: 1.4;
+    width: 230px; background: #080d18; color: #fff; font-size: var(--fs-small); line-height: 1.4;
     padding: 8px 10px; border-radius: 8px; border: 1px solid var(--blue);
   }
   .toast {
     position: fixed; right: 20px; bottom: 16px; background: #080d18; color: #fff;
-    padding: 10px 14px; border-radius: 8px; z-index: 20; font-size: 13px; border: 1px solid var(--accent);
+    padding: 10px 14px; border-radius: 8px; z-index: 20; font-size: var(--fs-body); border: 1px solid var(--accent);
   }
   footer {
     flex: 0 0 28px; padding: 0 22px; display: flex; align-items: center; gap: 8px;
-    color: var(--muted); font-size: 11.5px; max-width: 1220px; width: 100%; margin: 0 auto;
+    color: var(--muted); font-size: var(--fs-micro); max-width: 1220px; width: 100%; margin: 0 auto;
   }
   footer img { height: 16px; width: auto; }
   @media (max-width: 1100px) {
