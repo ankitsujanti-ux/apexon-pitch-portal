@@ -7,6 +7,7 @@ import { dashboardCopy } from "../lib/fallbacks.js";
 import { logoDataUri as apexonWordmark } from "../lib/templateTheme.js";
 import { platformFromRequirement } from "../lib/briefFirst.js";
 import { toChars, toLabel, toSentences } from "../lib/text.js";
+import { sanitizeScreen, screenFingerprint } from "../lib/sanitizeScreen.js";
 
 function escapeHtml(str) {
   return String(str || "")
@@ -307,11 +308,17 @@ function tabInner({ companyName, domain, useCase, tabId, index, total, layout, p
   const visuals = blocks.filter((b) => b !== "kpis");
   const kpis = blocks.includes("kpis") ? kpiRow(ctx) : "";
   const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
-  // Always staged, even for a single visual. Left unwrapped it kept its natural
-  // height and left most of the screen empty.
-  const stage = `<div class="stage${visuals.length >= 2 ? " with-side" : ""}">${panels}</div>`;
+  const custom = sanitizeScreen(useCase.screenHtml, { tabId });
+  const layoutKey = custom.ok
+    ? screenFingerprint(custom.html) || "custom"
+    : blocks.join("+");
+  // Agent-authored markup wins when it sanitizes clean. Otherwise the block
+  // renderer paints, so a rejected screen never blanks the tab.
+  const stage = custom.ok
+    ? `<div class="stage custom"><button class="info" type="button" onclick="toggleInfo('${tabId}-scr')" aria-label="About this screen">i</button><div id="${tabId}-scr" class="pop">${twoLine(useCase.whatItShows || "Sample operating view for this job.")}</div><div class="screen">${custom.html}</div></div>`
+    : `<div class="stage${visuals.length >= 2 ? " with-side" : ""}">${panels}</div>`;
 
-  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(blocks.join("+"))}">
+  return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(layoutKey)}">
     <div class="title-row">
       <div>
         <p class="kicker">Screen ${index + 1} of ${total} · ${escapeHtml(toLabel(domain, 4))}</p>
@@ -332,7 +339,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   }
 
   const colors = palette || getPalette(domain, companyName);
-  const tabs = topUseCases.slice(0, 5);
+  const tabs = topUseCases.slice(0, 7);
   const layouts = assignLayouts(tabs);
   const apexonSrc = apexonWordmark();
   const platform = platformFromRequirement(requirement, domain);
@@ -529,6 +536,26 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
   th { text-align: left; color: var(--muted); font-size: var(--fs-micro); text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #243556; }
   td { padding: 8px; border-bottom: 1px solid #243556; }
+  .stage.custom { display: flex; flex-direction: column; position: relative; }
+  .stage.custom > .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .stage.custom > .screen > * { flex: 1; min-height: 0; }
+  .row { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; min-height: 0; height: 100%; }
+  .row.eq { grid-template-columns: 1fr 1fr; }
+  .row.tri { grid-template-columns: 1fr 1fr 1fr; }
+  .stack { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; }
+  .split-v { display: grid; grid-template-rows: 1fr 1fr; gap: 12px; min-height: 0; height: 100%; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; min-height: 0; height: 100%; }
+  .board > .col { background: #0b1220; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .lane { display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; background: #0b1220; border-radius: 10px; padding: 10px; }
+  .funnel { display: flex; flex-direction: column; gap: 6px; justify-content: center; height: 100%; }
+  .funnel .step { background: #1D6EE4; border-radius: 8px; padding: 10px 12px; text-align: center; font-weight: 700; font-size: var(--fs-body); }
+  .matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; height: 100%; }
+  .gauge { display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 10px; padding: 16px; min-height: 0; }
+  .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-evenly; height: 100%; }
+  .queue li { display: flex; gap: 10px; align-items: center; background: #0b1220; border-radius: 8px; padding: 10px; }
+  .queue .n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: var(--fs-small); flex: none; }
+  .callout { background: #1A1410; border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; color: #d7deea; font-size: var(--fs-body); }
+  h4 { margin: 0 0 8px; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .pill { flex: none; border-radius: 999px; padding: 2px 8px; font-size: var(--fs-micro); font-weight: 700; }
   .good { background: #16351f; color: #7ddea0; }
   .warn { background: #3a2a10; color: #ffd48a; }
