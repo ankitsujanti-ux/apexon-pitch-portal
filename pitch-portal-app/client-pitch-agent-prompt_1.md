@@ -29,7 +29,7 @@ Apexon navy, orange, and the white lockup are brand chrome. They are not content
 
 There is no fixed template, chart menu, or tab structure. Do not repeat the same KPI strip or architecture because a reference used them.
 
-Every screen must state **what it shows**, **why it matters**, and **what action it enables**. Use logos and product names only when they belong to this requirement. If the mandate has nothing to do with Fabric or Harness, do not introduce them.
+Every screen must state **what it shows**, **why it matters**, and **what action it enables**. Name a product, platform, or vendor only if `{{REQUIREMENT}}` names it. Otherwise describe the capability in plain words. Logos follow the same rule.
 
 Final check: if the reference were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
 
@@ -60,7 +60,7 @@ Rules:
 - `summary`: 2 short sentences a business stakeholder would nod at. Public, checkable facts only.
 - If a system is not publicly confirmed, `confidence` = `industry-typical`. Never present it as confirmed.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
-- Do not assume they already run Microsoft Fabric, Databricks, or any named platform unless that is public **or** named in `{{REQUIREMENT}}`.
+- Do not assume they already run any named platform or product unless that is public **or** named in `{{REQUIREMENT}}`.
 - `requirementFit`: one or two sentences on how "`{{REQUIREMENT}}`" would show up in their day-to-day work.
 
 ---
@@ -99,13 +99,22 @@ Copy must be **slide-ready**, not an essay. A VP should read a card in 5 seconds
 Also design:
 
 - The **title-slide** copy (`deckKicker`, `deckTitle`, `deckSubtitle`, `closeLine`) from this brief.
-- The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Do not paste Discover / Plan / Generate or L1–L4 unless this mandate is that Harness migration path.
-- Each **HTML screen** from scratch: `whatItShows`, `whyItMatters`, `action`, plus 1–3 visual primitives. Different mix per tab. Name entities and steps in their language. Do not put Fabric/Harness in labels unless the mandate names them.
+- The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Name the stages after this company's actual process. Do not reuse a generic phase model.
+- Each **HTML screen** from scratch: `whatItShows`, `whyItMatters`, `action`, plus 1–3 visual primitives. Different mix per tab. Name entities and steps in their language.
 - A **`slideLayout`** for every use case, chosen for that use case's story and varied across the set (see below).
 
-### Plain English
+### Plain English (enforced in code)
 
-Write for a smart executive who does not work in this function. Short sentences. Say “the line stops”, not “throughput degradation events occur”. No stacked jargon, no three-noun phrases, no consultant filler. If a term is unavoidable, explain it in the same sentence. A reader should never have to re-read a sentence.
+Write for a smart executive who does not work in this function. They are busy and they will not re-read a sentence.
+
+- One idea per sentence, under **32 words**. Longer sentences are rejected automatically.
+- Ordinary words: “use”, not “leverage” or “utilize”. “One screen”, not “single pane of glass”.
+- Concrete, not abstract: “the line stops for 40 minutes”, not “throughput degradation events occur”.
+- Banned outright: holistic, robust, seamless, frictionless, best-in-class, world-class, cutting-edge, state-of-the-art, next-generation, transformative, turnkey, mission-critical, data-driven, actionable insights, synergy, ecosystem, empower, operationalize, granular, streamline, at scale, north star, move the needle, low-hanging fruit, table stakes, deep dive, touchpoint, single pane of glass, unlock value, drive value, value-add, digital transformation, future-proof.
+- No stacked nouns. Break “supply chain visibility optimisation platform” into something a person would say out loud.
+- Never use a term without explaining it in the same sentence.
+
+A tone linter runs on the finished text. Anything it flags is sent back for repair before the deck is built, so filler costs time rather than passing through.
 
 ### One idea per slide
 
@@ -149,7 +158,7 @@ This is the single most important rule for content. Fragments like “Payment su
 - `title`: max 9 words. `subtitle`: 6–12 words — the promise of this use case.
 - `deckKicker`: max 4 words. `deckTitle`: max 9 words. `deckSubtitle`: max 18 words. `closeLine`: max 18 words.
 - `architecture.stages`: 2–3 stages, each 2–6 short steps, named for this process.
-- `architecture.target`: the platform this requirement asked for (Fabric only if the mandate says Fabric).
+- `architecture.target`: the platform this requirement asked for, by name. If it names none, use `"Operating platform"` — do not pick one for them.
 - `architecture.guards`: 0–4 cards. Omit if this brief is not about governance.
 - `lookFirst`: max 8 words.
 - `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`, `compare`, `timeline`, `entities`. Unique mix per tab.
@@ -168,7 +177,7 @@ Aim for roughly 150 words of body copy per slide. If a layout feels full, cut co
 
 ## Step 4 — Interactive HTML (built in code)
 
-Hornets is a **quality bar** (clear screens, no page scroll, horizontal tabs) — not a content template. Do not reuse Hornets tab names, sports visuals, Fabric logos, or Harness footer unless this requirement names them.
+The **only** thing carried over from anything shared previously is the dark theme: navy canvas, orange accent, white Apexon lockup. Everything else — tab names, screen composition, visuals, wording, iconography — is designed fresh for this requirement.
 
 - Dark navy canvas. Horizontal tabs that ellipsis rather than clip. Fits the viewport, no page scroll.
 - One type scale for the whole page. No ad-hoc font sizes.
@@ -183,7 +192,8 @@ Hornets is a **quality bar** (clear screens, no page scroll, horizontal tabs) �
 - Change the Azure Foundry `DemoAgent` definition. Prompts in this repo are the permanent instructions.
 - Publish generated PPT/HTML to GitHub Pages. The portal downloads files only.
 - Invent company facts, metrics, or systems.
-- Copy Harness product architecture, Hornets screens, or a prior client’s wording into a new brief.
+- Carry any screen, diagram, phase model, or wording from a previous brief into this one. The dark theme is the only thing that persists.
+- Name a product, platform, or vendor that `{{REQUIREMENT}}` does not name.
 - Write long paragraphs that will overflow a slide.
 - Put the same composition on all five use-case slides.
 - Repeat the deck's business case inside the HTML mockup.
