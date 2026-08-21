@@ -46,17 +46,31 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
     },
     difficulty,
     difficultyWhy: clip(uc.difficultyWhy || fallbackUc?.difficultyWhy || "", 90),
-    techComponents: Array.isArray(uc.techComponents)
-      ? uc.techComponents.slice(0, 3)
-      : fallbackUc?.techComponents || defaultTechStack(requirement, domain),
+    techComponents: stackForBrief(uc.techComponents, fallbackUc?.techComponents, requirement, domain),
     demoScore: uc.demoScore || 8 - i,
     tabWhy: clip(uc.tabWhy || `${uc.businessProblem || fallbackUc?.businessProblem || ""} ${uc.benefit || fallbackUc?.benefit || ""}`.trim(), 220),
+    whatItShows: clip(uc.whatItShows || uc.lookFirst || uc.title || "", 90),
+    whyItMatters: clip(uc.whyItMatters || uc.businessProblem || "", 110),
+    action: clip(uc.action || uc.benefit || "", 90),
     lookFirst: clip(uc.lookFirst || uc.title || "", 48),
     blocks: Array.isArray(uc.blocks) ? uc.blocks : uc.tabLayout ? [uc.tabLayout] : [],
     columns: Array.isArray(uc.columns) ? uc.columns.map((c) => clip(c, 18)).slice(0, 4) : [],
     zones: Array.isArray(uc.zones) ? uc.zones.map((z) => clip(z, 18)).slice(0, 6) : [],
+    entities: Array.isArray(uc.entities) ? uc.entities.map((e) => clip(typeof e === "string" ? e : e?.name, 22)).filter(Boolean).slice(0, 6) : [],
+    steps: Array.isArray(uc.steps) ? uc.steps.map((s) => clip(s, 36)).filter(Boolean).slice(0, 4) : [],
     recordKind: clip(uc.recordKind || "", 24),
   };
+}
+
+function stackForBrief(list, fallbackList, requirement, domain) {
+  const t = `${requirement || ""}`.toLowerCase();
+  const raw = (Array.isArray(list) && list.length ? list : fallbackList) || [];
+  const filtered = raw.filter((name) => {
+    const n = String(name || "").toLowerCase();
+    if (/fabric|onelake|harness/.test(n) && !/fabric|onelake|harness/.test(t)) return false;
+    return Boolean(name);
+  });
+  return (filtered.length ? filtered : defaultTechStack(requirement, domain)).slice(0, 3);
 }
 
 function normalizeDeckCopy(parsed, fallback, companyName, domain, requirement) {
@@ -100,52 +114,49 @@ ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-You are the pre-sales lead AND the demo designer for THIS brief only. Internally brainstorm at least two approaches, then keep the one that fits the mandate. There is no five-screen template and no leftover architecture from another deck.
+You are the pre-sales lead AND the demo designer for THIS brief only. Internally brainstorm at least two approaches, then keep the one that fits the mandate.
 
 Walk ${companyName}. Keep the ${numUseCases} strongest use cases that a ${domain} operator would recognize as THEIR job, addressable by the mandate, without inventing systems.
 
-Then design each HTML tab from scratch. Each tab is a different job — not the same chart with a new title. Compose the tab from 1-3 pieces, in the order they should appear. You name the labels in their language.
+Then design each HTML screen from scratch for that job. Do not reuse one chart with a new title. Every tab MUST include:
+- whatItShows: what this screen is (1 sentence)
+- whyItMatters: why the business cares (1 sentence)
+- action: what someone does next (1 sentence)
 
-Pieces you may combine (renderer primitives, not finished screens):
-- kpis: four numbers they would watch
-- bars: a status mix (you say what the mix is in lookFirst)
-- alerts: exceptions that need a person
-- table: rows that need a decision (you name columns)
-- heat: a map of THEIR areas (you name zones)
-- record: one object they work (you name recordKind)
-- actions: recommended next steps
-- flow: how work moves for this use case
+Compose the visual from 1-3 primitives, named in THEIR language. Different mix per tab. Add entities (plants, lots, stores, claims — THEIR objects) and steps (a 3-4 step path) when that screen needs them.
 
-Also design architecture for THIS mandate: sources they actually run, 2-3 stages named for their process, target platform named in the requirement, optional governance cards only if this brief is about governance. Do not paste Discover / Plan / Generate or L1-L4 unless this requirement is that Harness migration path.
+Primitives (the HTML builder can only paint these — choose which, do not invent other chart types):
+- kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
 
-Do not give every tab the same pieces. Write tabWhy as 2 business sentences.
+Do not put Fabric, Harness, or OneLake in techComponents, flow, or labels unless the mandate names them.
+
+Also design architecture for THIS mandate: sources they run, 2-3 stages named for their process, target = platform named in the requirement (or "Target platform" if none), guards only if this brief is about governance.
 
 Return ONLY JSON:
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","tabWhy":"","lookFirst":"","blocks":["kpis"],"columns":[],"zones":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","businessProblem":"","benefit":"","solutionFit":"","whatItShows":"","whyItMatters":"","action":"","tabWhy":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}
 
 Length limits (hard):
+- whatItShows, whyItMatters, action: max 18 words each.
 - deckKicker: max 4 words. From this company or mandate.
-- deckTitle: max 8 words. THEIR operating problem, not a generic modernization title.
+- deckTitle: max 8 words. THEIR operating problem.
 - deckSubtitle: max 16 words. From THIS mandate.
-- closeLine: max 16 words. Thank-you slide.
+- closeLine: max 16 words.
 - architecture.stages: 2-3 titles, each 2-6 short steps.
-- architecture.target.name: the platform this requirement asked for.
+- architecture.target.name: only a platform named in the mandate, else "Operating platform".
 - title: max 8 words.
 - businessProblem: max 28 words.
 - benefit: max 22 words.
-- tabWhy: exactly 2 short business sentences. Max 36 words.
+- tabWhy: 2 short business sentences. Max 36 words.
 - lookFirst: max 8 words.
-- blocks: 1-3 piece names from the list above.
-- columns: 3-4 headers if table is used, named for this process.
-- zones: up to 6 area names if heat is used, named for this operation.
-- recordKind: one word or short phrase if record is used.
+- blocks: 1-3 primitive names from the list. Unique mix per tab.
+- columns / zones / entities / steps: named for THIS process when used.
 - kpis: exactly 4. name max 4 words. why max 10 words. No invented current numbers.
 - dataPointer.description: max 16 words.
 - difficultyWhy: max 16 words.
 - overallBenefits: exactly 4 lines, each max 18 words.
-- techComponents: max 3 names from this mandate.
+- techComponents: max 3 names from this mandate only.
 
-Produce exactly ${numUseCases} use cases. Design the pitch-deck title, architecture, and close from THIS brief. Use-case titles become the agenda.`,
+Produce exactly ${numUseCases} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`,
     () => null,
     "usecases"
   );
