@@ -13,6 +13,7 @@
 import { askAgent } from "./azureAgentClient.js";
 import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
+import { TONE_RULE, lintUseCases } from "./toneGuard.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
 
@@ -161,11 +162,13 @@ ${JSON.stringify(critique?.defects || []).slice(0, 4000)}
 Current draft:
 ${JSON.stringify(draft).slice(0, 9000)}
 
+${TONE_RULE}
+
 Rules while revising:
 - Replace any label fragment with a full explanatory sentence a layman can follow.
 - Replace generic sentences with something only true of ${companyName} and this mandate.
 - Remove invented numbers, vendors, and system names. If a claim cannot be supported, either cut it or word it as an industry-typical assumption.
-- Rewrite jargon in plain English. Short sentences. Explain any term you must keep, in the same sentence.
+- Apply every fix exactly as described. A defect saying to remove a product name means that name must not appear anywhere in your answer.
 - Give every use case a slideLayout, and make sure the five differ.
 - Keep the same number of use cases and the same JSON shape.
 
@@ -282,6 +285,30 @@ export async function runReasoning({
       onStep,
     });
     if (Array.isArray(revised?.useCases) && revised.useCases.length >= 3) current = revised;
+  }
+
+  // The model is a poor judge of its own register, and it cannot be told which
+  // product names to avoid without being reminded of them. So this last gate is
+  // deterministic: lint the text, and send only the concrete findings back.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const defects = lintUseCases(current.useCases, requirement);
+    if (!defects.length) break;
+    trace.toneDefects = defects.length;
+    const repaired = await tryPass({
+      label: `tightening tone (${defects.length} to fix)`,
+      prompt: revisePrompt({
+        companyName,
+        requirement,
+        draft: current,
+        critique: { defects: defects.slice(0, 40) },
+        schema,
+      }),
+      onStep,
+    });
+    if (!Array.isArray(repaired?.useCases) || repaired.useCases.length < 3) break;
+    const after = lintUseCases(repaired.useCases, requirement);
+    if (after.length >= defects.length) break;
+    current = repaired;
   }
 
   const verification = await tryPass({
