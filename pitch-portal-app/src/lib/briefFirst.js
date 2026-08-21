@@ -3,7 +3,7 @@
 
 export const BRIEF_FIRST_RULE = `CRITICAL — REQUIREMENT FIRST, REFERENCE SECOND.
 
-Shared PPTs, HTML, screenshots, and other materials are REFERENCE ONLY. They set expected quality and depth. Do NOT copy their content, layout, tabs, charts, architecture, technology, terminology, or visual style unless the CURRENT requirement explicitly asks for them.
+Nothing shared previously is a reference. The dark theme is the only thing that carries over — navy canvas, orange accent, white Apexon lockup. That is brand chrome, not content. Content, layout, tabs, charts, architecture, phase names, terminology, and wording are all designed fresh for the current requirement.
 
 For every new requirement:
 1. Understand the business problem first.
@@ -22,7 +22,7 @@ ONE IDEA PER SLIDE. Putting challenge + solution + value + KPIs + data + effort 
 
 THE HTML IS THE PRODUCT, NOT THE DECK. Never repeat the deck's business case inside the mockup.
 
-Use entities, terminology, imagery, and logos ONLY when they are genuinely relevant to this requirement. If the mandate has nothing to do with Fabric or Harness, do not introduce them.
+Use entities, terminology, imagery, and logos ONLY when they are genuinely relevant to this requirement. Name a product, platform, or vendor only if the requirement itself names it; otherwise describe the capability in plain words.
 
 FINAL CHECK: If the reference material were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
 
@@ -42,34 +42,38 @@ function reqText(requirement, domain) {
   return `${requirement || ""} ${domain || ""}`.toLowerCase();
 }
 
+// The platform NAME may only come from the brief. Its components are described
+// as capabilities, never as sub-product names — naming a sub-product the brief
+// never mentioned is exactly the borrowed-reference problem.
 export function platformFromRequirement(requirement, domain = "") {
   const t = reqText(requirement, domain);
-  if (/fabric/.test(t)) {
-    const components = ["OneLake", "Pipelines"];
-    if (/real-?time|rti|intelligence|event/.test(t)) components.push("Real-Time Intelligence");
-    else components.push("Power BI");
-    if (/ai|foundry|agent/.test(t)) components.push("Azure AI");
-    else components.push("Semantic models");
-    return { name: "Microsoft Fabric", components: components.slice(0, 4) };
-  }
-  if (/databricks/.test(t)) {
-    return { name: "Databricks", components: ["Lakehouse", "Workflows", "SQL", "AI"] };
-  }
-  if (/snowflake/.test(t)) {
-    return { name: "Snowflake", components: ["Warehouse", "Piping", "Sharing", "Compute"] };
-  }
-  if (/power bi/.test(t)) {
-    return { name: "Power BI", components: ["Semantic models", "Reports", "Refresh", "Governance"] };
-  }
-  if (/azure/.test(t)) {
-    return { name: "Microsoft Azure", components: ["Data platform", "AI", "Security", "Ops views"] };
-  }
-  return { name: "Target platform", components: ["Ingest", "Store", "Decide", "Share"] };
+  const components = ["Bring the sources together", "Keep one set of definitions"];
+  if (/real-?time|rti|live|event|stream|during the day/.test(t)) components.push("Act while it still matters");
+  else components.push("Publish the operating view");
+  if (/\bai\b|agent|copilot|brief|assist|model/.test(t)) components.push("Assisted decisions, with sign-off");
+  else components.push("Trace every number to its source");
+
+  const named = [
+    [/fabric/, "Microsoft Fabric"],
+    [/databricks/, "Databricks"],
+    [/snowflake/, "Snowflake"],
+    [/power bi/, "Power BI"],
+    [/bigquery/, "BigQuery"],
+    [/redshift/, "Redshift"],
+    [/synapse/, "Azure Synapse"],
+    [/azure/, "Microsoft Azure"],
+    [/\baws\b|amazon web/, "AWS"],
+    [/google cloud|\bgcp\b/, "Google Cloud"],
+  ].find(([re]) => re.test(t));
+
+  return { name: named ? named[1] : "Operating platform", components: components.slice(0, 4) };
 }
 
+// Only real product names belong here, and only when the brief named one.
+// An empty list is the honest answer for a brief that named no platform.
 export function defaultTechStack(requirement, domain = "") {
   const platform = platformFromRequirement(requirement, domain);
-  return [platform.name, ...platform.components].slice(0, 3);
+  return platform.name === "Operating platform" ? [] : [platform.name];
 }
 
 function domainSources(domain, requirement) {
@@ -109,14 +113,9 @@ function uniqueNames(list) {
   return out;
 }
 
-function wantsHarnessMigrator(requirement) {
-  const t = String(requirement || "").toLowerCase();
-  return /harness/.test(t) && /migrat|discover|database|moderniz/.test(t);
-}
-
 function wantsGovernance(requirement) {
   const t = String(requirement || "").toLowerCase();
-  return /govern|harness|audit|purview|compliant|lineage/.test(t);
+  return /govern|audit|compliant|lineage|regulat/.test(t);
 }
 
 export function inferArchitecture({
@@ -133,13 +132,7 @@ export function inferArchitecture({
   const req = reqText(requirement, domain);
 
   let stages;
-  if (wantsHarnessMigrator(requirement)) {
-    stages = [
-      { title: "1. Discover and assess", steps: ["Connect sources", "Validate access", "Catalog metadata", "SME review"] },
-      { title: "2. Plan and approve", steps: ["Use-case plan", "Architecture check", "Go / no-go"] },
-      { title: "3. Generate deliverables", steps: ["Pipelines, models, and docs on the approved path"] },
-    ];
-  } else if (/real-?time|rti|live|operations|event|pulse/.test(req)) {
+  if (/real-?time|rti|live|operations|event|pulse/.test(req)) {
     stages = [
       { title: "1. Connect what they already run", steps: ["Source access", "Event and batch feeds", "Keep existing systems"] },
       { title: "2. Make it usable in time to act", steps: ["One operating picture", "Live exceptions", "Trusted metrics"] },
@@ -160,18 +153,11 @@ export function inferArchitecture({
   }
 
   const guards = wantsGovernance(requirement)
-    ? wantsHarnessMigrator(requirement)
-      ? [
-          { n: "L1", title: "Constraint", body: "Trusted inputs only" },
-          { n: "L2", title: "AI validation", body: "Check generated output" },
-          { n: "L3", title: "Plan check", body: "Check the proposed path" },
-          { n: "L4", title: "Quality gate", body: "Ready to run and audit" },
-        ]
-      : [
-          { n: "01", title: "Trusted data", body: "Only approved sources reach the view." },
-          { n: "02", title: "Human control", body: "People still take the operating decision." },
-          { n: "03", title: "Traceable", body: "Every number can be walked back to a feed." },
-        ]
+    ? [
+        { n: "01", title: "Trusted data", body: "Only approved sources reach the view." },
+        { n: "02", title: "Human control", body: "People still take the operating decision." },
+        { n: "03", title: "Traceable", body: "Every number can be walked back to a feed." },
+      ]
     : [];
 
   return {
