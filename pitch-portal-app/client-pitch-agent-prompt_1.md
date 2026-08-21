@@ -8,8 +8,8 @@ We do **not** change the agent definition in Azure. `1-research.js` and `2-useca
 - **Company name:** `{{COMPANY_NAME}}`
 - **Domain / industry:** `{{DOMAIN}}`
 - **Requirement:** `{{REQUIREMENT}}`
-- **Use cases:** 5
-- **Mockup tabs:** 5
+- **Use cases:** 3–7, decided from the brief
+- **Mockup tabs:** same as the use cases
 
 ---
 
@@ -73,9 +73,10 @@ A single generation call cannot deliberate — the model emits its first answer 
 | --- | --- |
 | 1. Frame | Restate the mandate, name what leadership must believe, list honest unknowns, set judging criteria |
 | 2. Diverge | Generate 9 candidates with rationale and each one's weakness — no filtering |
-| 3. Select | Score on recognisable / mandateFit / demoable / dataLikely, pick 5, record why each rejected one lost |
+| 3. Select | Score on recognisable / mandateFit / demoable / dataLikely, pick 3–7 (tight mandate → 3, sprawling → 6–7), record why each rejected one lost |
 | 4. Draft | Write the full pitch content for the survivors |
-| 5. Critique | Hostile review: find LABEL, GENERIC, UNSUPPORTED, INVENTED, SO_WHAT, REPEAT defects by field |
+| 4b. Design | Invent each HTML screen (`screenHtml`) and each slide composition (`slide.regions`). Neighbouring screens and slides must differ. |
+| 5. Critique | Hostile review: find LABEL, GENERIC, UNSUPPORTED, INVENTED, SO_WHAT, REPEAT, SAMEY, SPARSE, CLONE defects by field |
 | 6. Revise | Fix those specific defects, keep what was not criticised |
 | 7. Verify | Label every load-bearing claim `confirmed` or `industry-typical` with its basis |
 
@@ -85,7 +86,9 @@ Each pass degrades gracefully: an unparseable pass is skipped and the previous s
 
 ### Content instructions (sent in the draft pass)
 
-Walk their plant, store, claims desk, or trading floor in your head. Internally list 8–10 candidate use cases a `{{COMPANY_NAME}}` operator would recognize as **their job**. Then keep the 5 strongest that:
+Walk their plant, store, claims desk, or trading floor in your head. Internally list 8–10 candidate use cases a `{{COMPANY_NAME}}` operator would recognize as **their job**. Then keep 3–7 — whatever this brief actually needs. A tight mandate is 3. A sprawling operation is 6 or 7. Prefer fewer that a leader would remember.
+
+Keep ones that:
 
 1. Map to how `{{COMPANY_NAME}}` actually makes money, ships product, serves customers, or stays compliant.
 2. Are normal and valuable in `{{DOMAIN}}` — a plant manager / merchandiser / claims lead would say “that is us.”
@@ -100,8 +103,8 @@ Also design:
 
 - The **title-slide** copy (`deckKicker`, `deckTitle`, `deckSubtitle`, `closeLine`) from this brief.
 - The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Name the stages after this company's actual process. Do not reuse a generic phase model.
-- Each **HTML screen** from scratch: `whatItShows`, `whyItMatters`, `action`, plus 1–3 visual primitives. Different mix per tab. Name entities and steps in their language.
-- A **`slideLayout`** for every use case, chosen for that use case's story and varied across the set (see below).
+- Each **HTML screen** from scratch as real markup in `screenHtml`, using only the design-system classes. Neighbouring screens must not share a structure. `blocks` is a fallback if the markup is rejected.
+- Each **slide composition** in `slide.regions` (kinds `quote`, `list`, `pair`, `steps`, `kpis`, `callout`, `split`, `compare`; spans 4, 6, or 12). Neighbouring slides must differ. `slideLayout` remains a fallback.
 
 ### Plain English (enforced in code)
 
@@ -118,15 +121,17 @@ A tone linter runs on the finished text. Anything it flags is sent back for repa
 
 ### One idea per slide
 
-Every use-case slide showing challenge + moves + works-with + value + 4 KPIs + data + effort is what makes all five slides look identical and unreadable. So pick the layout that fits each use case's story, and vary it across the five:
+Every use-case slide showing challenge + moves + works-with + value + 4 KPIs + data + effort is what makes all the slides look identical and unreadable. So describe a composition in `slide.regions` that fits THIS use case's one idea. Neighbouring slides must not share the same kind sequence. `slideLayout` is only a fallback if regions are missing.
 
-| `slideLayout` | Use when | Shows |
+| `kind` | Use when | Span |
 | --- | --- | --- |
-| `challenge` | the pain is the compelling part | challenge statement, 3 moves, value |
-| `impact` | leadership cares about the numbers | 4 KPIs large, one-line stake, value |
-| `shift` | the change in working is the point | today vs after, side by side, value |
-| `journey` | the story is a path or flow | 4 numbered steps, works-with, value |
-| `evidence` | feasibility is the real question | data, effort, how we land it, value |
+| `quote` | one statement is the point | 12 |
+| `kpis` | the numbers are the point | 12 |
+| `compare` / `split` | today vs after | 12 or 6+6 |
+| `steps` | the story is a path | 12 |
+| `list` | a few outcomes | 6 or 12 |
+| `pair` | a labelled card | 6 |
+| `callout` | a caution or constraint | 6 or 12 |
 
 Each layout renders only **part** of the content so the slide stays readable. Write every field anyway — the builder picks what that layout needs.
 
@@ -134,10 +139,12 @@ Each layout renders only **part** of the content so the slide stays readable. Wr
 
 The mockup shows the working software. Do **not** restate the challenge or the business case there — that is the deck's job, and repeating it makes the screen unreadable. Each screen gets one short caption (`whatItShows`) and the visual.
 
-Return JSON only, exactly 5 use cases:
+Write `screenHtml` as real markup for that screen. Allowed tags: `article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button`. Allowed classes are the design system: `row`, `stack`, `viz`, `heat`, `board`, `funnel`, `queue`, `compare`, `timeline`, `gauge`, `callout`, and the rest listed in `src/lib/designContract.js`. Neighbouring screens must not share a structure. `blocks` is a fallback if the markup is rejected.
+
+Return JSON only, 3–7 use cases:
 
 ```json
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
 ```
 
 ### Write explanations, not labels
@@ -152,7 +159,8 @@ This is the single most important rule for content. Fragments like “Payment su
 - `dataPointer.description`: 12–25 words naming the data and where it usually lives.
 - `difficultyWhy`: 12–25 words.
 - `whatItShows`: 12–22 words, **one** sentence — the screen's only caption. `whyItMatters` / `action`: 12–22 words each.
-- `slideLayout`: exactly one of `challenge`, `impact`, `shift`, `journey`, `evidence`. Vary across the five use cases.
+- `screenHtml`: real markup for this screen, different structure from its neighbours.
+- `slide.regions`: 1–4 regions. Neighbouring slides must not share a kind sequence.
 - `businessProblem`: 25–40 words. `benefit`: 20–35 words.
 - `proofPoint`: one sentence of industry evidence, or `""` if not confident.
 - `title`: max 9 words. `subtitle`: 6–12 words — the promise of this use case.
@@ -169,9 +177,9 @@ This is the single most important rule for content. Fragments like “Payment su
 
 ## Step 3 — Pitch deck (built in code)
 
-Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief.
+Narrative structure (title → agenda → architecture → use cases → thank you) is the **delivery format**. Content is generated from this brief. Slide count is `4 + N` where N is 3–7.
 
-Every use-case slide carries a common header (index, title, subtitle, accent rule) and a one-line evidence strip. The body is whichever composition `slideLayout` selects — `challenge`, `impact`, `shift`, `journey`, or `evidence`. The five slides must not share one composition.
+Every use-case slide carries a common header (index, title, subtitle, accent rule) and a one-line evidence strip. The body is packed from `slide.regions` onto a 12-column grid. If regions are missing, `slideLayout` is the fallback. Neighbouring slides must not share one composition.
 
 Aim for roughly 150 words of body copy per slide. If a layout feels full, cut copy rather than shrinking type.
 
@@ -182,7 +190,7 @@ The **only** thing carried over from anything shared previously is the dark them
 - Dark navy canvas. Horizontal tabs that ellipsis rather than clip. Fits the viewport, no page scroll.
 - One type scale for the whole page. No ad-hoc font sizes.
 - This is the **product**, not the deck. One short caption (`whatItShows`) per screen, then the visual. No challenge, no business case, no “what is verified” block — those live in the PPT.
-- Visuals come from `blocks` for this job (`compare`, `timeline`, `entities`, table, heat, record, flow, and so on) — not the same KPI strip on every tab.
+- The agent writes `screenHtml`. A sanitizer keeps only the design-system tags and classes. If the markup is rejected, `blocks` paints a fallback.
 - Sample data is simulated, never claimed as live company metrics.
 
 ---
@@ -195,5 +203,5 @@ The **only** thing carried over from anything shared previously is the dark them
 - Carry any screen, diagram, phase model, or wording from a previous brief into this one. The dark theme is the only thing that persists.
 - Name a product, platform, or vendor that `{{REQUIREMENT}}` does not name.
 - Write long paragraphs that will overflow a slide.
-- Put the same composition on all five use-case slides.
+- Put the same composition on neighbouring use-case slides.
 - Repeat the deck's business case inside the HTML mockup.
