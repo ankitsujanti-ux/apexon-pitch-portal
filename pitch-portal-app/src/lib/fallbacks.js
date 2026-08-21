@@ -73,10 +73,10 @@ const PACKS = {
       difficulty: "easier",
       difficultyWhy: "Line and batch data typically already exist in MES or a historian for this industry. Treat as typical unless confirmed.",
       kpis: [
-        { name: "Batches in band", why: "Share of runs staying inside the process window." },
-        { name: "Time to first alert", why: "How fast operations sees a drift." },
-        { name: "Holds opened live", why: "Exceptions caught during the run, not after." },
-        { name: "Feed health", why: "Whether the plant stream is still landing." },
+        { name: "Batches in band", why: "Share of runs staying inside the process window, which is the clearest read on whether the line is stable." },
+        { name: "Time to first alert", why: "How quickly operations sees a drift, because every minute of delay is product already committed." },
+        { name: "Holds opened live", why: "Exceptions caught during the run rather than after, which is where scrap and rework are avoided." },
+        { name: "Feed health", why: "Whether the plant stream is still landing, since a stale board quietly stops being trusted." },
       ],
       tech: ["Microsoft Fabric", "Eventstream", "Real-Time Intelligence"],
       demoScore: 10,
@@ -184,34 +184,70 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
     ["compare", "timeline"],
     ["entities", "flow"],
   ];
-  const useCases = shapes.slice(0, numUseCases).map((shape, i) => ({
-    title: shape.title(companyName, domain),
-    businessProblem: shape.problem(companyName, domain),
-    benefit: shape.fit(),
-    solutionFit: `${shape.fit()} This maps to: ${sentence(requirement, "the stated mandate")}.`,
-    whatItShows: `This screen is the ${shape.title(companyName, domain).split(/[—–-]/)[0].trim()} view for ${companyName}.`,
-    whyItMatters: shape.problem(companyName, domain),
-    action: shape.fit(),
-    lookFirst: shape.title(companyName, domain).split(/[—–-]/)[0].trim(),
-    blocks: layouts[i] || ["table", "actions"],
-    entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
-    steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
-    kpis: shape.kpis || [
-      { name: "Exceptions in view", why: "What needs a person right now." },
-      { name: "On-time signal", why: "Whether operations are staying inside the window." },
-      { name: "Oldest open item", why: "How long the slowest issue has waited." },
-      { name: "Feed health", why: "Whether the data stream is still landing." },
-    ],
-    dataPointer: { description: shape.data, availability: shape.availability, confidence: "industry-typical" },
-    difficulty: shape.difficulty || (shape.availability === "new" ? "harder" : "moderate"),
-    difficultyWhy:
-      shape.difficultyWhy ||
-      (shape.availability === "new"
-        ? "Would need a new source or join that is not confirmed at this company."
-        : "Uses data this industry usually already holds. Treat as typical unless confirmed."),
-    techComponents: defaultTechStack(requirement, domain),
-    demoScore: shape.demoScore,
-  }));
+  const useCases = shapes.slice(0, numUseCases).map((shape, i) => {
+    const label = shape.title(companyName, domain).split(/[—–-]/)[0].trim();
+    const problem = shape.problem(companyName, domain);
+    const fit = shape.fit();
+    return {
+      title: shape.title(companyName, domain),
+      subtitle: `Give ${companyName} this decision while it can still be changed`,
+      businessProblem: problem,
+      benefit: fit,
+      solutionFit: `${fit} This maps to: ${sentence(requirement, "the stated mandate")}.`,
+      challenge: `${problem} The data already exists across ${domain} systems, but it arrives as an overnight report rather than a signal someone can act on. By the time the pack is read, the window to change the outcome has usually closed.`,
+      solutionMoves: [
+        {
+          lead: "See it live",
+          detail: `${label} becomes a single operating view, so the team sees status as it changes instead of the next morning.`,
+        },
+        {
+          lead: "Act instantly",
+          detail: "When a threshold is crossed the exception is routed to a named owner with the context needed to decide.",
+        },
+        {
+          lead: "Keep the audit",
+          detail: "Every number keeps its source and every action is recorded, so the view stands up to review.",
+        },
+      ],
+      worksWith: [
+        `Reads the ${domain} systems ${companyName} already runs — nothing is ripped out or replaced.`,
+        "Existing reporting keeps running while this view handles the in-the-moment decisions.",
+        "Access and permissions stay with the systems that own the data today.",
+      ],
+      businessValue: [
+        "Issues are caught inside the window where a decision still changes the outcome.",
+        "Less time is spent reconciling conflicting reports before anyone can act.",
+        "Leadership gets one version of the number, with the source behind it.",
+      ],
+      proofPoint: "",
+      whatItShows: `The ${label.toLowerCase()} view for ${companyName}: current status, what is outside the expected range, and who owns each open item.`,
+      whyItMatters: problem,
+      action: fit,
+      lookFirst: label,
+      blocks: layouts[i] || ["table", "actions"],
+      entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
+      steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
+      kpis: shape.kpis || [
+        { name: "Open exceptions", why: "How many items need a person right now, which tells leadership if the team is keeping up." },
+        { name: "On-time signal", why: "Whether operations are staying inside the agreed window rather than drifting quietly." },
+        { name: "Oldest open item", why: "How long the slowest issue has waited, which is where cost and risk build up." },
+        { name: "Feed health", why: "Whether the underlying data is still landing, because a stale view is worse than no view." },
+      ],
+      dataPointer: {
+        description: `${shape.data} — data a ${domain} operator of this size typically already captures today.`,
+        availability: shape.availability,
+        confidence: "industry-typical",
+      },
+      difficulty: shape.difficulty || (shape.availability === "new" ? "harder" : "moderate"),
+      difficultyWhy:
+        shape.difficultyWhy ||
+        (shape.availability === "new"
+          ? "Needs a new source or join that is not confirmed at this company, so scope it in discovery first."
+          : "Uses data this industry usually already holds, so the work is mostly joining and surfacing it."),
+      techComponents: defaultTechStack(requirement, domain),
+      demoScore: shape.demoScore,
+    };
+  });
 
   return {
     useCases,
