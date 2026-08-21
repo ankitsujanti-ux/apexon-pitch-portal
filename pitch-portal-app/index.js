@@ -156,6 +156,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
     const mockupHtml = await buildMockup({
       companyName,
       domain,
+      requirement,
       topUseCases,
       deckFileName,
     });
