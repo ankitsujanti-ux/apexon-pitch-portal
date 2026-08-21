@@ -696,7 +696,7 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
     ? uc.techComponents.slice(0, 3).join(" · ")
     : "Named in the mandate";
   const bottomY = kpiY + 1.3;
-  const bottomH = 6.92 - bottomY;
+  const bottomH = 6.74 - bottomY;
   addPanel(slide, palette, {
     x: MARGIN,
     y: bottomY,
@@ -725,6 +725,32 @@ function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
     accent: palette.accent,
     bodyMax: 150,
   });
+
+  // Evidence strip: nothing on this slide is presented as fact unless it is
+  // labelled confirmed. Leadership sees what is assumed.
+  const assumptions = (uc.assumptions || []).slice(0, 2);
+  if (assumptions.length) {
+    const confirmed = assumptions.filter((a) => a.confidence === "confirmed").length;
+    const label = confirmed === assumptions.length ? "CONFIRMED" : confirmed ? "PART CONFIRMED" : "INDUSTRY-TYPICAL";
+    slide.addText(
+      [
+        {
+          text: `${label}  `,
+          options: {
+            bold: true,
+            fontSize: 8.5,
+            color: confirmed === assumptions.length ? "7DDEA0" : palette.accent,
+            fontFace: palette.fontTitle,
+          },
+        },
+        {
+          text: truncate(assumptions.map((a) => `${a.claim} (${a.basis})`).join("  ·  "), 210),
+          options: { fontSize: 8.5, color: "9AA6B8", fontFace: palette.fontBody },
+        },
+      ],
+      { x: MARGIN, y: 6.8, w: 12.48, h: 0.2, wrap: false, valign: "middle" }
+    );
+  }
 }
 
 export async function buildDeck({
