@@ -136,11 +136,13 @@ Find every instance of:
 - INVENTED: a specific number, system name, vendor, or metric that was made up.
 - SO_WHAT: a screen or KPI where a business reader would ask "why do I care".
 - REPEAT: two use cases that are really the same job, or the same visual reused.
+- JARGON: a sentence an executive outside this function would have to re-read. Stacked nouns, unexplained terms, consultant filler.
+- SAMEY: slideLayout values that repeat across use cases, or a screen whose blocks duplicate another screen's.
 
 Name the exact use case and field for each defect, and say what would fix it.
 
 ${NO_PROSE}
-{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT","problem":"","fix":""}]}
+{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY","problem":"","fix":""}]}
 
 Report every real defect, up to 14. If the draft is genuinely strong, verdict "pass" with an empty defects array. problem and fix: 10-22 words each.`;
 }
@@ -163,6 +165,8 @@ Rules while revising:
 - Replace any label fragment with a full explanatory sentence a layman can follow.
 - Replace generic sentences with something only true of ${companyName} and this mandate.
 - Remove invented numbers, vendors, and system names. If a claim cannot be supported, either cut it or word it as an industry-typical assumption.
+- Rewrite jargon in plain English. Short sentences. Explain any term you must keep, in the same sentence.
+- Give every use case a slideLayout, and make sure the five differ.
 - Keep the same number of use cases and the same JSON shape.
 
 ${NO_PROSE}
