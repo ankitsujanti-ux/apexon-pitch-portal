@@ -96,6 +96,7 @@ function publicJob(job) {
     jobId: job.id,
     status: job.status,
     step: job.step || null,
+    detail: job.detail || null,
     companyName: job.companyName,
     error: job.error || null,
     result: job.result || null,
@@ -122,7 +123,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
     const researchStructured = researchOut.structured || null;
 
     patchJob(jobId, { step: "use-cases" });
-    console.log(`[${companyName}] Step 2/4 - generating use cases...`);
+    console.log(`[${companyName}] Step 2/4 - reasoning about this brief...`);
     const useCases = await generateUseCases({
       companyName,
       domain,
@@ -130,6 +131,12 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       research: researchResult,
       numUseCases: 5,
       numMockupTabs: 5,
+      // The reasoning pipeline takes several minutes, so the portal shows which
+      // pass is running instead of sitting on one opaque "use-cases" label.
+      onStep: (label) => {
+        console.log(`[${companyName}]   reasoning: ${label}...`);
+        patchJob(jobId, { step: "use-cases", detail: label });
+      },
     });
     const topUseCases = selectTopUseCases(useCases);
     if (!topUseCases.length) {
@@ -159,6 +166,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       requirement,
       topUseCases,
       deckFileName,
+      evidenceNote: useCases.evidenceNote || "",
     });
 
     const dir = path.join(OUTPUT_DIR, slug);
