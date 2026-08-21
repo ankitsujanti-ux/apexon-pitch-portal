@@ -1,7 +1,9 @@
-import { allowLocalFallback, askAgentOrFallback } from "../lib/azureAgentClient.js";
-import { extractJson } from "../lib/parseJson.js";
+import { allowLocalFallback } from "../lib/azureAgentClient.js";
 import { fallbackUseCases } from "../lib/fallbacks.js";
 import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
+import { runReasoning } from "../lib/reasoningPasses.js";
+
+export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -182,6 +184,7 @@ export async function generateUseCases({
   research,
   numUseCases = 5,
   numMockupTabs = 5,
+  onStep,
 }) {
   if (!companyName || !domain || !requirement || !research) {
     throw new Error(
@@ -197,7 +200,7 @@ export async function generateUseCases({
     numMockupTabs,
   });
 
-  const { value: raw, source } = await askAgentOrFallback(
+  const draftPrompt = (reasoning) =>
     `${BRIEF_FIRST_RULE}
 
 You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
@@ -207,9 +210,10 @@ ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 
-You are the pre-sales lead AND the demo designer for THIS brief only. Internally brainstorm at least two approaches, then keep the one that fits the mandate.
+Your own analysis of this brief so far — build on it, do not start over:
+${reasoning || "(none available; reason from the mandate and research above)"}
 
-Walk ${companyName}. Keep the ${numUseCases} strongest use cases that a ${domain} operator would recognize as THEIR job, addressable by the mandate, without inventing systems.
+Now write the pitch content for the selected use cases.
 
 WRITE IN FULL SENTENCES. This is the most important instruction. Label fragments like "Payment success", "Ask clarifier", or "Less time to pay" are a FAILED answer — a reader who knows nothing about this project must understand the use case from your text alone. Explain, do not label.
 
@@ -237,7 +241,7 @@ Do not put Fabric, Harness, or OneLake in techComponents, flow, or labels unless
 Also design architecture for THIS mandate: sources they run, 2-3 stages named for their process, target = platform named in the requirement (or "Target platform" if none), guards only if this brief is about governance.
 
 Return ONLY JSON:
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}
+${PACKAGE_SCHEMA}
 
 Length guidance — these are MINIMUMS for the explanatory fields, so write enough to be understood:
 - challenge: 35-55 words. At least 2 sentences.
@@ -258,14 +262,40 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - overallBenefits: exactly 4 lines, 12-20 words each.
 - techComponents: max 3 names from this mandate only.
 
-Produce exactly ${numUseCases} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`,
-    () => null,
-    "usecases"
-  );
+Produce exactly ${numUseCases} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`;
 
-  if (raw) {
+  let parsed = null;
+  let verification = null;
+  let trace = null;
+  let source = "fallback";
+
+  try {
+    const outcome = await runReasoning({
+      companyName,
+      domain,
+      requirement,
+      research,
+      count: numUseCases,
+      draft: null,
+      draftPrompt,
+      schema: PACKAGE_SCHEMA,
+      onStep,
+    });
+    parsed = outcome.result;
+    verification = outcome.verification;
+    trace = outcome.trace;
+    if (parsed) source = "azure";
+  } catch (err) {
+    if (!allowLocalFallback()) {
+      throw new Error(
+        `Azure AI Foundry failed while reasoning about this brief (${err?.message || err}). The live portal does not publish generic fallback use cases.`
+      );
+    }
+    console.warn(`generateUseCases: reasoning pipeline failed (${err?.message || err}).`);
+  }
+
+  if (parsed) {
     try {
-      const parsed = extractJson(raw);
       const list = Array.isArray(parsed.useCases)
         ? parsed.useCases
         : Array.isArray(parsed)
@@ -276,11 +306,12 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
         .slice(0, numUseCases)
         .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain));
       if (useCases.length >= 3) {
+        attachEvidence(useCases, verification);
         return {
           useCases,
           topForMockup: useCases.slice(0, numMockupTabs).map((uc) => uc.title),
           overallBenefits: Array.isArray(parsed.overallBenefits)
-            ? parsed.overallBenefits.map((s) => clip(String(s), 110)).filter(Boolean).slice(0, 4)
+            ? parsed.overallBenefits.map((s) => clip(String(s), 130)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
           ...normalizeDeckCopy(parsed, fallback, companyName, domain, requirement),
           architecture: normalizeArchitecture(parsed.architecture, {
@@ -290,11 +321,13 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
             researchStructured: typeof research === "object" ? research : null,
             useCases,
           }),
+          evidenceNote: clip(verification?.evidenceNote || "", 200),
+          reasoning: trace,
           source,
         };
       }
     } catch (err) {
-      console.warn("generateUseCases: could not parse agent JSON.", err.message);
+      console.warn("generateUseCases: could not use the reasoned package.", err.message);
     }
   }
 
@@ -305,6 +338,38 @@ Produce exactly ${numUseCases} use cases. Design title, architecture, screens, a
   }
 
   return { ...fallback, source: "fallback" };
+}
+
+// Claims are labelled, never silently upgraded. An honest "industry-typical"
+// is what leadership needs; unlabelled content is marked as unverified.
+function attachEvidence(useCases, verification) {
+  const byTitle = new Map(
+    (verification?.useCases || []).map((entry) => [String(entry.title || "").toLowerCase().trim(), entry])
+  );
+  useCases.forEach((uc) => {
+    const match =
+      byTitle.get(String(uc.title).toLowerCase().trim()) ||
+      (verification?.useCases || []).find((e) =>
+        String(e.title || "").toLowerCase().includes(String(uc.title).toLowerCase().slice(0, 18))
+      );
+    const assumptions = (match?.assumptions || [])
+      .map((a) => ({
+        claim: clip(a.claim, 130),
+        confidence: a.confidence === "confirmed" ? "confirmed" : "industry-typical",
+        basis: clip(a.basis, 130),
+      }))
+      .filter((a) => a.claim)
+      .slice(0, 3);
+    uc.assumptions = assumptions.length
+      ? assumptions
+      : [
+          {
+            claim: "Details of this operation were not independently confirmed.",
+            confidence: "industry-typical",
+            basis: "Treat as typical for this industry until validated with the client.",
+          },
+        ];
+  });
 }
 
 export function selectTopUseCases(useCasesResult) {
