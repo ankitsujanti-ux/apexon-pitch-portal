@@ -220,6 +220,18 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
         "Leadership gets one version of the number, with the source behind it.",
       ],
       proofPoint: "",
+      assumptions: [
+        {
+          claim: `${companyName} runs the ${domain} systems this use case reads from.`,
+          confidence: "industry-typical",
+          basis: "Normal for an operator of this size, but not confirmed for this company.",
+        },
+        {
+          claim: "The data behind this view is already captured somewhere today.",
+          confidence: "industry-typical",
+          basis: "Assumed from industry norms — validate in discovery before committing.",
+        },
+      ],
       whatItShows: `The ${label.toLowerCase()} view for ${companyName}: current status, what is outside the expected range, and who owns each open item.`,
       whyItMatters: problem,
       action: fit,
