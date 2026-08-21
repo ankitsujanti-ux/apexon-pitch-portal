@@ -3,6 +3,7 @@
 
 import fs from "fs";
 import { toLabel, toSentences } from "../lib/text.js";
+import { packRegions } from "../lib/slideGrid.js";
 import path from "path";
 import pptxgen from "pptxgenjs";
 import { getPalette } from "../lib/palette.js";
@@ -797,9 +798,93 @@ const LAYOUT_RENDERERS = {
   evidence: layoutEvidence,
 };
 
+function paintPacked(slide, palette, uc, regions) {
+  const placed = packRegions(regions);
+  placed.forEach(({ x, y, w, h, region }) => {
+    const kind = region.kind;
+    const accent =
+      region.accent === "good" ? "0E7C66" : region.accent === "warn" ? "8A6A3A" : palette.cardBorder;
+    if (kind === "list") {
+      addBulletPanel(slide, palette, {
+        x, y, w, h,
+        kicker: region.kicker || region.title || "What follows",
+        items: region.items && region.items.length ? region.items : uc.businessValue,
+        accent,
+        itemMax: 140,
+      });
+      return;
+    }
+    if (kind === "kpis") {
+      const kpis = (uc.kpis || []).slice(0, 4);
+      const gap = 0.2;
+      const kw = kpis.length ? (w - (kpis.length - 1) * gap) / kpis.length : w;
+      kpis.forEach((k, i) => {
+        addPanel(slide, palette, {
+          x: x + i * (kw + gap), y, w: kw, h,
+          kicker: "Watch this",
+          title: k.name,
+          body: k.why,
+          accent: palette.accent,
+          bodyMax: 110,
+        });
+      });
+      return;
+    }
+    if (kind === "steps") {
+      const steps = (region.items && region.items.length ? region.items : uc.steps || (uc.solutionMoves || []).map((m) => m.lead)).slice(0, 4);
+      const gap = 0.16;
+      const sw = steps.length ? (w - (steps.length - 1) * gap) / steps.length : w;
+      steps.forEach((step, i) => {
+        addPanel(slide, palette, {
+          x: x + i * (sw + gap), y, w: sw, h,
+          kicker: String(i + 1).padStart(2, "0"),
+          title: "",
+          body: step,
+          accent: i === steps.length - 1 ? "0E7C66" : palette.cardBorder,
+          bodyMax: 90,
+        });
+      });
+      return;
+    }
+    if (kind === "compare" || kind === "split") {
+      const half = (w - 0.2) / 2;
+      addPanel(slide, palette, {
+        x, y, w: half, h,
+        kicker: region.kicker || "Today",
+        title: "",
+        body: region.items?.[0] || uc.challenge,
+        accent: "8A6A3A",
+        bodyMax: 220,
+      });
+      addPanel(slide, palette, {
+        x: x + half + 0.2, y, w: half, h,
+        kicker: region.title || "After",
+        title: "",
+        body: region.items?.[1] || (uc.solutionMoves || []).map((m) => m.lead).join(". "),
+        accent: "0E7C66",
+        bodyMax: 220,
+      });
+      return;
+    }
+    addPanel(slide, palette, {
+      x, y, w, h,
+      kicker: region.kicker || (kind === "callout" ? "Why this slide" : kind === "quote" ? "The point" : "In this job"),
+      title: region.title || "",
+      body: region.body || (region.items || []).join(" ") || uc.subtitle || uc.benefit,
+      accent: kind === "callout" ? palette.accent : accent,
+      bodyMax: kind === "quote" ? 280 : 180,
+    });
+  });
+}
+
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
   addSlideHeader(slide, palette, uc, index, total, companyName);
-  (LAYOUT_RENDERERS[layoutFor(uc, index)] || layoutChallenge)(slide, palette, uc);
+  const regions = uc.slide?.regions;
+  if (Array.isArray(regions) && regions.length) {
+    paintPacked(slide, palette, uc, regions);
+  } else {
+    (LAYOUT_RENDERERS[layoutFor(uc, index)] || layoutChallenge)(slide, palette, uc);
+  }
   addEvidenceStrip(slide, palette, uc);
 }
 
@@ -823,7 +908,7 @@ export async function buildDeck({
   const finalPath = outputPath || path.join("./output", `${slug}-pitch-deck.pptx`);
   fs.mkdirSync(path.dirname(finalPath), { recursive: true });
 
-  const list = useCases.useCases.slice(0, 5);
+  const list = useCases.useCases.slice(0, 7);
   const narrative = deckNarrative(useCases, companyName, domain, requirement);
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE";
