@@ -14,6 +14,7 @@ import { askAgent } from "./azureAgentClient.js";
 import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
 import { TONE_RULE, lintUseCases } from "./toneGuard.js";
+import { clampCount, classCatalog } from "./designContract.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
 
@@ -107,12 +108,12 @@ ${lines(frame?.criteria)}
 
 Score each 1-10 on: recognisable (an operator says "that is my job"), mandateFit, demoable (can be shown without inventing systems), dataLikely (the data plausibly exists).
 
-Then choose the ${count} strongest. Prefer a spread of different jobs over ${count} variations of one idea. Say plainly why each winner won and why each rejected one lost.
+Then choose how many this brief actually needs. At least 3, at most 7. A tight mandate is 3. A sprawling operation is 6 or 7. Prefer fewer that a leader would remember over padding. If you were asked for a specific count, honour it: ${count ? `choose exactly ${count}.` : "choose the count yourself."}
 
 ${NO_PROSE}
 {"selected":[{"title":"","scores":{"recognisable":9,"mandateFit":9,"demoable":8,"dataLikely":7},"whyChosen":""}],"rejected":[{"title":"","whyNot":""}]}
 
-Exactly ${count} in selected. whyChosen 15-25 words. Every non-selected candidate appears in rejected with whyNot, 10-20 words.`;
+3 to 7 in selected. whyChosen 15-25 words. Every non-selected candidate appears in rejected with whyNot, 10-20 words.`;
 }
 
 // Pass 5 — attack the draft as a hostile reviewer.
@@ -138,12 +139,14 @@ Find every instance of:
 - SO_WHAT: a screen or KPI where a business reader would ask "why do I care".
 - REPEAT: two use cases that are really the same job, or the same visual reused.
 - JARGON: a sentence an executive outside this function would have to re-read. Stacked nouns, unexplained terms, consultant filler.
-- SAMEY: slideLayout values that repeat across use cases, or a screen whose blocks duplicate another screen's.
+- SAMEY: two screens or two slides that use the same visual structure. Neighbouring ones must differ.
+- SPARSE: a screen or slide region with almost nothing in it.
+- CLONE: screenHtml that is a copy of another use case with the words swapped.
 
 Name the exact use case and field for each defect, and say what would fix it.
 
 ${NO_PROSE}
-{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY","problem":"","fix":""}]}
+{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY|SPARSE|CLONE","problem":"","fix":""}]}
 
 Report every real defect, up to 14. If the draft is genuinely strong, verdict "pass" with an empty defects array. problem and fix: 10-22 words each.`;
 }
@@ -169,7 +172,7 @@ Rules while revising:
 - Replace generic sentences with something only true of ${companyName} and this mandate.
 - Remove invented numbers, vendors, and system names. If a claim cannot be supported, either cut it or word it as an industry-typical assumption.
 - Apply every fix exactly as described. A defect saying to remove a product name means that name must not appear anywhere in your answer.
-- Give every use case a slideLayout, and make sure the five differ.
+- Give every use case a slide composition (slide.regions) that is different from its neighbours, and a screenHtml that is a real working screen — not the deck restated.
 - Keep the same number of use cases and the same JSON shape.
 
 ${NO_PROSE}
@@ -203,6 +206,38 @@ ${NO_PROSE}
 One entry per use case, matched by title. 2-3 assumptions each. claim 8-18 words. basis 8-18 words. evidenceNote 15-30 words.`;
 }
 
+// Pass between draft and critique — the agent designs each screen and slide.
+export function designPrompt({ companyName, domain, requirement, draft }) {
+  const titles = (draft?.useCases || []).map((uc) => uc.title).filter(Boolean);
+  return `${BRIEF_FIRST_RULE}
+
+You are designing the working software screens and the slide compositions for ${companyName} (${domain}).
+
+Mandate: "${requirement}"
+
+Use cases you already wrote (do not change their titles or rewrite their story):
+${JSON.stringify((draft?.useCases || []).map((uc) => ({ title: uc.title, subtitle: uc.subtitle, whatItShows: uc.whatItShows, lookFirst: uc.lookFirst, kpis: uc.kpis, steps: uc.steps, entities: uc.entities, challenge: uc.challenge, solutionMoves: uc.solutionMoves, businessValue: uc.businessValue }))).slice(0, 8000)}
+
+For EACH use case invent:
+1. screenHtml — the working product screen, NOT the deck. One short visual a person would use. Use only these tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
+   Allowed CSS classes:
+${classCatalog()}
+   Style attribute is allowed only as width:N% on a fill or funnel step. No other inline style. No scripts. No images.
+   Neighbouring screens must use a DIFFERENT structure. Invent the arrangement this job needs — a heat map for a plant, a queue for a claims desk, a board for a changeover, a funnel for a conversion path. Sample numbers only.
+
+2. slide — the PowerPoint composition. One idea, named in slide.idea. Then 1-4 regions on a 12-column grid.
+   kind is one of: quote, list, pair, steps, kpis, callout, split, compare.
+   span is 4, 6, or 12. Two span-6 regions sit side by side. A span-12 region is full width.
+   Neighbouring slides must not share the same kind sequence.
+
+Do not restate the challenge in screenHtml. Do not copy one screen onto another with the words swapped.
+
+${NO_PROSE}
+{"useCases":[{"title":"${titles[0] || ""}","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
+
+One entry per use case, matched by title. screenHtml is a single root (div.row, div.stack, or similar). slide.idea: 8-16 words.`;
+}
+
 export async function runReasoning({
   companyName,
   domain,
@@ -232,7 +267,7 @@ export async function runReasoning({
   trace.candidates = candidates;
 
   let selection = null;
-  if (candidates.length >= count) {
+  if (candidates.length >= 3) {
     selection = await tryPass({
       label: "scoring and selecting",
       prompt: selectPrompt({ companyName, domain, requirement, frame, candidates, count }),
@@ -240,6 +275,9 @@ export async function runReasoning({
     });
   }
   trace.selection = selection;
+  const targetCount = count
+    ? clampCount(count, 5)
+    : clampCount(selection?.selected?.length, 5);
 
   // The draft prompt is owned by the caller so the JSON contract stays in one
   // place; we only feed it the reasoning gathered so far.
@@ -253,7 +291,7 @@ export async function runReasoning({
       ? `Known gaps — mark these as industry-typical assumptions, do not state them as fact:\n${lines(frame.unknowns)}`
       : "",
     selection?.selected?.length
-      ? `Use these selected use cases and the reason each was chosen:\n${JSON.stringify(selection.selected).slice(0, 2600)}`
+      ? `Use these ${Math.min(targetCount, selection.selected.length)} selected use cases and the reason each was chosen:\n${JSON.stringify(selection.selected.slice(0, targetCount)).slice(0, 2600)}`
       : candidates.length
         ? `Shortlist to draw from:\n${JSON.stringify(candidates.slice(0, 9)).slice(0, 2600)}`
         : "",
@@ -264,12 +302,37 @@ export async function runReasoning({
   if (onStep) onStep("drafting the pitch");
   let current = draft;
   try {
-    const drafted = extractJson(await askAgent(draftPrompt(context), { retries: 1 }));
+    const drafted = extractJson(await askAgent(draftPrompt(context, targetCount), { retries: 1 }));
     if (Array.isArray(drafted?.useCases) && drafted.useCases.length >= 3) current = drafted;
   } catch (err) {
     console.warn(`[reason:draft] failed (${err?.message || err}).`);
   }
   if (!current) return { result: null, trace };
+
+  const designed = await tryPass({
+    label: "designing each screen",
+    prompt: designPrompt({ companyName, domain, requirement, draft: current }),
+    onStep,
+  });
+  if (Array.isArray(designed?.useCases) && designed.useCases.length) {
+    const byTitle = new Map(
+      designed.useCases.map((uc) => [String(uc.title || "").toLowerCase().trim(), uc])
+    );
+    current.useCases = (current.useCases || []).map((uc) => {
+      const match =
+        byTitle.get(String(uc.title || "").toLowerCase().trim()) ||
+        designed.useCases.find((d) =>
+          String(d.title || "").toLowerCase().includes(String(uc.title || "").toLowerCase().slice(0, 16))
+        );
+      if (!match) return uc;
+      return {
+        ...uc,
+        screenHtml: match.screenHtml || uc.screenHtml,
+        slide: match.slide || uc.slide,
+      };
+    });
+    trace.design = { screens: designed.useCases.length };
+  }
 
   const critique = await tryPass({
     label: "reviewing for weak content",
