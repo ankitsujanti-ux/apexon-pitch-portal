@@ -65,7 +65,25 @@ Rules:
 
 ---
 
-## Step 2 — Use-case brainstorming (sent by `2-usecases.js`)
+## Step 2 — Reasoning pipeline (orchestrated by `2-usecases.js` + `src/lib/reasoningPasses.js`)
+
+A single generation call cannot deliberate — the model emits its first answer and the builder paints it. Telling it to "think harder" changes nothing, because nothing inspects whether it did. So the deliberation is **run as separate passes**, each attacking the output of the last:
+
+| Pass | Purpose |
+| --- | --- |
+| 1. Frame | Restate the mandate, name what leadership must believe, list honest unknowns, set judging criteria |
+| 2. Diverge | Generate 9 candidates with rationale and each one's weakness — no filtering |
+| 3. Select | Score on recognisable / mandateFit / demoable / dataLikely, pick 5, record why each rejected one lost |
+| 4. Draft | Write the full pitch content for the survivors |
+| 5. Critique | Hostile review: find LABEL, GENERIC, UNSUPPORTED, INVENTED, SO_WHAT, REPEAT defects by field |
+| 6. Revise | Fix those specific defects, keep what was not criticised |
+| 7. Verify | Label every load-bearing claim `confirmed` or `industry-typical` with its basis |
+
+Each pass degrades gracefully: an unparseable pass is skipped and the previous state carries forward, so one bad response cannot fail the whole generation. Progress is reported per pass to the portal.
+
+**Verification stance.** Nothing is presented as fact unless labelled `confirmed`. Claims about a company's internal systems are not public, so the honest output is `industry-typical` with the basis shown on the slide and screen. Never upgrade a label to make the deck look stronger.
+
+### Content instructions (sent in the draft pass)
 
 Walk their plant, store, claims desk, or trading floor in your head. Internally list 8–10 candidate use cases a `{{COMPANY_NAME}}` operator would recognize as **their job**. Then keep the 5 strongest that:
 
