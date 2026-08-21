@@ -1,20 +1,26 @@
 // Permanent brief-first rule. Sent on every Foundry call and used by the
 // PPT/HTML builders so outputs follow THIS requirement, not a prior example.
 
-export const BRIEF_FIRST_RULE = `CORE RULE: Treat every shared document, slide, HTML file, or diagram as reference for quality only. Do not reuse its domain, product names, architecture, wording, layouts, or visuals unless the CURRENT requirement explicitly asks for them.
+export const BRIEF_FIRST_RULE = `CRITICAL — REQUIREMENT FIRST, REFERENCE SECOND.
 
-Required workflow:
-1. Extract the current company, domain, requirement, and constraints.
-2. Ignore unrelated details from reference material (Harness product PPT, Hornets demo, prior clients).
-3. Internally brainstorm at least two viable approaches for THIS brief.
-4. Choose the approach that best fits the requirement.
-5. Generate all copy, architecture, diagrams, and UI labels from that choice.
+Shared PPTs, HTML, screenshots, and other materials are REFERENCE ONLY. They set expected quality and depth. Do NOT copy their content, layout, tabs, charts, architecture, technology, terminology, or visual style unless the CURRENT requirement explicitly asks for them.
 
-Design: new information architecture per request. Name systems and screens in THEIR language. If the requirement changes, the output must change substantially.
+For every new requirement:
+1. Understand the business problem first.
+2. Brainstorm the most appropriate story, visuals, and UI for THIS company and mandate.
+3. Independently decide layout, screens/tabs, charts, diagrams, and interactions.
+4. Generate new business-specific content.
+5. Design the PPT and HTML around that content.
 
-Reuse check before you answer: primary subject is this brief; no leftover names, technologies, or patterns from a reference unless explicitly requested; architecture reflects the requested system.
+There is no fixed template, chart menu, tab structure, or design pattern to reuse. Do not repeat the same charts, KPI strip, or architecture just because a reference used them.
 
-If the brief is thin, mark assumptions as industry-typical. Do not fill gaps from a previous example.`;
+Every screen must state: what it shows, why it matters to the business, and what insight or action it enables.
+
+Use entities, terminology, imagery, and logos ONLY when they are genuinely relevant to this requirement. If the mandate has nothing to do with Fabric or Harness, do not introduce them.
+
+FINAL CHECK: If the reference material were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
+
+The requirement determines WHAT to build. Your reasoning determines HOW. The reference determines ONLY quality.`;
 
 const STAGE_COLORS = ["1D6EE4", "0E7C66", "E54A24"];
 const GUARD_COLORS = ["0E7C66", "1D6EE4", "6366F1", "E54A24"];
