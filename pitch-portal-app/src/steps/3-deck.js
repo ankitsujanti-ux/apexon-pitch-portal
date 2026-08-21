@@ -2,12 +2,12 @@
 // Order: title → agenda → architecture → use cases → thank you.
 
 import fs from "fs";
+import { toLabel, toSentences } from "../lib/text.js";
 import path from "path";
 import pptxgen from "pptxgenjs";
 import { getPalette } from "../lib/palette.js";
 import { slugify } from "../lib/slugify.js";
 import { LOGO_PATH, MASTER_BG_PATH } from "../lib/templateTheme.js";
-import { logoKeyForSystem, logoPath } from "../lib/logos.js";
 import { normalizeArchitecture } from "../lib/briefFirst.js";
 
 const SLIDE_W = 13.33;
@@ -75,10 +75,16 @@ function pptSafe(text) {
     .trim();
 }
 
+// Body copy keeps whole sentences so a shortened paragraph still reads as
+// finished prose. Nothing is ever cut mid-word.
 function truncate(text, maxChars) {
-  const clean = pptSafe(text);
-  if (clean.length <= maxChars) return clean;
-  return clean.slice(0, maxChars).replace(/\s+\S*$/, "") + "...";
+  return toSentences(pptSafe(text), maxChars);
+}
+
+// Short slots (kickers, node labels, step names) get a clean noun phrase rather
+// than a severed clause.
+function label(text, maxWords = 5) {
+  return toLabel(pptSafe(text), maxWords);
 }
 
 function applyMaster(slide, palette, { page, wave = false }) {
@@ -348,132 +354,138 @@ function difficultyLabel(uc) {
   return "Moderate — mix of existing and new work";
 }
 
+// Designed for the brief, not borrowed. The old version was a three-column
+// sources | stages | target plumbing diagram with meta-language kickers and a
+// row of identical database icons. This tells the operating story instead: the
+// stages this company would actually go through, what each one produces, and
+// the systems it is built on named plainly underneath.
 function addArchitectureSlide(slide, palette, { companyName, domain, requirement, researchStructured, architecture, useCases }) {
   const arch = normalizeArchitecture(architecture, {
-    companyName,
-    domain,
-    requirement,
-    researchStructured,
-    useCases,
+    companyName, domain, requirement, researchStructured, useCases,
   });
-  const sources = (arch.sources || []).map((s) => s.name || s).filter(Boolean).slice(0, 8);
-  const stages = arch.stages || [];
-  const target = arch.target || { name: "Target platform", components: [] };
-  const guards = arch.guards || [];
-  const hasGuards = guards.length > 0;
-  const colH = hasGuards ? 4.4 : 5.55;
+  const sources = (arch.sources || []).map((s) => s.name || s).filter(Boolean).slice(0, 7);
+  const stages = (arch.stages || []).slice(0, 4);
+  const target = arch.target || {};
+  const guards = (arch.guards || []).slice(0, 3);
+  const platformNamed = target.name && target.name !== "Operating platform";
 
-  slide.addText(truncate(arch.title || "Proposed architecture", 42), {
-    x: MARGIN, y: 0.14, w: 12.4, h: 0.3, fontSize: 22, bold: true,
-    color: palette.heading, fontFace: palette.fontTitle,
+  slide.addText(truncate(arch.title || "How this works", 46), {
+    x: MARGIN, y: 0.3, w: 12.4, h: 0.4, fontSize: 26, bold: true,
+    color: palette.textLight, fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(arch.subtitle || `${companyName}: path for this mandate.`, 140), {
-    x: MARGIN, y: 0.46, w: 12.4, h: 0.28, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody,
+  slide.addText(truncate(arch.subtitle || `What ${companyName} would put in place, and what it runs on.`, 150), {
+    x: MARGIN, y: 0.76, w: 12.4, h: 0.3, fontSize: 13, color: palette.accent, fontFace: palette.fontBody,
   });
+  slide.addShape("rect", { x: MARGIN, y: 1.16, w: 1.1, h: 0.03, fill: { color: palette.accent } });
 
-  slide.addShape("roundRect", {
-    x: 0.28, y: 0.82, w: 2.55, h: colH, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "75A2ED", width: 1.25 },
-  });
-  slide.addText("SOURCES FOR THIS BRIEF", {
-    x: 0.4, y: 0.9, w: 2.3, h: 0.28, fontSize: 10, bold: true,
-    color: "75A2ED", fontFace: palette.fontTitle, align: "center",
-  });
-  const srcH = Math.min(0.86, (colH - 0.5) / Math.max(2, Math.ceil(Math.max(sources.length, 1) / 2)));
-  sources.forEach((name, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = 0.42 + col * 1.18;
-    const y = 1.24 + row * (srcH + 0.08);
+  // The stages, as a left-to-right path. Each card carries its own steps, so
+  // there is no separate legend to cross-reference.
+  const gap = 0.26;
+  const w = stages.length ? (12.48 - (stages.length - 1) * gap) / stages.length : 12.48;
+  const cardY = 1.46;
+  // Height follows the longest stage. A fixed height left a third of every card
+  // empty, which is what made the slide look unfinished.
+  const maxSteps = Math.max(1, ...stages.map((s) => Math.min(4, (s.steps || []).length)));
+  const cardH = 1.34 + maxSteps * 0.34;
+  stages.forEach((stage, i) => {
+    const x = MARGIN + i * (w + gap);
+    const last = i === stages.length - 1;
     slide.addShape("roundRect", {
-      x, y, w: 1.1, h: srcH, rectRadius: 0.06,
-      fill: { color: "0B1220" }, line: { color: "243556", width: 1 },
+      x, y: cardY, w, h: cardH, rectRadius: 0.1,
+      fill: { color: palette.card },
+      line: { color: last ? "0E7C66" : "75A2ED", width: last ? 1.75 : 1.25 },
     });
-    const img = logoPath(logoKeyForSystem(name));
-    if (img && srcH > 0.55) {
-      slide.addImage({ path: img, x: x + 0.28, y: y + 0.06, w: 0.54, h: 0.36 });
+    slide.addText(String(i + 1).padStart(2, "0"), {
+      x: x + 0.22, y: cardY + 0.18, w: w - 0.44, h: 0.28,
+      fontSize: 13, bold: true, color: last ? "7DDEA0" : palette.accent, fontFace: palette.fontTitle,
+    });
+    slide.addText(label(stage.title, 6), {
+      x: x + 0.22, y: cardY + 0.5, w: w - 0.44, h: 0.66,
+      fontSize: 16, bold: true, color: palette.heading, fontFace: palette.fontTitle,
+      wrap: true, valign: "top",
+    });
+    const steps = (stage.steps || []).slice(0, 4).map((s) => ({
+      text: label(s, 7),
+      options: { fontSize: 12, color: palette.textLight, fontFace: palette.fontBody, bullet: { indent: 14 }, paraSpaceAfter: 7 },
+    }));
+    if (steps.length) {
+      slide.addText(steps, {
+        x: x + 0.22, y: cardY + 1.2, w: w - 0.44, h: cardH - 1.4, valign: "top",
+      });
     }
-    slide.addText(truncate(name, 22), {
-      x: x + 0.04, y: y + (srcH > 0.55 ? srcH - 0.32 : 0.08), w: 1.02, h: 0.28,
-      fontSize: 9, color: palette.textLight, fontFace: palette.fontBody, align: "center", wrap: true,
-    });
+    if (!last) {
+      slide.addText("→", {
+        x: x + w, y: cardY + 1.5, w: gap, h: 0.3,
+        fontSize: 15, bold: true, color: "75A2ED", fontFace: palette.fontTitle, align: "center",
+      });
+    }
   });
 
-  const bandH = (colH - (Math.max(stages.length, 1) - 1) * 0.1) / Math.max(1, stages.length);
-  stages.forEach((band, bi) => {
-    const y = 0.82 + bi * (bandH + 0.1);
-    const color = band.color || ["1D6EE4", "0E7C66", "E54A24"][bi] || "1D6EE4";
+  // Named systems as plain text chips. No stock database icons — they carried no
+  // information and repeated seven times.
+  const stripY = cardY + cardH + 0.3;
+  slide.addText("BUILT ON WHAT YOU ALREADY RUN", {
+    x: MARGIN, y: stripY, w: 6.0, h: 0.24,
+    fontSize: 10, bold: true, color: "8E9AB0", fontFace: palette.fontTitle,
+  });
+  let chipX = MARGIN;
+  let chipY = stripY + 0.3;
+  sources.forEach((name) => {
+    const text = label(name, 4);
+    const chipW = Math.min(2.6, Math.max(0.9, text.length * 0.088 + 0.34));
+    if (chipX + chipW > MARGIN + 12.48) {
+      chipX = MARGIN;
+      chipY += 0.44;
+    }
     slide.addShape("roundRect", {
-      x: 3.0, y, w: 7.05, h: bandH, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color, width: 1.25 },
+      x: chipX, y: chipY, w: chipW, h: 0.36, rectRadius: 0.18,
+      fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
     });
-    slide.addShape("rect", { x: 3.0, y, w: 0.1, h: bandH, fill: { color } });
-    slide.addText(truncate(band.title, 48), {
-      x: 3.22, y: y + 0.06, w: 6.7, h: 0.24, fontSize: 11, bold: true, color, fontFace: palette.fontTitle,
+    slide.addText(text, {
+      x: chipX, y: chipY, w: chipW, h: 0.36,
+      fontSize: 11, color: palette.textLight, fontFace: palette.fontBody,
+      align: "center", valign: "middle", wrap: false,
     });
-    const steps = band.steps || [];
-    const stepW = (6.7 - (Math.max(steps.length, 1) - 1) * 0.08) / Math.max(1, steps.length);
-    steps.forEach((step, si) => {
-      const sx = 3.22 + si * (stepW + 0.08);
-      slide.addShape("roundRect", {
-        x: sx, y: y + 0.34, w: stepW, h: Math.max(0.5, bandH - 0.44), rectRadius: 0.06,
-        fill: { color: "0B1220" }, line: { color: "243556", width: 1 },
-      });
-      slide.addText(String(si + 1), {
-        x: sx + 0.06, y: y + 0.38, w: 0.28, h: 0.2, fontSize: 10, bold: true, color, fontFace: palette.fontTitle,
-      });
-      slide.addText(truncate(step, 48), {
-        x: sx + 0.08, y: y + 0.58, w: stepW - 0.16, h: Math.max(0.32, bandH - 0.7),
-        fontSize: 10, color: palette.textLight, fontFace: palette.fontBody, wrap: true,
-      });
-    });
+    chipX += chipW + 0.14;
   });
 
-  slide.addShape("roundRect", {
-    x: 10.2, y: 0.82, w: 2.75, h: colH, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "A78BFA", width: 1.25 },
-  });
-  slide.addText("TARGET FOR THIS MANDATE", {
-    x: 10.32, y: 0.9, w: 2.5, h: 0.28, fontSize: 10, bold: true,
-    color: "C4B5FD", fontFace: palette.fontTitle, align: "center",
-  });
-  const targetImg = logoPath(/fabric/i.test(target.name || "") ? "fabric" : logoKeyForSystem(target.name));
-  if (targetImg) slide.addImage({ path: targetImg, x: 11.05, y: 1.28, w: 1.05, h: 0.85 });
-  slide.addText(truncate(target.name || "Target platform", 28), {
-    x: 10.32, y: 2.2, w: 2.5, h: 0.4, fontSize: 13, bold: true,
-    color: palette.textLight, fontFace: palette.fontTitle, align: "center", wrap: true,
-  });
-  (target.components || []).slice(0, 4).forEach((label, i) => {
-    const y = 2.7 + i * 0.55;
-    const img = logoPath(logoKeyForSystem(label));
-    if (img) slide.addImage({ path: img, x: 10.45, y: y, w: 0.36, h: 0.36 });
-    slide.addText(truncate(label, 22), {
-      x: 10.9, y: y + 0.04, w: 1.85, h: 0.3, fontSize: 12, color: palette.textLight, fontFace: palette.fontBody,
-    });
-  });
-
-  if (!hasGuards) return;
-
-  slide.addText("CONTROLS FOR THIS BRIEF", {
-    x: MARGIN, y: 5.38, w: 8, h: 0.2, fontSize: 10, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
-  });
-  const gw = (12.76 - (guards.length - 1) * 0.14) / guards.length;
-  guards.forEach((layer, i) => {
-    const x = 0.28 + i * (gw + 0.14);
+  // Whatever height is left goes to the things leadership asks about next:
+  // what it runs on, and what keeps it safe. Filling this band is what stops
+  // the slide trailing off into empty navy.
+  const bandY = chipY + 0.36 + 0.34;
+  const bandH = Math.max(1.0, 6.62 - bandY);
+  const cards = [
+    platformNamed
+      ? { k: "What it runs on", v: `${label(target.name, 4)}, named in your brief.` }
+      : { k: "What it runs on", v: "Your choice of platform. Nothing here depends on one vendor." },
+    ...(guards.length
+      ? guards.map((g) => ({ k: label(g.title, 4), v: pptSafe(g.body) }))
+      : [
+          {
+            k: "What stays as it is",
+            v: "The systems above keep running and stay the system of record. Nothing is replaced.",
+          },
+          {
+            k: "How you check it",
+            v: "Every number traces back to the feed it came from, so the view can be challenged.",
+          },
+        ]),
+  ].slice(0, 4);
+  const cw = (12.48 - (cards.length - 1) * gap) / cards.length;
+  cards.forEach((card, i) => {
+    const x = MARGIN + i * (cw + gap);
     slide.addShape("roundRect", {
-      x, y: 5.5, w: gw, h: 1.18, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: layer.color || "1D6EE4", width: 1.25 },
+      x, y: bandY, w: cw, h: bandH, rectRadius: 0.08,
+      fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
     });
-    slide.addText(String(layer.n || i + 1), {
-      x: x + 0.12, y: 5.58, w: 0.55, h: 0.2, fontSize: 12, bold: true,
-      color: layer.color || palette.accent, fontFace: palette.fontTitle,
+    slide.addText(pptSafe(card.k).toUpperCase(), {
+      x: x + 0.18, y: bandY + 0.14, w: cw - 0.36, h: 0.22,
+      fontSize: 9.5, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
-    slide.addText(truncate(layer.title, 22), {
-      x: x + 0.7, y: 5.58, w: gw - 0.86, h: 0.2, fontSize: 13, bold: true,
-      color: palette.textLight, fontFace: palette.fontTitle,
-    });
-    slide.addText(truncate(layer.body, 70), {
-      x: x + 0.12, y: 5.82, w: gw - 0.24, h: 0.72, fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
+    slide.addText(truncate(card.v, 120), {
+      x: x + 0.18, y: bandY + 0.42, w: cw - 0.36, h: bandH - 0.58,
+      fontSize: 11.5, color: palette.textLight, fontFace: palette.fontBody,
+      wrap: true, valign: "top",
     });
   });
 }
@@ -643,25 +655,38 @@ function layoutImpact(slide, palette, uc) {
 // Layout C — today versus after.
 function layoutShift(slide, palette, uc) {
   const half = (12.48 - 0.3) / 2;
+  // Size the panels to the longer of the two columns instead of a fixed 3.3in,
+  // which left a large void under short copy.
+  const challengeLines = Math.ceil(truncate(uc.challenge || uc.businessProblem, 330).length / 46);
+  const moveLines = (uc.solutionMoves || []).slice(0, 3).length * 3;
+  const panelH = Math.min(3.3, Math.max(2.1, 0.55 + Math.max(challengeLines, moveLines) * 0.24));
+  const valueItems = (uc.businessValue || []).slice(0, 3);
+  const bulletH = Math.max(1.0, 0.52 + valueItems.length * 0.3);
+  // Both panels are sized to their own copy, then the pair is centred in the
+  // body. Stretching either one to reach the footer is what produced the void.
+  const bodyTop = 1.62;
+  const bodyBottom = 6.5;
+  const stackH = panelH + 0.24 + bulletH;
+  const top = Math.max(bodyTop, bodyTop + (bodyBottom - bodyTop - stackH) / 2);
   slide.addShape("roundRect", {
-    x: MARGIN, y: 1.72, w: half, h: 3.3, rectRadius: 0.08,
+    x: MARGIN, y: top, w: half, h: panelH, rectRadius: 0.08,
     fill: { color: "1A1410" }, line: { color: "8A6A3A", width: 1 },
   });
   slide.addText("HOW IT RUNS TODAY", {
-    x: MARGIN + 0.2, y: 1.9, w: half - 0.4, h: 0.24,
+    x: MARGIN + 0.2, y: top + 0.18, w: half - 0.4, h: 0.24,
     fontSize: 10.5, bold: true, color: "FFD48A", fontFace: palette.fontTitle,
   });
   slide.addText(truncate(uc.challenge || uc.businessProblem, 330), {
-    x: MARGIN + 0.2, y: 2.22, w: half - 0.4, h: 2.6,
+    x: MARGIN + 0.2, y: top + 0.5, w: half - 0.4, h: panelH - 0.6,
     fontSize: 13.5, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
     lineSpacingMultiple: 1.2,
   });
   slide.addShape("roundRect", {
-    x: MARGIN + half + 0.3, y: 1.72, w: half, h: 3.3, rectRadius: 0.08,
+    x: MARGIN + half + 0.3, y: top, w: half, h: panelH, rectRadius: 0.08,
     fill: { color: "0E211A" }, line: { color: "0E7C66", width: 1.25 },
   });
   slide.addText("HOW IT RUNS AFTER", {
-    x: MARGIN + half + 0.5, y: 1.9, w: half - 0.4, h: 0.24,
+    x: MARGIN + half + 0.5, y: top + 0.18, w: half - 0.4, h: 0.24,
     fontSize: 10.5, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
   (uc.solutionMoves || []).slice(0, 3).forEach((move, i) => {
@@ -670,12 +695,19 @@ function layoutShift(slide, palette, uc) {
         { text: `${pptSafe(move.lead).replace(/[.:]$/, "")}. `, options: { bold: true, color: "FFFFFF", fontSize: 12.5, fontFace: palette.fontTitle } },
         { text: truncate(move.detail, 130), options: { color: palette.textLight, fontSize: 12.5, fontFace: palette.fontBody } },
       ],
-      { x: MARGIN + half + 0.5, y: 2.24 + i * 0.88, w: half - 0.4, h: 0.82, wrap: true, valign: "top" }
+      {
+        x: MARGIN + half + 0.5,
+        y: top + 0.52 + i * ((panelH - 0.62) / 3),
+        w: half - 0.4,
+        h: (panelH - 0.62) / 3,
+        wrap: true,
+        valign: "top",
+      }
     );
   });
   addBulletPanel(slide, palette, {
-    x: MARGIN, y: 5.18, w: 12.48, h: 1.4,
-    kicker: "What that is worth", items: uc.businessValue, accent: "0E7C66", itemMax: 150,
+    x: MARGIN, y: top + panelH + 0.24, w: 12.48, h: bulletH,
+    kicker: "What that is worth", items: valueItems, accent: "0E7C66", itemMax: 150,
   });
 }
 
