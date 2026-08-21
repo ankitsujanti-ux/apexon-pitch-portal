@@ -67,7 +67,7 @@ const PACKS = {
     {
       title: (c) => `Live production pulse — ${c}`,
       problem: (c) => `${c} cannot see live line status, yield, and holds across batches, so issues surface after the run is already off-spec.`,
-      fit: () => "Real-Time Intelligence on Fabric turns line, temperature, and batch events into a live operations board.",
+      fit: () => "Line, temperature, and batch events become a live operations board the plant can act on.",
       data: "MES/historian events, batch records, line temperatures",
       availability: "existing",
       difficulty: "easier",
@@ -84,7 +84,7 @@ const PACKS = {
     {
       title: (c) => `Quality hold radar — ${c}`,
       problem: (c) => `${c} finds quality or allergen exceptions only after product has moved, which creates scrap, rework, and recall risk.`,
-      fit: () => "Streaming rules and a Foundry agent flag holds as they happen and route them to the quality owner.",
+      fit: () => "Streaming rules flag holds as they happen and route them to the quality owner.",
       data: "LIMS/quality checks, allergen and lot records",
       availability: "existing",
       tech: ["Microsoft Fabric", "Azure AI Foundry", "Data Activator"],
@@ -93,7 +93,7 @@ const PACKS = {
     {
       title: (c) => `Ingredient and finished-goods signal — ${c}`,
       problem: (c) => `${c} plans ingredient and finished-goods inventory from yesterday's reports, which creates stockouts and waste.`,
-      fit: () => "Fabric unifies orders, inventory, and supplier receipts so planners see what is changing now.",
+      fit: () => "Orders, inventory, and supplier receipts sit in one view so planners see what is changing now.",
       data: "ERP inventory, purchase orders, warehouse receipts",
       availability: "existing",
       tech: ["Microsoft Fabric", "OneLake", "Power BI"],
@@ -102,7 +102,7 @@ const PACKS = {
     {
       title: (c) => `Governed ops briefing — ${c}`,
       problem: (c) => `${c} leaders get long, conflicting plant reports instead of a short, trusted daily briefing.`,
-      fit: () => "A governed Foundry agent summarizes trusted Fabric data into a plain-language briefing with sources.",
+      fit: () => "A governed briefing summarizes trusted operational data in plain language, with a source behind each number.",
       data: "KPI marts, quality summaries, production totals",
       availability: "existing",
       tech: ["Azure AI Foundry", "Microsoft Fabric", "OneLake"],
@@ -111,7 +111,7 @@ const PACKS = {
     {
       title: (c) => `Lot traceability trail — ${c}`,
       problem: (c) => `${c} struggles to prove lot lineage from ingredient to customer when quality or a retailer asks.`,
-      fit: () => "OneLake and Fabric governance keep lot, recipe, and shipping lineage in one auditable place.",
+      fit: () => "Lot, recipe, and shipping lineage stay in one auditable trail when quality or a retailer asks.",
       data: "Lot genealogy, shipping, recipe/BOM",
       availability: "new",
       tech: ["Microsoft Fabric", "Purview", "OneLake"],
@@ -122,7 +122,7 @@ const PACKS = {
     {
       title: (c) => `Live operations pulse — ${c}`,
       problem: (c, d) => `${c} cannot see live ${d} operations across sites, so issues surface too late.`,
-      fit: () => "Real-Time Intelligence on Fabric turns event streams into a live operations board leaders can act on.",
+      fit: () => "Event streams become a live operations board leaders can act on.",
       data: "Plant, order, and event telemetry",
       availability: "existing",
       tech: ["Microsoft Fabric", "Eventstream", "Real-Time Intelligence"],
@@ -140,7 +140,7 @@ const PACKS = {
     {
       title: (c) => `Demand and inventory signal — ${c}`,
       problem: (c, d) => `${c} plans ${d} inventory from yesterday's reports, which creates stockouts and waste.`,
-      fit: () => "Fabric unifies sales, inventory, and supply signals so planners see what is changing now.",
+      fit: () => "Sales, inventory, and supply signals sit in one view so planners see what is changing now.",
       data: "Orders, inventory, and supplier feeds",
       availability: "existing",
       tech: ["Microsoft Fabric", "OneLake", "Power BI"],
@@ -149,7 +149,7 @@ const PACKS = {
     {
       title: (c) => `Governed AI briefing — ${c}`,
       problem: (c) => `${c} leaders get long, conflicting reports instead of a short, trusted daily briefing.`,
-      fit: () => "A governed Foundry agent summarizes trusted Fabric data into a plain-language briefing with sources.",
+      fit: () => "A governed briefing summarizes trusted operational data in plain language, with a source behind each number.",
       data: "KPI marts and operational summaries",
       availability: "existing",
       tech: ["Azure AI Foundry", "Microsoft Fabric", "OneLake"],
@@ -158,7 +158,7 @@ const PACKS = {
     {
       title: (c, d) => `Traceability and audit trail — ${c}`,
       problem: (c, d) => `${c} struggles to prove ${d} lineage and control when auditors or customers ask.`,
-      fit: () => "OneLake and Fabric governance keep lineage, access, and audit history in one place.",
+      fit: () => "Lineage, access, and audit history stay in one trail when auditors or customers ask.",
       data: "Lineage, access logs, and master data",
       availability: "new",
       tech: ["Microsoft Fabric", "Purview", "OneLake"],
@@ -177,11 +177,25 @@ PACKS.energy = PACKS.manufacturing;
 
 export function fallbackUseCases({ companyName, domain, requirement, numUseCases = 5, numMockupTabs = 5 }) {
   const shapes = PACKS[industryKey(domain, requirement)] || PACKS.manufacturing;
-  const useCases = shapes.slice(0, numUseCases).map((shape) => ({
+  const layouts = [
+    ["alerts", "table"],
+    ["record", "actions"],
+    ["heat", "kpis"],
+    ["compare", "timeline"],
+    ["entities", "flow"],
+  ];
+  const useCases = shapes.slice(0, numUseCases).map((shape, i) => ({
     title: shape.title(companyName, domain),
     businessProblem: shape.problem(companyName, domain),
     benefit: shape.fit(),
-    solutionFit: `${shape.fit()} This maps to: ${sentence(requirement, "the stated Azure platform requirement")}.`,
+    solutionFit: `${shape.fit()} This maps to: ${sentence(requirement, "the stated mandate")}.`,
+    whatItShows: `This screen is the ${shape.title(companyName, domain).split(/[—–-]/)[0].trim()} view for ${companyName}.`,
+    whyItMatters: shape.problem(companyName, domain),
+    action: shape.fit(),
+    lookFirst: shape.title(companyName, domain).split(/[—–-]/)[0].trim(),
+    blocks: layouts[i] || ["table", "actions"],
+    entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
+    steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
     kpis: shape.kpis || [
       { name: "Exceptions in view", why: "What needs a person right now." },
       { name: "On-time signal", why: "Whether operations are staying inside the window." },
@@ -308,7 +322,7 @@ export function dashboardCopy(companyName, domain, useCase) {
   if (/brief|governed|next.?best/.test(blob)) {
     return {
       kpis: [
-        { value: "5", label: "Sources cited", why: "How many trusted Fabric sources sit behind this briefing.\nEvery number should point back to one of them." },
+        { value: "5", label: "Sources cited", why: "How many trusted sources sit behind this briefing.\nEvery number should point back to one of them." },
         { value: "2", label: "Items needing a call", why: "Recommendations that still need a person to decide.\nThe agent does not act on its own." },
         { value: "12m", label: "Brief freshness", why: "How recently the briefing was rebuilt from governed data.\nStale briefs should not be used in a walkthrough." },
         { value: "Governed", label: "Agent status", why: "The agent is limited to approved tables.\nIt will not invent figures from the open web." },
@@ -321,10 +335,10 @@ export function dashboardCopy(companyName, domain, useCase) {
         { label: "Escalate 13%", w: 70, color: "#E54A24" },
       ],
       feed: [
-        ["good", "Inform", `${companyName} overnight totals match the Fabric KPI mart.`],
+        ["good", "Inform", `${companyName} overnight totals match the operating KPI mart.`],
         ["warn", "Review", "Two quality holds are still open — include in the stand-up."],
         ["bad", "Escalate", `Line 3 yield dropped versus plan. Owner needs a call.`],
-        ["good", "Inform", "Foundry briefing rebuilt from governed OneLake tables."],
+        ["good", "Inform", "Briefing rebuilt from governed operational tables."],
       ],
       button: "Refresh the briefing",
       event: `Simulated briefing refresh for ${companyName} — two items flagged for review.`,
