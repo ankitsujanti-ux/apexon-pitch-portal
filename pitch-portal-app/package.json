@@ -13,7 +13,8 @@
     "test:usecases": "node src/steps/test-usecases.js",
     "test:deck": "node src/steps/test-deck.js",
     "test:mockup": "node src/steps/test-mockup.js",
-    "test:publish": "node src/steps/test-publish.js"
+    "test:design": "node src/steps/design-harness.mjs",
+    "test:verify": "node src/steps/verify-many.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
