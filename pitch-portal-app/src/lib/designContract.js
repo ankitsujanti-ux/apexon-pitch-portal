@@ -90,6 +90,13 @@ export const ALLOWED_CLASSES = new Set([
   "s",
   "n",
   "conf",
+  "primary",
+  "workspace",
+  "workspace-metrics",
+  "workspace-body",
+  "workspace-hero",
+  "workspace-rail",
+  "solo",
 ]);
 
 export const ALLOWED_ATTRS = new Set(["class", "id", "style", "data-feed", "data-kpi", "aria-label", "type"]);
@@ -114,7 +121,7 @@ export function clampCount(n, fallback = 5) {
 }
 
 export function classCatalog() {
-  return `LAYOUT: row (two columns), row eq (equal), row tri (three), stack (vertical), split-v (two stacked panels).
+  return `LAYOUT: row with EXACTLY two children (article.viz + article.side). Optional section.kpis ABOVE the row, never inside it. stack = kpis then one viz. Never put h3, kpis, tables, and boards as siblings in a row.
 CARDS: viz, side, kpi, kpis, callout, gauge.
 CHARTS: heat+cell (good|warn|bad), bars+bar-row+track+fill, funnel+step, matrix, board+col (kanban), lane, queue+n, timeline, flow+node (keep|mid|out)+arrow, compare+col (before|after), entities+entity.
 LISTS: alerts+alert+pill, feed, nba-list+nba.
