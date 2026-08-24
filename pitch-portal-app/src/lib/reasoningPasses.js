@@ -223,7 +223,13 @@ For EACH use case invent:
    Allowed CSS classes:
 ${classCatalog()}
    Style attribute is allowed only as width:N% on a fill or funnel step. No other inline style. No scripts. No images.
-   Neighbouring screens must use a DIFFERENT structure. Invent the arrangement this job needs — a heat map for a plant, a queue for a claims desk, a board for a changeover, a funnel for a conversion path. Sample numbers only.
+   Neighbouring screens must use a DIFFERENT working view. Sample numbers only.
+
+   HARD LAYOUT RULE: screenHtml is at most TWO panels.
+   - Root is <div class="row"> with EXACTLY two children, or <div class="stack"> with a kpi strip then one viz.
+   - Child 1: <article class="viz"> the work (one board OR one table OR one heat — not all three).
+   - Child 2: <article class="side"> the next move (queue, compare, or actions). Optional kpi strip ABOVE the row, never inside it.
+   - Do not put h3, kpis, tables, and boards as siblings inside a row. That layout is unreadable.
 
 2. slide — the PowerPoint composition. One idea, named in slide.idea. Then 1-4 regions on a 12-column grid.
    kind is one of: quote, list, pair, steps, kpis, callout, split, compare.
