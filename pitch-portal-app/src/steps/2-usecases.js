@@ -285,7 +285,7 @@ Then design each HTML screen. The HTML is the working product, NOT the deck — 
 - whatItShows: ONE short sentence naming what is on the screen. This is the only caption the screen gets.
 - whyItMatters / action: one sentence each, used elsewhere. Keep them plain.
 
-Compose the visual from 1-3 primitives in blocks as a fallback, AND write screenHtml as the real screen using the allowed design-system classes (row, stack, viz, heat, board, funnel, queue, compare, timeline, and so on). Neighbouring screens must not share a structure. The HTML is the working product, NOT the deck.
+Compose the visual from 1-3 primitives in blocks as a fallback, AND write screenHtml as the real screen. HARD LAYOUT: a row with EXACTLY two children (article.viz = the work, article.side = the next move). Optional kpi strip ABOVE the row, never inside it. One working view per screen — a board OR a table OR a heat map, not all three. Neighbouring screens must not share a structure. The HTML is the working product, NOT the deck.
 
 Then compose the PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ.
 
