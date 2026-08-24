@@ -79,7 +79,128 @@ export function sanitizeScreen(html, { tabId = "tab" } = {}) {
   if (!/<(article|div|section|table|ul|ol)\b/i.test(out)) {
     return { ok: false, reason: "no layout root" };
   }
-  return { ok: true, html: out };
+  return { ok: true, html: compileScreen(out) };
+}
+
+const LAYOUT_ROOT = /\b(row|stack|split-v|screen|workspace|tri|eq)\b/;
+
+function classOf(html) {
+  const m = /^<[a-z]+([^>]*)>/i.exec(String(html || ""));
+  const cls = m && /class="([^"]*)"/.exec(m[1] || "");
+  return cls ? cls[1] : "";
+}
+
+function splitTopLevel(html) {
+  const s = String(html || "").trim();
+  const parts = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] !== "<") {
+      const skip = s.slice(i).match(/^[^<]*/);
+      i += skip ? skip[0].length : 1;
+      continue;
+    }
+    if (s.startsWith("</", i)) {
+      const close = s.slice(i).match(/^<\/[a-zA-Z][a-zA-Z0-9]*>/);
+      i += close ? close[0].length : 1;
+      continue;
+    }
+    const open = s.slice(i).match(/^<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/);
+    if (!open) break;
+    const tag = open[1].toLowerCase();
+    const start = i;
+    i += open[0].length;
+    if (open[0].endsWith("/>")) {
+      parts.push(s.slice(start, i));
+      continue;
+    }
+    let depth = 1;
+    while (depth > 0 && i < s.length) {
+      const next = s.slice(i).match(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/);
+      if (!next) {
+        i = s.length;
+        break;
+      }
+      i += s.slice(i).indexOf(next[0]) + next[0].length;
+      if (next[2].toLowerCase() !== tag) continue;
+      if (next[1] === "/") depth -= 1;
+      else if (!next[0].endsWith("/>")) depth += 1;
+    }
+    parts.push(s.slice(start, i));
+  }
+  return parts.filter((p) => /<[a-z]/i.test(p));
+}
+
+function innerHtml(el) {
+  return String(el || "").replace(/^<[^>]+>/, "").replace(/<\/[a-zA-Z][a-zA-Z0-9]*>$/, "");
+}
+
+function flattenWidgets(html) {
+  const out = [];
+  for (const el of splitTopLevel(html)) {
+    const cls = classOf(el);
+    const layoutOnly = LAYOUT_ROOT.test(cls) && !/\b(viz|side|kpis|board|heat|compare|queue|alerts|gauge|flow|matrix)\b/.test(cls);
+    if (layoutOnly) out.push(...flattenWidgets(innerHtml(el)));
+    else out.push(el);
+  }
+  return out;
+}
+
+function kindOfWidget(el) {
+  const cls = classOf(el);
+  const body = String(el);
+  if (/\bkpis\b/.test(cls) || /^<.*class="[^"]*\bkpi\b/.test(body.slice(0, 80))) return "metrics";
+  if (/\b(board|heat|matrix|table)\b/.test(cls) || /<table\b/i.test(body) || /\bboard\b/.test(body)) return "hero";
+  if (/\b(alerts|queue|nba-list|feed|compare|flow|gauge|callout)\b/.test(cls) || /<(ul|ol)\b/i.test(body)) return "rail";
+  if (/^<h[34]\b/i.test(el)) return "heading";
+  if (/^<button\b/i.test(el)) return "action";
+  return "hero";
+}
+
+function polish(el) {
+  let html = String(el || "");
+  html = html.replace(/<button\b(?![^>]*class=)/gi, '<button class="primary" type="button"');
+  html = html.replace(/<button class="/gi, '<button type="button" class="');
+  return html;
+}
+
+function attachHeading(heading, el) {
+  if (!heading) return el;
+  if (/^<(ul|ol)\b/i.test(el)) return `${heading}${el}`;
+  return String(el).replace(/^(<[a-z]+[^>]*>)/i, `$1${heading}`);
+}
+
+// Agent HTML is a pile of widgets. The page is a product screen: metrics on
+// top, the working view on the left, the next move on the right. Anything else
+// is what made the Microsoft mockup unreadable.
+export function compileScreen(html) {
+  const widgets = flattenWidgets(html).map(polish);
+  if (!widgets.length) return html;
+  const metrics = [];
+  const heroes = [];
+  const rails = [];
+  let pendingHeading = "";
+  for (const el of widgets) {
+    const kind = kindOfWidget(el);
+    if (kind === "heading") {
+      pendingHeading = el;
+      continue;
+    }
+    if (kind === "metrics") {
+      metrics.push(el);
+      continue;
+    }
+    const wrapped = attachHeading(pendingHeading, el);
+    pendingHeading = "";
+    if (kind === "rail" || kind === "action") rails.push(wrapped);
+    else heroes.push(wrapped);
+  }
+  if (pendingHeading) rails.push(pendingHeading);
+  if (heroes.length > 1) rails.push(...heroes.slice(1));
+  const hero = heroes[0] || rails.shift() || widgets[0];
+  const rail = rails.join("");
+  const strip = metrics.join("");
+  return `<div class="workspace">${strip ? `<div class="workspace-metrics">${strip}</div>` : ""}<div class="workspace-body${rail ? "" : " solo"}"><div class="workspace-hero">${hero}</div>${rail ? `<div class="workspace-rail">${rail}</div>` : ""}</div></div>`;
 }
 
 export function screenFingerprint(html) {
