@@ -6,8 +6,9 @@
 // Deck: the agent describes a composition (regions on a 12-column grid). The
 // builder packs and paints it. The agent never emits inch coordinates.
 //
-// Count: the brief decides how many screens, not a constant. Tight mandates
-// get three. A sprawling operation can take seven. Padding is a defect.
+// Count: the brief decides how many use-case slides, not a constant. Tight
+// mandates get three. A sprawling operation can take seven. Padding is a
+// defect. HTML is always one leadership screen covering those jobs' KPIs.
 
 export const MIN_SCREENS = 3;
 export const MAX_SCREENS = 7;
@@ -121,7 +122,7 @@ export function clampCount(n, fallback = 5) {
 }
 
 export function classCatalog() {
-  return `LAYOUT: row with EXACTLY two children (article.viz + article.side). Optional section.kpis ABOVE the row, never inside it. stack = kpis then one viz. Never put h3, kpis, tables, and boards as siblings in a row.
+  return `LAYOUT: one leadership screen. Builder paints KPIs. screenHtml is a row with EXACTLY two children (article.viz + article.side). Never put h3, kpis, tables, and boards as siblings in a row.
 CARDS: viz, side, kpi, kpis, callout, gauge.
 CHARTS: heat+cell (good|warn|bad), bars+bar-row+track+fill, funnel+step, matrix, board+col (kanban), lane, queue+n, timeline, flow+node (keep|mid|out)+arrow, compare+col (before|after), entities+entity.
 LISTS: alerts+alert+pill, feed, nba-list+nba.
