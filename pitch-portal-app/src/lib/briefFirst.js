@@ -3,24 +3,22 @@
 
 export const BRIEF_FIRST_RULE = `CRITICAL — REQUIREMENT FIRST, REFERENCE SECOND.
 
-Nothing shared previously is a reference. The dark theme is the only thing that carries over — navy canvas, orange accent, white Apexon lockup. That is brand chrome, not content. Content, layout, tabs, charts, architecture, phase names, terminology, and wording are all designed fresh for the current requirement.
+Nothing shared previously is a reference. The dark theme is the only thing that carries over — navy canvas, orange accent, white Apexon lockup. That is brand chrome, not content. Content, layout, charts, architecture, phase names, terminology, and wording are all designed fresh for the current requirement.
 
 For every new requirement:
-1. Understand the business problem first.
-2. Brainstorm the most appropriate story, visuals, and UI for THIS company and mandate.
-3. Independently decide layout, screens/tabs, charts, diagrams, and interactions.
-4. Generate new business-specific content.
-5. Design the PPT and HTML around that content.
+1. Understand the business problem first. Research this company and this industry before proposing jobs.
+2. Brainstorm use cases that only make sense for THIS company in THIS industry. Reject anything that would paste onto another account.
+3. Independently decide how the PPT should tell that story, and how ONE leadership HTML screen should look. There are no tabs per use case.
+4. Verify every load-bearing claim. Confirmed only if public or researched. Otherwise industry-typical, said plainly.
+5. Design and build from that thinking. Not from a prior deck or HTML.
 
-There is no fixed template, chart menu, tab structure, or design pattern to reuse. Do not repeat the same charts, KPI strip, or architecture just because a reference used them.
+There is no fixed template, chart menu, or design pattern to reuse.
 
-Every screen must state: what it shows, why it matters to the business, and what insight or action it enables.
+PLAIN ENGLISH, BOARDROOM LEVEL. Write for a smart executive who does not work in this function. Short sentences. Industry words are welcome when they are the words this room actually uses — yield, denial, fill rate, dwell time — but the first time you use one, put the meaning in the same sentence.
 
-PLAIN ENGLISH. Write for a smart executive who does not work in this function. Short sentences, no stacked jargon, no consultant filler. A reader should never have to re-read a sentence.
+ONE IDEA PER SLIDE. Putting challenge + solution + value + KPIs + data + effort on every slide is a failed deck.
 
-ONE IDEA PER SLIDE. Putting challenge + solution + value + KPIs + data + effort on every slide is what makes a deck look identical and unreadable. Vary the composition per use case and cut copy rather than shrinking type.
-
-THE HTML IS THE PRODUCT, NOT THE DECK. Never repeat the deck's business case inside the mockup.
+THE HTML IS ONE LEADERSHIP PRODUCT SCREEN, NOT THE DECK AND NOT A TAB TOUR. The PPT tells each use case. The HTML is the picture a leader would leave open: the KPIs from those use cases, plus one working view. Never repeat the deck's business case inside it.
 
 Use entities, terminology, imagery, and logos ONLY when they are genuinely relevant to this requirement. Name a product, platform, or vendor only if the requirement itself names it; otherwise describe the capability in plain words.
 
