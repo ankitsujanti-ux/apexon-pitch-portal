@@ -5,7 +5,7 @@ import { runReasoning } from "../lib/reasoningPasses.js";
 import { TONE_RULE, lintUseCases } from "../lib/toneGuard.js";
 import { clampCount, MAX_SCREENS, MIN_SCREENS } from "../lib/designContract.js";
 
-export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""]}`;
+export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""],"hub":{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":""}]}}`;
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -178,6 +178,44 @@ function normalizeSlide(raw) {
   return { idea: clip(raw.idea, 90), regions };
 }
 
+const SAMPLE_VALUES = ["18", "96%", "4.2h", "3", "12", "99%"];
+
+export function normalizeHub(raw, useCases, companyName, domain) {
+  const kpis = (useCases || []).slice(0, 6).map((uc, i) => {
+    const named = uc.kpis?.[0];
+    const fromAgent = Array.isArray(raw?.kpis)
+      ? raw.kpis.find(
+          (k) =>
+            String(k?.from || "").toLowerCase() === String(uc.title || "").toLowerCase() ||
+            String(k?.name || "").toLowerCase() === String(named?.name || "").toLowerCase()
+        ) || raw.kpis[i]
+      : null;
+    return {
+      name: clip(fromAgent?.name || named?.name || uc.title, 30),
+      value: clip(fromAgent?.value || SAMPLE_VALUES[i] || "—", 12),
+      why: paragraph(
+        fromAgent?.why,
+        [named?.why, uc.whyItMatters, "Leadership watches this to know whether this job is holding."],
+        120,
+        24
+      ),
+      from: clip(uc.title, 60),
+    };
+  });
+  return {
+    title: clip(raw?.title || `${companyName} operating picture`, 64),
+    subtitle: clip(raw?.subtitle || `What ${domain} leadership would watch this morning`, 90),
+    whatItShows: paragraph(
+      raw?.whatItShows,
+      ["The numbers from each job on the slides, and the next exception that still needs a person."],
+      140,
+      40
+    ),
+    screenHtml: typeof raw?.screenHtml === "string" ? raw.screenHtml.slice(0, 14000) : "",
+    kpis,
+  };
+}
+
 const DECK_LAYOUTS = ["challenge", "impact", "shift", "journey", "evidence"];
 
 // Guarantee neighbouring slides differ even when the agent picks the same
@@ -281,15 +319,16 @@ Choose a slideLayout for EACH use case — pick the one that suits ITS story, an
 - "evidence" — data, effort, and what is proven. Use when feasibility is the real question.
 Each layout shows only PART of the content, so the slide stays readable. Write all fields anyway.
 
-Then design each HTML screen. The HTML is the working product, NOT the deck — do not restate the challenge or the business case there. It shows the software.
-- whatItShows: ONE short sentence naming what is on the screen. This is the only caption the screen gets.
-- whyItMatters / action: one sentence each, used elsewhere. Keep them plain.
+Then design ONE leadership HTML screen — not a tab per use case. The deck tells each job. The HTML is the product a leader would leave open: those jobs' KPIs on one strip, plus one working view.
+- hub.title: max 8 words, what this screen is called in their language.
+- hub.subtitle: 6-12 words, the promise of the view.
+- hub.whatItShows: ONE sentence, 12-22 words — the only caption the screen gets.
+- hub.kpis: one KPI per use case (name + sample value + why). Sample numbers only, never claimed as live.
+- hub.screenHtml: the working view under the KPIs. HARD LAYOUT: a row with EXACTLY two children (article.viz = the work, article.side = the next move). One working view — a board OR a table OR a heat map, not all three. Do not restate the deck.
 
-Compose the visual from 1-3 primitives in blocks as a fallback, AND write screenHtml as the real screen. HARD LAYOUT: a row with EXACTLY two children (article.viz = the work, article.side = the next move). Optional kpi strip ABOVE the row, never inside it. One working view per screen — a board OR a table OR a heat map, not all three. Neighbouring screens must not share a structure. The HTML is the working product, NOT the deck.
+Then compose each PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ.
 
-Then compose the PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ.
-
-Primitives (fallback only, if screenHtml is rejected):
+Primitives (fallback only, if hub.screenHtml is rejected):
 - kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
 
 Put a product or platform name in techComponents, flow, or labels only if the requirement itself names one. Otherwise describe the capability in plain words.
@@ -314,12 +353,15 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - deckKicker: max 4 words. deckTitle: max 9 words. deckSubtitle: max 18 words. closeLine: max 18 words.
 - architecture.stages: 2-3 titles, each 2-6 short steps.
 - architecture.target.name: only a platform named in the mandate, else "Operating platform".
-- lookFirst: max 8 words. blocks: 1-3 primitive names, unique mix per tab.
+- lookFirst: max 8 words. blocks: 1-3 primitive names for the hub fallback only.
+- hub.title: max 8 words. hub.whatItShows: 12-22 words, one sentence.
 - columns / zones / entities / steps: named for THIS process when used.
 - overallBenefits: exactly 4 lines, 12-20 words each.
 - techComponents: max 3 names from this mandate only.
 
-Produce exactly ${count} use cases. Design title, architecture, screens, and close from THIS brief. Use-case titles become the agenda.`;
+Leave useCases[].screenHtml empty. The HTML is hub.screenHtml only.
+
+Produce exactly ${count} use cases. Design title, architecture, the one leadership screen, and close from THIS brief. Use-case titles become the agenda.`;
   };
 
   let parsed = null;
@@ -368,8 +410,10 @@ Produce exactly ${count} use cases. Design title, architecture, screens, and clo
       if (useCases.length >= MIN_SCREENS) {
         spreadLayouts(useCases);
         attachEvidence(useCases, verification);
+        const hub = normalizeHub(parsed.hub, useCases, companyName, domain);
         return {
           useCases,
+          hub,
           topForMockup: useCases.slice(0, tabs).map((uc) => uc.title),
           overallBenefits: Array.isArray(parsed.overallBenefits)
             ? parsed.overallBenefits.map((s) => clip(String(s), 130)).filter(Boolean).slice(0, 4)
@@ -398,7 +442,12 @@ Produce exactly ${count} use cases. Design title, architecture, screens, and clo
     );
   }
 
-  return { ...fallback, useCases: spreadLayouts(fallback.useCases || []), source: "fallback" };
+  return {
+    ...fallback,
+    useCases: spreadLayouts(fallback.useCases || []),
+    hub: normalizeHub(fallback.hub, fallback.useCases || [], companyName, domain),
+    source: "fallback",
+  };
 }
 
 // Claims are labelled, never silently upgraded. An honest "industry-typical"
