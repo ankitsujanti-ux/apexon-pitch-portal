@@ -22,10 +22,28 @@ function toText(structured, companyName, domain, requirement) {
     ? structured.reporting.map((r) => r.name || r).filter(Boolean).join("; ")
     : "";
   const compliance = Array.isArray(structured.compliance) ? structured.compliance.join("; ") : "";
+  const implications = Array.isArray(structured.implications)
+    ? structured.implications
+        .map((i) => {
+          const finding = i.finding || i;
+          const why = i.whyItMatters ? ` Why it matters: ${i.whyItMatters}` : "";
+          const opp = i.opportunity ? ` Opportunity: ${i.opportunity}` : "";
+          return `${finding}${why}${opp}`;
+        })
+        .filter(Boolean)
+        .join(" ")
+    : "";
+  const known = Array.isArray(structured.knownFacts) ? structured.knownFacts.filter(Boolean).join(" ") : "";
+  const assumptions = Array.isArray(structured.assumptions) ? structured.assumptions.filter(Boolean).join(" ") : "";
+  const hypotheses = Array.isArray(structured.hypotheses) ? structured.hypotheses.filter(Boolean).join(" ") : "";
   return [
     structured.summary || `${companyName} operates in ${domain}.`,
     walk,
     morning,
+    known ? `Known facts: ${known}` : "",
+    assumptions ? `Assumptions (not confirmed): ${assumptions}` : "",
+    hypotheses ? `Hypotheses to test: ${hypotheses}` : "",
+    implications ? `Business implications: ${implications}` : "",
     facts,
     systems ? `Data systems: ${systems}.` : "",
     reporting ? `Reporting landscape: ${reporting}.` : "",
@@ -41,6 +59,10 @@ function normalizeResearch(parsed, companyName, domain, requirement) {
     summary: String(parsed.summary || "").trim(),
     operationsWalk: String(parsed.operationsWalk || "").trim(),
     leadershipMorning: String(parsed.leadershipMorning || "").trim(),
+    knownFacts: Array.isArray(parsed.knownFacts) ? parsed.knownFacts.slice(0, 8) : [],
+    assumptions: Array.isArray(parsed.assumptions) ? parsed.assumptions.slice(0, 6) : [],
+    hypotheses: Array.isArray(parsed.hypotheses) ? parsed.hypotheses.slice(0, 6) : [],
+    implications: Array.isArray(parsed.implications) ? parsed.implications.slice(0, 6) : [],
     verifiedFacts: Array.isArray(parsed.verifiedFacts) ? parsed.verifiedFacts.slice(0, 8) : [],
     systems: Array.isArray(parsed.systems) ? parsed.systems.slice(0, 10) : [],
     reporting: Array.isArray(parsed.reporting) ? parsed.reporting.slice(0, 6) : [],
@@ -59,7 +81,7 @@ export async function research({ companyName, domain, requirement }) {
   const { value, source } = await askAgentOrFallback(
     `${BRIEF_FIRST_RULE}
 
-You are an Apexon pre-sales solution architect walking into ${companyName} (${domain}) tomorrow.
+You are an Apexon enterprise pitch strategist walking into ${companyName} (${domain}) tomorrow.
 
 Mandate from the account team: "${requirement}"
 
@@ -67,13 +89,17 @@ Do a deep brief on THIS company in THIS industry before any use case is proposed
 
 Search what is public first: official site, investor filings, annual reports, reputable news. List what you can source. Then, and only then, fill gaps with industry-typical practice — labelled as such. Do not invent a walk from generic industry knowledge and present it as this company.
 
+Do not merely collect facts. Translate every important finding into a BUSINESS IMPLICATION: why it matters to this client, and what problem or opportunity it creates.
+
 Return ONLY JSON, no markdown:
-{"summary":"","operationsWalk":"","leadershipMorning":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
+{"summary":"","operationsWalk":"","leadershipMorning":"","knownFacts":[""],"assumptions":[""],"hypotheses":[""],"implications":[{"finding":"","whyItMatters":"","opportunity":""}],"verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
 
 Hard rules:
 - summary: 2 short sentences a business stakeholder would nod at. Public, checkable facts only. Name products, plants, channels, or customers only if public.
 - operationsWalk: 4-6 sentences walking how THIS company actually works day to day, in ${domain} language. Who does the work, where the delay or risk sits, what a missed window costs.
 - leadershipMorning: 2-3 sentences on what a ${domain} VP at a company like ${companyName} would want on one screen at the start of the day. Name the metrics in their words, then say what each means.
+- knownFacts: only public, checkable items. assumptions: industry-typical, said as assumptions. hypotheses: what we would test in discovery.
+- implications: 3-6 items. finding 8-16 words. whyItMatters 10-18 words. opportunity 10-18 words — a business decision, not a dashboard name.
 - verifiedFacts: only items you can reasonably attribute to a public source. Put the basis in "basis" as a site name or URL. If you cannot source it, do not list it.
 - systems: operational systems a ${domain} company like this typically runs, and what each is used for in THEIR process.
 - If a system is not publicly confirmed for ${companyName}, set confidence to "industry-typical" and say so in basis. Never write it as if they confirmed it.
