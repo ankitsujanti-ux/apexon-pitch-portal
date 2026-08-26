@@ -9,7 +9,7 @@ We do **not** change the agent definition in Azure. `1-research.js` and `2-useca
 - **Domain / industry:** `{{DOMAIN}}`
 - **Requirement:** `{{REQUIREMENT}}`
 - **Use cases:** 3–7, decided from the brief
-- **Mockup tabs:** same as the use cases
+- **Mockup:** one leadership HTML screen covering the KPIs from those use cases. Not a tab per use case.
 
 ---
 
@@ -23,13 +23,15 @@ Apexon navy, orange, and the white lockup are brand chrome. They are not content
 
 1. Understand the business problem first.
 2. Brainstorm the most appropriate story, visuals, and UI for this company and mandate.
-3. Independently decide layout, screens/tabs, charts, diagrams, and interactions.
+3. Independently decide how the PPT should tell the story, and how ONE leadership HTML screen should look.
 4. Generate new business-specific content.
 5. Design the PPT and HTML around that content.
 
 There is no fixed template, chart menu, or tab structure. Do not repeat the same KPI strip or architecture because a reference used them.
 
-Every screen must state **what it shows**, **why it matters**, and **what action it enables**. Name a product, platform, or vendor only if `{{REQUIREMENT}}` names it. Otherwise describe the capability in plain words. Logos follow the same rule.
+The HTML is one leadership product screen. The PPT tells each use case. Invent both at runtime from this company and this mandate.
+
+Every screen must make **what it shows**, **why it matters**, and **what action it enables** obvious from the UI. Name a product, platform, or vendor only if `{{REQUIREMENT}}` names it. Otherwise describe the capability in plain words. Logos follow the same rule.
 
 Final check: if the reference were removed and you had only this requirement, would you design essentially the same experience? If no, redesign.
 
@@ -52,12 +54,15 @@ Research `{{COMPANY_NAME}}`: what they actually do, how they make money, the sys
 Return JSON only:
 
 ```json
-{"summary":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
+{"summary":"","operationsWalk":"","leadershipMorning":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
 ```
 
 Rules:
 
+- Search public sources first: official site, filings, reputable news. Then separate confirmed from industry-typical.
 - `summary`: 2 short sentences a business stakeholder would nod at. Public, checkable facts only.
+- `operationsWalk`: 4–6 sentences on how THIS company actually works, in `{{DOMAIN}}` language.
+- `leadershipMorning`: 2–3 sentences on what a VP would want on one screen at the start of the day. Name the metric, then say what it means.
 - If a system is not publicly confirmed, `confidence` = `industry-typical`. Never present it as confirmed.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
 - Do not assume they already run any named platform or product unless that is public **or** named in `{{REQUIREMENT}}`.
@@ -75,8 +80,8 @@ A single generation call cannot deliberate — the model emits its first answer 
 | 2. Diverge | Generate 9 candidates with rationale and each one's weakness — no filtering |
 | 3. Select | Score on recognisable / mandateFit / demoable / dataLikely, pick 3–7 (tight mandate → 3, sprawling → 6–7), record why each rejected one lost |
 | 4. Draft | Write the full pitch content for the survivors |
-| 4b. Design | Invent each HTML screen (`screenHtml`) and each slide composition (`slide.regions`). Neighbouring screens and slides must differ. |
-| 5. Critique | Hostile review: find LABEL, GENERIC, UNSUPPORTED, INVENTED, SO_WHAT, REPEAT, SAMEY, SPARSE, CLONE defects by field |
+| 4b. Design | Invent ONE leadership HTML hub (`hub.screenHtml` + KPIs from the use cases) and each slide (`slide.regions`). Neighbouring slides must differ. |
+| 5. Critique | Hostile review: find LABEL, GENERIC, UNSUPPORTED, INVENTED, SO_WHAT, REPEAT, SAMEY, SPARSE, HUB defects by field |
 | 6. Revise | Fix those specific defects, keep what was not criticised |
 | 7. Verify | Label every load-bearing claim `confirmed` or `industry-typical` with its basis |
 
@@ -103,7 +108,7 @@ Also design:
 
 - The **title-slide** copy (`deckKicker`, `deckTitle`, `deckSubtitle`, `closeLine`) from this brief.
 - The **architecture** for this requirement (`architecture.sources`, `stages`, `target`, `guards`). Name the stages after this company's actual process. Do not reuse a generic phase model.
-- Each **HTML screen** from scratch as real markup in `screenHtml`, using only the design-system classes. Neighbouring screens must not share a structure. `blocks` is a fallback if the markup is rejected.
+- ONE **leadership HTML hub** (`hub.title`, `hub.whatItShows`, `hub.kpis` from the use cases, `hub.screenHtml`). Leave per-use-case `screenHtml` empty. There is no tab tour.
 - Each **slide composition** in `slide.regions` (kinds `quote`, `list`, `pair`, `steps`, `kpis`, `callout`, `split`, `compare`; spans 4, 6, or 12). Neighbouring slides must differ. `slideLayout` remains a fallback.
 
 ### Plain English (enforced in code)
@@ -137,14 +142,14 @@ Each layout renders only **part** of the content so the slide stays readable. Wr
 
 ### The HTML is the product, not the deck
 
-The mockup shows the working software. Do **not** restate the challenge or the business case there — that is the deck's job, and repeating it makes the screen unreadable. Each screen gets one short caption (`whatItShows`) and the visual.
+The mockup shows the working software. Do **not** restate the challenge or the business case there — that is the deck's job, and repeating it makes the screen unreadable. The leadership screen gets one short caption (`hub.whatItShows`) and the visual.
 
-Write `screenHtml` as real markup for that screen. Allowed tags: `article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button`. Allowed classes are the design system: `row`, `stack`, `viz`, `heat`, `board`, `funnel`, `queue`, `compare`, `timeline`, `gauge`, `callout`, and the rest listed in `src/lib/designContract.js`. Neighbouring screens must not share a structure. `blocks` is a fallback if the markup is rejected.
+Write `hub.screenHtml` as real markup for that one working view. Allowed tags: `article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button`. Allowed classes are the design system: `row`, `stack`, `viz`, `heat`, `board`, `funnel`, `queue`, `compare`, `timeline`, `gauge`, `callout`, and the rest listed in `src/lib/designContract.js`. `blocks` is a fallback if the markup is rejected. Leave `useCases[].screenHtml` empty.
 
 Return JSON only, 3–7 use cases:
 
 ```json
-{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""]}
+{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","","",""],"hub":{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":""}]}}
 ```
 
 ### Write explanations, not labels
@@ -158,8 +163,8 @@ This is the single most important rule for content. Fragments like “Payment su
 - `kpis`: exactly 4. `name` 2–4 words. `why` 12–20 words as a full sentence saying what it tells leadership. No invented current numbers.
 - `dataPointer.description`: 12–25 words naming the data and where it usually lives.
 - `difficultyWhy`: 12–25 words.
-- `whatItShows`: 12–22 words, **one** sentence — the screen's only caption. `whyItMatters` / `action`: 12–22 words each.
-- `screenHtml`: real markup for this screen, different structure from its neighbours.
+- `whatItShows`: 12–22 words, **one** sentence — used on the slide; the HTML caption is `hub.whatItShows`. `whyItMatters` / `action`: 12–22 words each.
+- `hub.screenHtml`: real markup for the one leadership working view. Leave per-use-case `screenHtml` empty.
 - `slide.regions`: 1–4 regions. Neighbouring slides must not share a kind sequence.
 - `businessProblem`: 25–40 words. `benefit`: 20–35 words.
 - `proofPoint`: one sentence of industry evidence, or `""` if not confident.
@@ -169,7 +174,8 @@ This is the single most important rule for content. Fragments like “Payment su
 - `architecture.target`: the platform this requirement asked for, by name. If it names none, use `"Operating platform"` — do not pick one for them.
 - `architecture.guards`: 0–4 cards. Omit if this brief is not about governance.
 - `lookFirst`: max 8 words.
-- `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`, `compare`, `timeline`, `entities`. Unique mix per tab.
+- `blocks`: 1–3 of `kpis`, `bars`, `alerts`, `table`, `heat`, `record`, `actions`, `flow`, `compare`, `timeline`, `entities`. Hub fallback only.
+- `hub.kpis`: one KPI per use case (sample value, never claimed live).
 - `overallBenefits`: exactly 4 lines, 12–20 words each.
 - `techComponents`: max 3 names from this mandate.
 
@@ -185,12 +191,12 @@ Aim for roughly 150 words of body copy per slide. If a layout feels full, cut co
 
 ## Step 4 — Interactive HTML (built in code)
 
-The **only** thing carried over from anything shared previously is the dark theme: navy canvas, orange accent, white Apexon lockup. Everything else — tab names, screen composition, visuals, wording, iconography — is designed fresh for this requirement.
+The **only** thing carried over from anything shared previously is the dark theme: navy canvas, orange accent, white Apexon lockup. Everything else — composition, visuals, wording, iconography — is designed fresh for this requirement.
 
-- Dark navy canvas. Horizontal tabs that ellipsis rather than clip. Fits the viewport, no page scroll.
+- Dark navy canvas. One leadership screen, not a tab per use case. Fits the viewport, no page scroll.
 - One type scale for the whole page. No ad-hoc font sizes.
-- This is the **product**, not the deck. One short caption (`whatItShows`) per screen, then the visual. No challenge, no business case, no “what is verified” block — those live in the PPT.
-- The agent writes `screenHtml`. A sanitizer keeps only the design-system tags and classes. If the markup is rejected, `blocks` paints a fallback.
+- This is the **product**, not the deck. KPI strip from the use cases. One short caption (`hub.whatItShows`), then the working view. No challenge, no business case, no “what is verified” block — those live in the PPT.
+- The agent writes `hub.screenHtml`. A sanitizer keeps only the design-system tags and classes. If the markup is rejected, `blocks` paints a fallback.
 - Sample data is simulated, never claimed as live company metrics.
 
 ---
