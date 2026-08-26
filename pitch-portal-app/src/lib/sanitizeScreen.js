@@ -166,13 +166,13 @@ function polish(el) {
 
 function attachHeading(heading, el) {
   if (!heading) return el;
-  if (/^<(ul|ol)\b/i.test(el)) return `${heading}${el}`;
+  if (/^<(ul|ol|table)\b/i.test(el) || /<table\b/i.test(el.slice(0, 120))) return `${heading}${el}`;
   return String(el).replace(/^(<[a-z]+[^>]*>)/i, `$1${heading}`);
 }
 
-// Agent HTML is a pile of widgets. The page is a product screen: metrics on
-// top, the working view on the left, the next move on the right. Anything else
-// is what made the Microsoft mockup unreadable.
+// Agent HTML is a pile of widgets. Keep the working view in the main column
+// and only true next-actions in the rail. Dumping leftover tables into the
+// rail is what stacked text on top of text.
 export function compileScreen(html) {
   const widgets = flattenWidgets(html).map(polish);
   if (!widgets.length) return html;
@@ -195,12 +195,15 @@ export function compileScreen(html) {
     if (kind === "rail" || kind === "action") rails.push(wrapped);
     else heroes.push(wrapped);
   }
-  if (pendingHeading) rails.push(pendingHeading);
-  if (heroes.length > 1) rails.push(...heroes.slice(1));
-  const hero = heroes[0] || rails.shift() || widgets[0];
-  const rail = rails.join("");
+  if (pendingHeading) {
+    if (heroes.length) heroes.push(pendingHeading);
+    else rails.push(pendingHeading);
+  }
+  const heroInner =
+    heroes.length > 1 ? `<div class="stack">${heroes.join("")}</div>` : heroes[0] || rails.shift() || widgets[0];
+  const railInner = rails.slice(0, 3).join("");
   const strip = metrics.join("");
-  return `<div class="workspace">${strip ? `<div class="workspace-metrics">${strip}</div>` : ""}<div class="workspace-body${rail ? "" : " solo"}"><div class="workspace-hero">${hero}</div>${rail ? `<div class="workspace-rail">${rail}</div>` : ""}</div></div>`;
+  return `<div class="workspace">${strip ? `<div class="workspace-metrics">${strip}</div>` : ""}<div class="workspace-body${railInner ? "" : " solo"}"><div class="workspace-hero">${heroInner}</div>${railInner ? `<div class="workspace-rail"><div class="stack">${railInner}</div></div>` : ""}</div></div>`;
 }
 
 export function screenFingerprint(html) {
