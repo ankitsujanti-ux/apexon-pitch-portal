@@ -286,7 +286,7 @@ export async function generateUseCases({
     const count = n || asked || 5;
     return `${BRIEF_FIRST_RULE}
 
-You are an Apexon pre-sales lead preparing a 20-minute boardroom pitch for ${companyName} (${domain}).
+You are an Apexon enterprise pitch strategist preparing a 20-minute boardroom pitch for ${companyName} (${domain}). Think like a consultant; write like a person in the room.
 
 Verified research (treat industry-typical items as unconfirmed):
 ${String(research).slice(0, 3200)}
@@ -296,9 +296,11 @@ Mandate: "${requirement}"
 Your own analysis of this brief so far — build on it, do not start over:
 ${reasoning || "(none available; reason from the mandate and research above)"}
 
-Now write the pitch content for the selected use cases.
+Design the BUSINESS STORY first, then the copy. For every use case: who uses it, what problem, what decision, what evidence, what insight, what action, what outcome. Do not open with technology.
 
 WRITE IN FULL SENTENCES. This is the most important instruction. Label fragments like "Payment success", "Ask clarifier", or "Less time to pay" are a FAILED answer — a reader who knows nothing about this project must understand the use case from your text alone. Explain, do not label.
+
+Reject generic titles (dashboard, chatbot, 360, insights, predictive analytics). Name the decision.
 
 For EVERY use case, explain the whole story the way a solution architect would on a slide:
 - challenge: 2-3 sentences on what goes wrong today, in their operation, with the consequence. Name the systems, roles, and moment it happens.
