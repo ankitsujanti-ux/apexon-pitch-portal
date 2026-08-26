@@ -122,7 +122,7 @@ export function clampCount(n, fallback = 5) {
 }
 
 export function classCatalog() {
-  return `LAYOUT: one leadership screen. Builder paints KPIs. screenHtml is a row with EXACTLY two children (article.viz + article.side). Never put h3, kpis, tables, and boards as siblings in a row.
+  return `LAYOUT: one leadership screen. Builder paints KPIs. screenHtml = one primary visual in article.viz PLUS an optional article.side of next actions. Never dump h3, kpis, tables, and boards as siblings. One thought per table cell and per queue item.
 CARDS: viz, side, kpi, kpis, callout, gauge.
 CHARTS: heat+cell (good|warn|bad), bars+bar-row+track+fill, funnel+step, matrix, board+col (kanban), lane, queue+n, timeline, flow+node (keep|mid|out)+arrow, compare+col (before|after), entities+entity.
 LISTS: alerts+alert+pill, feed, nba-list+nba.
