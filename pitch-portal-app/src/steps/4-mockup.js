@@ -482,7 +482,10 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   /* Panels are columns so their content can claim the leftover height instead
      of sitting at the top of an over-tall box. */
   .viz, .side { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-  .viz > *:last-child, .side > *:last-child { flex: 1; min-height: 0; }
+  .viz > *:last-child, .side > *:last-child { flex: 1; min-height: 0; overflow: auto; }
+  .viz > table, .side > table, .viz > .tablewrap, .side > .queue, .viz > .queue {
+    flex: 1; min-height: 0; overflow: auto; height: auto;
+  }
   .heat, .entities, .timeline, .flow, .compare, .bars, .feed, .tablewrap { min-height: 0; }
   .bars { display: flex; flex-direction: column; justify-content: space-evenly; }
   .bar-row { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--fs-body); }
@@ -490,11 +493,13 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .track { flex: 1; height: 14px; background: #0b1220; border-radius: 8px; overflow: hidden; }
   .fill { display: block; height: 100%; border-radius: 8px; }
   .vv { width: 48px; text-align: right; font-weight: 700; color: var(--heading); }
-  .feed, .nba-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-evenly; }
-  .alerts { display: flex; flex-direction: column; justify-content: space-evenly; }
-  .rec-body { display: flex; flex-direction: column; justify-content: space-evenly; }
-  .tablewrap { display: block; }
-  table tbody tr { height: 1px; }
+  .feed, .nba-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+  .alerts { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+  .rec-body { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+  .tablewrap { display: block; overflow: auto; min-height: 0; }
+  table tbody tr { height: auto; }
+  th, td { vertical-align: top; white-space: normal; word-break: break-word; line-height: 1.4; }
+  td p, td span, td small, td b { display: block; line-height: 1.35; }
   .feed li, .nba { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #243556; font-size: var(--fs-body); }
   .feed li:last-child, .nba:last-child { border-bottom: 0; }
   .conf { margin-left: auto; font-size: var(--fs-micro); font-weight: 700; color: var(--blue60); white-space: nowrap; }
@@ -566,6 +571,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .workspace-hero, .workspace-rail {
     min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px;
   }
+  .workspace-rail .stack { flex: none; gap: 10px; }
   .workspace-hero > h3, .workspace-rail > h3 {
     margin: 0; font-size: var(--fs-h3); color: #d7deea;
   }
@@ -604,8 +610,9 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   .funnel .step { background: #1D6EE4; border-radius: 8px; padding: 10px 12px; text-align: center; font-weight: 700; font-size: var(--fs-body); }
   .matrix { display: block; min-height: 0; }
   .gauge { display: flex; flex-direction: column; justify-content: center; background: #0b1220; border-radius: 10px; padding: 16px; min-height: 0; }
-  .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; height: auto; }
-  .queue > * { display: flex; gap: 10px; align-items: center; background: #0b1220; border-radius: 8px; padding: 10px; }
+  .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; height: auto; justify-content: flex-start; }
+  .queue > * { display: flex; gap: 10px; align-items: flex-start; background: #0b1220; border-radius: 8px; padding: 10px; min-width: 0; overflow: visible; }
+  .queue > * > :not(.n) { min-width: 0; flex: 1; white-space: normal; line-height: 1.35; }
   .queue .n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: var(--fs-small); flex: none; }
   .callout { background: #1A1410; border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 14px; color: #d7deea; font-size: var(--fs-body); }
   h4 { margin: 0 0 8px; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
