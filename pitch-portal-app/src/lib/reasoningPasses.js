@@ -48,7 +48,7 @@ function lines(list, max = 12) {
 export function framePrompt({ companyName, domain, requirement, research }) {
   return `${BRIEF_FIRST_RULE}
 
-You are an Apexon pre-sales lead. Before proposing anything, interrogate the brief.
+You are an Apexon enterprise pitch strategist. Before proposing anything, interrogate the brief. Do not design slides yet.
 
 Company: ${companyName}
 Industry: ${domain}
@@ -58,16 +58,16 @@ Research:
 ${String(research).slice(0, 3000)}
 
 Do not propose solutions yet. Answer only these questions:
-1. What is this mandate actually asking for, restated in business terms?
+1. What is this mandate actually asking for, restated as the BUSINESS DECISION behind it — not a restatement of the request?
 2. What must ${companyName} leadership believe by the end of the meeting for this to be a win?
-3. What do we genuinely NOT know about this company that matters here? Be honest — list the gaps.
+3. Split what we know: knownFacts (public), assumptions (industry-typical), hypotheses (to test). Do not treat gaps as facts.
 4. What criteria should we use to judge whether a use case is worth putting on a slide for THIS mandate?
-5. What would make this pitch fail or feel generic?
+5. What would make this pitch fail, feel generic, or sound like a dashboard catalogue?
 
 ${NO_PROSE}
-{"mandateRestated":"","leadershipMustBelieve":["",""],"unknowns":["",""],"criteria":["",""],"failureModes":["",""]}
+{"mandateRestated":"","leadershipMustBelieve":["",""],"knownFacts":[""],"assumptions":[""],"hypotheses":[""],"unknowns":["",""],"criteria":["",""],"failureModes":["",""]}
 
-mandateRestated: 25-40 words. leadershipMustBelieve: 2-4 items, 10-20 words each. unknowns: 3-5 honest gaps. criteria: 4-5 judging criteria specific to this mandate. failureModes: 2-3 ways this pitch goes wrong.`;
+mandateRestated: 25-40 words, the decision not the dashboard. leadershipMustBelieve: 2-4 items, 10-20 words each. knownFacts / assumptions / hypotheses: 2-4 each. unknowns: 3-5 honest gaps. criteria: 4-5 judging criteria specific to this mandate. failureModes: 2-3 ways this pitch goes wrong.`;
 }
 
 // Pass 2 — diverge widely before narrowing.
@@ -84,14 +84,16 @@ ${lines(frame?.criteria)}
 Research:
 ${String(research).slice(0, 2600)}
 
-Generate 9 CANDIDATE use cases. Do not filter yet and do not polish the wording. Cast wide: include obvious operational ones, one or two that a competitor would miss, and one that is uncomfortable but valuable.
+Generate 12 CANDIDATE use cases. Do not filter yet. Cast wide: obvious operational ones, one or two a competitor would miss, one that is uncomfortable but valuable.
 
-For each candidate say who inside the company feels the pain, what job it is, and what data it would lean on.
+Reject titles that are capabilities, not decisions: Sales Dashboard, Inventory Dashboard, AI Chatbot, Predictive Analytics, Customer 360, Operational Dashboard. Convert those into the specific decision this company must take.
+
+For each candidate: who feels the pain, the business decision, why THIS client, the data, and the honest weakness.
 
 ${NO_PROSE}
-{"candidates":[{"title":"","job":"","whoFeelsIt":"","whyItFitsMandate":"","dataNeeded":"","weakness":""}]}
+{"candidates":[{"title":"","job":"","whoFeelsIt":"","decision":"","whyThisClient":"","whyItFitsMandate":"","dataNeeded":"","kpis":"","weakness":""}]}
 
-Exactly 9 candidates. title max 9 words. job 15-25 words. whoFeelsIt: the actual role. whyItFitsMandate 12-20 words. dataNeeded 8-16 words. weakness: the honest reason this might not make the cut, 8-16 words.`;
+Exactly 12 candidates. title max 9 words, a decision not a dashboard. job 15-25 words. whoFeelsIt: the actual role. decision 10-18 words. whyThisClient 10-18 words. whyItFitsMandate 12-20 words. dataNeeded 8-16 words. kpis 6-12 words. weakness: 8-16 words.`;
 }
 
 // Pass 3 — score against the stated criteria and justify the cut.
@@ -106,12 +108,14 @@ ${JSON.stringify(candidates).slice(0, 4000)}
 Criteria for this brief:
 ${lines(frame?.criteria)}
 
-Score each 1-10 on: recognisable (an operator says "that is my job"), mandateFit, demoable (can be shown without inventing systems), dataLikely (the data plausibly exists).
+Score each 1-10 on: clientRelevance, industryRelevance, businessValue, executiveRelevance, dataLikely, demoable, differentiation, storytellingPotential. Do not pick a use case only because it is easy to draw.
 
 Then choose how many this brief actually needs. At least 3, at most 7. A tight mandate is 3. A sprawling operation is 6 or 7. Prefer fewer that a leader would remember over padding. If you were asked for a specific count, honour it: ${count ? `choose exactly ${count}.` : "choose the count yourself."}
 
+Reject generic capabilities even if they scored well on demoable.
+
 ${NO_PROSE}
-{"selected":[{"title":"","scores":{"recognisable":9,"mandateFit":9,"demoable":8,"dataLikely":7},"whyChosen":""}],"rejected":[{"title":"","whyNot":""}]}
+{"selected":[{"title":"","scores":{"clientRelevance":9,"industryRelevance":9,"businessValue":9,"executiveRelevance":8,"dataLikely":7,"demoable":8,"differentiation":8,"storytellingPotential":8},"whyChosen":""}],"rejected":[{"title":"","whyNot":""}]}
 
 3 to 7 in selected. whyChosen 15-25 words. Every non-selected candidate appears in rejected with whyNot, 10-20 words.`;
 }
@@ -133,20 +137,24 @@ ${JSON.stringify(draft).slice(0, 9000)}
 
 Find every instance of:
 - LABEL: a field that is a fragment or keyword instead of an explanation a layman could follow.
-- GENERIC: a sentence that would read identically for any other company in any other industry.
+- GENERIC: a sentence or use case that would read identically for any other company in any other industry.
 - UNSUPPORTED: a claim about ${companyName} that the research does not support and that is not flagged as an assumption.
 - INVENTED: a specific number, system name, vendor, or metric that was made up.
 - SO_WHAT: a screen or KPI where a business reader would ask "why do I care".
 - REPEAT: two use cases that are really the same job, or the same visual reused.
 - JARGON: a sentence an executive outside this function would have to re-read. Stacked nouns, unexplained terms, consultant filler.
 - SAMEY: two slides that use the same visual structure. Neighbouring slides must differ.
-- SPARSE: a slide region or the hub screen with almost nothing in it.
+- SPARSE: a slide or hub that is too shallow for an executive — missing what is happening, why, where, or what to do.
 - HUB: the HTML is not one leadership screen covering the use-case KPIs, or it restates the deck.
+- TECH_FIRST: the story opens with technology instead of the business decision.
+- DASHBOARD: a title that is a capability (dashboard, chatbot, 360, insights) instead of a decision.
+
+Also fail the draft if a CXO would not find it commercially meaningful, or if it could be reused for another company unchanged.
 
 Name the exact use case and field for each defect, and say what would fix it.
 
 ${NO_PROSE}
-{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY|SPARSE|HUB","problem":"","fix":""}]}
+{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY|SPARSE|HUB|TECH_FIRST|DASHBOARD","problem":"","fix":""}]}
 
 Report every real defect, up to 14. If the draft is genuinely strong, verdict "pass" with an empty defects array. problem and fix: 10-22 words each.`;
 }
@@ -226,6 +234,8 @@ KPIs the HTML must cover (one from each use case, as leadership would see them t
 ${kpiLines}
 
 Invent the design at runtime for THIS company. Do not reuse a prior layout, tab tour, or generic dashboard. A VP of this function should recognise Monday morning in one glance.
+
+Do not start by picking a chart. Start from the business insight, then choose the visual that makes that insight obvious. Every number on screen must have meaning, why it matters, what to notice, and what to do. High density, not random charts.
 
 1. hub — ONE product screen a leader would leave open. Not a tab per use case. Not the deck. Leave useCases[].screenHtml empty.
    - hub.title: max 8 words, in their language.
@@ -308,7 +318,7 @@ export async function runReasoning({
     selection?.selected?.length
       ? `Use these ${Math.min(targetCount, selection.selected.length)} selected use cases and the reason each was chosen:\n${JSON.stringify(selection.selected.slice(0, targetCount)).slice(0, 2600)}`
       : candidates.length
-        ? `Shortlist to draw from:\n${JSON.stringify(candidates.slice(0, 9)).slice(0, 2600)}`
+        ? `Shortlist to draw from:\n${JSON.stringify(candidates.slice(0, 12)).slice(0, 2600)}`
         : "",
   ]
     .filter(Boolean)
