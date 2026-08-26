@@ -15,6 +15,7 @@ import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
 import { TONE_RULE, lintUseCases } from "./toneGuard.js";
 import { clampCount, classCatalog } from "./designContract.js";
+import { lintHubMarkup, lintSlideCompositions } from "./visualLint.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
 
@@ -215,8 +216,63 @@ ${NO_PROSE}
 One entry per use case, matched by title. 2-3 assumptions each. claim 8-18 words. basis 8-18 words. evidenceNote 15-30 words.`;
 }
 
+// Pass before markup — invent the visual experience, do not draw it yet.
+export function uiPlanPrompt({ companyName, domain, requirement, draft }) {
+  const titles = (draft?.useCases || []).map((uc) => uc.title).filter(Boolean);
+  return `${BRIEF_FIRST_RULE}
+
+Do NOT write HTML, CSS, or slide regions yet. Plan the visual experience for ${companyName} (${domain}).
+
+Mandate: "${requirement}"
+
+Use cases (these become PPT slides; their KPIs appear on the one HTML hub):
+${JSON.stringify((draft?.useCases || []).map((uc) => ({ title: uc.title, challenge: uc.challenge, kpis: uc.kpis, action: uc.action }))).slice(0, 7000)}
+
+Think, then answer:
+
+HTML hub — one screen a ${domain} VP would leave open Monday morning:
+- Who is looking?
+- What decision do they take from this screen?
+- What is the ONE primary visual, and why that visual (not "a table because dashboards have tables")?
+- What are the next 2-3 leadership moves in the rail — one sentence each?
+- What must never appear (deck challenge, Apexon value, solution essay)?
+
+PPT — one idea per use-case slide:
+- For each title, the composition (kinds) and why it fits THAT decision.
+- Neighbouring slides must not share the same kind sequence.
+- Do not put challenge + steps + KPIs + value on every slide.
+
+${NO_PROSE}
+{"hubPlan":{"viewer":"","decision":"","primaryVisual":"","whyThisVisual":"","rail":["",""],"avoid":[""]},"slides":[{"title":"${titles[0] || ""}","idea":"","kinds":["quote","steps"],"whyThisComposition":""}]}
+
+hubPlan.primaryVisual: table, board, heat, compare, flow, or funnel — plus why. slides: one per use case, matched by title. kinds from quote, list, pair, steps, kpis, callout, split, compare.`;
+}
+
+export function repairHubPrompt({ companyName, hub, defects }) {
+  return `${BRIEF_FIRST_RULE}
+
+The leadership HTML for ${companyName} failed a layout self-check. Fix ONLY hub.screenHtml. Keep title, subtitle, whatItShows, and kpis unless they cause the defect.
+
+Defects:
+${JSON.stringify(defects).slice(0, 2500)}
+
+Current hub:
+${JSON.stringify(hub).slice(0, 6000)}
+
+Rules:
+- One primary visual in <article class="viz">. Next actions in <article class="side">.
+- Table never in the side rail.
+- One fact per table cell. One sentence per queue item.
+- Wrap in <div class="row"> with those two children.
+- Allowed tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
+- No scripts, no images, no deck copy.
+
+${NO_PROSE}
+{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":""}]}`;
+}
+
 // Pass between draft and critique — the agent designs each screen and slide.
-export function designPrompt({ companyName, domain, requirement, draft }) {
+export function designPrompt({ companyName, domain, requirement, draft, uiPlan }) {
   const titles = (draft?.useCases || []).map((uc) => uc.title).filter(Boolean);
   const kpiLines = (draft?.useCases || [])
     .map((uc) => `- ${uc.title}: ${(uc.kpis || []).map((k) => k.name).filter(Boolean).join(", ")}`)
@@ -233,25 +289,22 @@ ${JSON.stringify((draft?.useCases || []).map((uc) => ({ title: uc.title, subtitl
 KPIs the HTML must cover (one from each use case, as leadership would see them together):
 ${kpiLines}
 
-Invent the design at runtime for THIS company. Do not reuse a prior layout, tab tour, or generic dashboard. A VP of this function should recognise Monday morning in one glance.
-
-Do not start by picking a chart. Start from the business insight, then choose the visual that makes that insight obvious. Every number on screen must have meaning, why it matters, what to notice, and what to do. High density, not random charts.
+Visual plan already decided — implement it. Do not ignore it and do not substitute a generic dashboard:
+${JSON.stringify(uiPlan || {}).slice(0, 3500)}
 
 1. hub — ONE product screen a leader would leave open. Not a tab per use case. Not the deck. Leave useCases[].screenHtml empty.
    - hub.title: max 8 words, in their language.
    - hub.subtitle: 6-12 words.
    - hub.whatItShows: one sentence, 12-22 words.
    - hub.kpis: one entry per use case. name from that job. value is SAMPLE only. why: one sentence. from: the use-case title.
-   - hub.screenHtml: the working view UNDER the KPI strip. Use only these tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
+   - hub.screenHtml: implement hubPlan.primaryVisual. Allowed tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
    Allowed CSS classes:
 ${classCatalog()}
    Style attribute is allowed only as width:N% on a fill or funnel step. No scripts. No images.
-   HARD LAYOUT: <div class="row"> with EXACTLY two children.
-   - Child 1: <article class="viz"> the work (one board OR one table OR one heat — not all three).
-   - Child 2: <article class="side"> the next move (queue, compare, or actions).
-   Do not put a kpi strip inside the row. The builder paints KPIs above this markup.
+   Structure: <div class="row"> with two children — <article class="viz"> the primary visual, <article class="side"> the next moves from hubPlan.rail.
+   One thought per table cell. One sentence per queue item. Never put a table in the side rail. The builder paints KPIs above this markup.
 
-2. slide — for EACH use case, the PowerPoint composition. One idea, named in slide.idea. Then 1-4 regions on a 12-column grid.
+2. slide — follow slides[].kinds from the plan. One idea, named in slide.idea. 1-4 regions on a 12-column grid.
    kind is one of: quote, list, pair, steps, kpis, callout, split, compare.
    span is 4, 6, or 12. Neighbouring slides must not share the same kind sequence.
 
@@ -334,9 +387,16 @@ export async function runReasoning({
   }
   if (!current) return { result: null, trace };
 
+  const uiPlan = await tryPass({
+    label: "planning the visual experience",
+    prompt: uiPlanPrompt({ companyName, domain, requirement, draft: current }),
+    onStep,
+  });
+  trace.uiPlan = uiPlan;
+
   const designed = await tryPass({
     label: "designing the leadership screen",
-    prompt: designPrompt({ companyName, domain, requirement, draft: current }),
+    prompt: designPrompt({ companyName, domain, requirement, draft: current, uiPlan }),
     onStep,
   });
   if (designed?.hub && typeof designed.hub === "object") {
@@ -361,6 +421,22 @@ export async function runReasoning({
       };
     });
     trace.design = { ...(trace.design || {}), slides: designed.useCases.length };
+  }
+
+  const layoutDefects = [
+    ...lintHubMarkup(current.hub?.screenHtml).map((d) => ({ useCase: "Leadership view", ...d })),
+    ...lintSlideCompositions(current.useCases),
+  ];
+  if (layoutDefects.length) {
+    trace.layoutDefects = layoutDefects.length;
+    const repairedHub = await tryPass({
+      label: `correcting ${layoutDefects.length} layout issues`,
+      prompt: repairHubPrompt({ companyName, hub: current.hub, defects: layoutDefects }),
+      onStep,
+    });
+    if (repairedHub?.screenHtml) {
+      current.hub = { ...current.hub, ...repairedHub };
+    }
   }
 
   const critique = await tryPass({
