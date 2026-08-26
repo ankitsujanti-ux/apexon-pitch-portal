@@ -18,11 +18,15 @@ dotenv.config();
 const APP_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const OUTPUT_DIR = path.join(APP_ROOT, "output");
-const JOBS_DIR = process.env.RENDER
-  ? path.join(os.tmpdir(), "pitch-portal-jobs")
-  : path.join(OUTPUT_DIR, "jobs");
+// Write the same job to two folders. Render can recycle /tmp or the app disk
+// independently; reading either one keeps polling from returning 404.
+const JOB_DIRS = [
+  path.join(OUTPUT_DIR, "jobs"),
+  path.join(os.tmpdir(), "pitch-portal-jobs"),
+];
 const JOB_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const jobsById = new Map();
+const runningPipelines = new Set();
 
 const app = express();
 app.use((req, res, next) => {
@@ -60,28 +64,43 @@ function packageDir(slug) {
   return { safe, dir };
 }
 
-function jobPath(id) {
+function assertJobId(id) {
   if (!JOB_ID_RE.test(id)) {
     throw new Error("Invalid job id");
   }
-  return path.join(JOBS_DIR, `${id}.json`);
+  return id;
 }
 
 function writeJob(job) {
   jobsById.set(job.id, job);
-  fs.mkdirSync(JOBS_DIR, { recursive: true });
-  fs.writeFileSync(jobPath(job.id), JSON.stringify(job, null, 2));
+  const payload = JSON.stringify(job, null, 2);
+  for (const dir of JOB_DIRS) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, `${job.id}.json`), payload);
+    } catch (err) {
+      console.warn(`Could not persist job to ${dir}:`, err.message);
+    }
+  }
   return job;
 }
 
 function readJob(id) {
+  assertJobId(id);
   const fromMemory = jobsById.get(id);
   if (fromMemory) return fromMemory;
-  const file = jobPath(id);
-  if (!fs.existsSync(file)) return null;
-  const job = JSON.parse(fs.readFileSync(file, "utf8"));
-  jobsById.set(id, job);
-  return job;
+  for (const dir of JOB_DIRS) {
+    const file = path.join(dir, `${id}.json`);
+    if (!fs.existsSync(file)) continue;
+    try {
+      const job = JSON.parse(fs.readFileSync(file, "utf8"));
+      jobsById.set(id, job);
+      return job;
+    } catch (err) {
+      console.warn(`Could not read job ${id} from ${dir}:`, err.message);
+    }
+  }
+  return null;
 }
 
 function patchJob(id, patch) {
@@ -112,6 +131,14 @@ function pipelineErrorMessage(err) {
     return "Azure AI Foundry cannot reach its knowledge base (Search MCP 403). In Azure: grant the Foundry project identity Search Index Data Reader on the search service, or remove that knowledge MCP from DemoAgent if this portal should use Bing and the brief only. Then Generate again. No code change needed.";
   }
   return raw;
+}
+
+function startPipeline(jobId, brief) {
+  if (runningPipelines.has(jobId)) return;
+  runningPipelines.add(jobId);
+  setImmediate(() => {
+    runPipeline(jobId, brief).finally(() => runningPipelines.delete(jobId));
+  });
 }
 
 async function runPipeline(jobId, { companyName, domain, requirement }) {
@@ -272,9 +299,12 @@ app.get("/downloads/:slug/preview", (req, res) => {
 
 app.get("/pitches/:jobId", (req, res) => {
   try {
-    const job = readJob(req.params.jobId);
+    const job = readJob(String(req.params.jobId || "").trim());
     if (!job) {
-      return res.status(404).json({ error: "Job not found." });
+      return res.status(404).json({
+        error: "This run is no longer on the server. Click Prepare artifacts again.",
+        resume: true,
+      });
     }
     res.json(publicJob(job));
   } catch (err) {
@@ -286,6 +316,7 @@ app.post("/pitches", (req, res) => {
   const companyName = String(req.body.companyName || "").trim();
   const domain = String(req.body.domain || "").trim();
   const requirement = String(req.body.requirement || "").trim();
+  const requestedId = String(req.body.jobId || "").trim();
 
   if (!companyName || !domain || !requirement) {
     return res.status(400).json({
@@ -293,7 +324,36 @@ app.post("/pitches", (req, res) => {
     });
   }
 
-  const jobId = crypto.randomUUID();
+  const jobId = JOB_ID_RE.test(requestedId) ? requestedId : crypto.randomUUID();
+  const existing = (() => {
+    try {
+      return readJob(jobId);
+    } catch {
+      return null;
+    }
+  })();
+
+  if (existing && (existing.status === "queued" || existing.status === "running")) {
+    if (!runningPipelines.has(jobId)) {
+      writeJob({
+        ...existing,
+        status: "queued",
+        step: "queued",
+        error: null,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    startPipeline(jobId, {
+      companyName: existing.companyName,
+      domain: existing.domain,
+      requirement: existing.requirement,
+    });
+    return res.status(200).json({ jobId, status: "queued" });
+  }
+  if (existing && existing.status === "done" && existing.result) {
+    return res.status(200).json({ jobId, status: "done" });
+  }
+
   writeJob({
     id: jobId,
     status: "queued",
@@ -301,14 +361,11 @@ app.post("/pitches", (req, res) => {
     companyName,
     domain,
     requirement,
-    createdAt: new Date().toISOString(),
+    createdAt: existing?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
 
-  setImmediate(() => {
-    runPipeline(jobId, { companyName, domain, requirement });
-  });
-
+  startPipeline(jobId, { companyName, domain, requirement });
   res.status(200).json({ jobId, status: "queued" });
 });
 
