@@ -161,6 +161,7 @@ async function runPipeline(jobId, { companyName, domain, requirement }) {
       domain,
       requirement,
       topUseCases,
+      hub: useCases.hub,
       deckFileName,
       evidenceNote: useCases.evidenceNote || "",
     });
