@@ -321,14 +321,9 @@ Choose a slideLayout for EACH use case — pick the one that suits ITS story, an
 - "evidence" — data, effort, and what is proven. Use when feasibility is the real question.
 Each layout shows only PART of the content, so the slide stays readable. Write all fields anyway.
 
-Then design ONE leadership HTML screen — not a tab per use case. The deck tells each job. The HTML is the product a leader would leave open: those jobs' KPIs on one strip, plus one working view.
-- hub.title: max 8 words, what this screen is called in their language.
-- hub.subtitle: 6-12 words, the promise of the view.
-- hub.whatItShows: ONE sentence, 12-22 words — the only caption the screen gets.
-- hub.kpis: one KPI per use case (name + sample value + why). Sample numbers only, never claimed as live.
-- hub.screenHtml: the working view under the KPIs. HARD LAYOUT: a row with EXACTLY two children (article.viz = the work, article.side = the next move). One working view — a board OR a table OR a heat map, not all three. Do not restate the deck.
+Then design ONE leadership HTML screen — not a tab per use case. Fill hub.title, subtitle, whatItShows, and kpis. Leave hub.screenHtml EMPTY in this draft. A later pass plans the visual, then writes the markup.
 
-Then compose each PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ.
+Then compose each PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ. Do not put challenge + steps + KPIs + value on every slide.
 
 Primitives (fallback only, if hub.screenHtml is rejected):
 - kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
