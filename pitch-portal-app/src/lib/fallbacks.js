@@ -285,6 +285,18 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
     deckSubtitle: sentence(requirement, `${domain} leadership walkthrough`),
     closeLine: `Walk the live demonstration with ${companyName} next.`,
     architecture: inferArchitecture({ companyName, domain, requirement, useCases }),
+    hub: {
+      title: `${companyName} operating picture`,
+      subtitle: `What ${domain} leadership would watch this morning`,
+      whatItShows: `The numbers from each ${domain} job, and the next exception that still needs a person.`,
+      screenHtml: fallbackVisual(0, `${domain} exceptions`, companyName).screenHtml,
+      kpis: useCases.slice(0, 6).map((uc, i) => ({
+        name: uc.kpis?.[0]?.name || uc.title,
+        value: ["18", "96%", "4.2h", "3", "12", "99%"][i] || "—",
+        why: uc.kpis?.[0]?.why || "Leadership watches this for this job.",
+        from: uc.title,
+      })),
+    },
   };
 }
 
