@@ -364,8 +364,10 @@ A single generation call cannot deliberate. The workflow above is **executed as 
 | 1. Frame | 1, 3 | Mandate restated as a business decision; known vs unknown; how the pitch fails |
 | 2. Diverge | 4, 5 | ~12 candidates; reject generic titles |
 | 3. Select | 6 | Score and keep 3–7; record why losers lost |
-| 4. Draft | 7, 13 | Full-sentence pitch content, story before charts |
-| 4b. Design | 8–12 | One HTML hub + unique slide compositions |
+| 4. Draft | 7, 13 | Full-sentence pitch content, story before charts. Hub markup left empty. |
+| 4a. Visual plan | 8–9 | Decide HTML primary visual and each slide's composition. No markup yet. |
+| 4b. Design | 8–12 | Write hub.screenHtml and slide.regions from that plan. |
+| 4c. Layout self-check | 10–11 | Lint: table in the rail, overflowing cells, copy-paste slides. Repair if needed. |
 | 5. Critique | 14 | Hostile CXO + quality review |
 | 6. Revise | 11 | Fix named defects only |
 | 7. Verify | evidence | Label every load-bearing claim |
