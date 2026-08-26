@@ -89,19 +89,19 @@ const JARGON = [
 const MAX_SENTENCE_WORDS = 32;
 
 // The tone contract sent to the model. Deliberately contains no vendor names.
-export const TONE_RULE = `TONE — PLAIN ENGLISH, NON-NEGOTIABLE.
+export const TONE_RULE = `TONE — BOARDROOM, NON-NEGOTIABLE.
 
-Write for a smart executive who does not work in this function. They are busy and they will not re-read a sentence.
+This will be read by company leadership. Write for a smart executive who does not work in this function. They are busy and they will not re-read a sentence.
 
 - One idea per sentence. Keep sentences under ${MAX_SENTENCE_WORDS} words.
-- Use ordinary words. "use", not "leverage" or "utilize". "one screen", not "single pane of glass".
+- Use ordinary words. "use", not "leverage" or "utilize".
+- Industry wording is required when it is how this company talks (yield, denial, fill rate, dwell time, first-pass). The first time you use a term, put the meaning in the same sentence so a visitor still follows.
 - Say the concrete thing. "The line stops for 40 minutes", not "throughput degradation events occur".
 - No filler adjectives: holistic, robust, seamless, best-in-class, world-class, cutting-edge, transformative, turnkey, frictionless, next-generation, mission-critical, data-driven, actionable.
-- No stacked nouns. Break "supply chain visibility optimisation platform" into a sentence a person would say out loud.
-- Never use a term without explaining it in the same sentence.
-- Name a product, platform, or vendor ONLY if the requirement itself names it. If the requirement does not name one, describe the capability in plain words instead. Do not borrow product names from anywhere else.
+- No stacked nouns. Break them into a sentence a person would say out loud.
+- Name a product, platform, or vendor ONLY if the requirement itself names it. Otherwise describe the capability in plain words.
 
-Read every sentence back before you answer. If it sounds like a consulting brochure, rewrite it as something you would actually say to a colleague.`;
+Read every sentence back. If it sounds like a consulting brochure, rewrite it as something you would actually say in the room.`;
 
 function escapeRe(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -183,9 +183,19 @@ function textFields(uc) {
 
 // Deterministic gate over the finished package. Returns defects in the same
 // shape the revise pass already consumes, so findings can be repaired.
-export function lintUseCases(useCases, brief) {
+export function lintUseCases(useCases, brief, hub) {
   const defects = [];
-  for (const uc of useCases || []) {
+  const targets = [...(useCases || [])];
+  if (hub && typeof hub === "object") {
+    targets.push({
+      title: "Leadership view",
+      subtitle: hub.subtitle,
+      whatItShows: hub.whatItShows,
+      challenge: hub.title,
+      kpis: hub.kpis,
+    });
+  }
+  for (const uc of targets) {
     for (const [field, value] of textFields(uc)) {
       for (const name of findVendorLeaks(value, brief)) {
         defects.push({
