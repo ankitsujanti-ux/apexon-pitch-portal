@@ -139,14 +139,14 @@ Find every instance of:
 - SO_WHAT: a screen or KPI where a business reader would ask "why do I care".
 - REPEAT: two use cases that are really the same job, or the same visual reused.
 - JARGON: a sentence an executive outside this function would have to re-read. Stacked nouns, unexplained terms, consultant filler.
-- SAMEY: two screens or two slides that use the same visual structure. Neighbouring ones must differ.
-- SPARSE: a screen or slide region with almost nothing in it.
-- CLONE: screenHtml that is a copy of another use case with the words swapped.
+- SAMEY: two slides that use the same visual structure. Neighbouring slides must differ.
+- SPARSE: a slide region or the hub screen with almost nothing in it.
+- HUB: the HTML is not one leadership screen covering the use-case KPIs, or it restates the deck.
 
 Name the exact use case and field for each defect, and say what would fix it.
 
 ${NO_PROSE}
-{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY|SPARSE|CLONE","problem":"","fix":""}]}
+{"verdict":"pass|revise","defects":[{"useCase":"","field":"","kind":"LABEL|GENERIC|UNSUPPORTED|INVENTED|SO_WHAT|REPEAT|JARGON|SAMEY|SPARSE|HUB","problem":"","fix":""}]}
 
 Report every real defect, up to 14. If the draft is genuinely strong, verdict "pass" with an empty defects array. problem and fix: 10-22 words each.`;
 }
@@ -172,7 +172,8 @@ Rules while revising:
 - Replace generic sentences with something only true of ${companyName} and this mandate.
 - Remove invented numbers, vendors, and system names. If a claim cannot be supported, either cut it or word it as an industry-typical assumption.
 - Apply every fix exactly as described. A defect saying to remove a product name means that name must not appear anywhere in your answer.
-- Give every use case a slide composition (slide.regions) that is different from its neighbours, and a screenHtml that is a real working screen — not the deck restated.
+- Give every use case a slide composition (slide.regions) that is different from its neighbours.
+- Design one hub HTML screen covering the KPIs from those use cases — not a tab per job, and not the deck restated.
 - Keep the same number of use cases and the same JSON shape.
 
 ${NO_PROSE}
@@ -209,39 +210,47 @@ One entry per use case, matched by title. 2-3 assumptions each. claim 8-18 words
 // Pass between draft and critique — the agent designs each screen and slide.
 export function designPrompt({ companyName, domain, requirement, draft }) {
   const titles = (draft?.useCases || []).map((uc) => uc.title).filter(Boolean);
+  const kpiLines = (draft?.useCases || [])
+    .map((uc) => `- ${uc.title}: ${(uc.kpis || []).map((k) => k.name).filter(Boolean).join(", ")}`)
+    .join("\n");
   return `${BRIEF_FIRST_RULE}
 
-You are designing the working software screens and the slide compositions for ${companyName} (${domain}).
+You are designing the PowerPoint slides and ONE leadership HTML screen for ${companyName} (${domain}). This will be shown to company leadership. Tone, wording, and UI must be boardroom-level: easy to follow, using the words this industry actually uses.
 
 Mandate: "${requirement}"
 
-Use cases you already wrote (do not change their titles or rewrite their story):
-${JSON.stringify((draft?.useCases || []).map((uc) => ({ title: uc.title, subtitle: uc.subtitle, whatItShows: uc.whatItShows, lookFirst: uc.lookFirst, kpis: uc.kpis, steps: uc.steps, entities: uc.entities, challenge: uc.challenge, solutionMoves: uc.solutionMoves, businessValue: uc.businessValue }))).slice(0, 8000)}
+Use cases already written (do not change titles or rewrite their story). These become the PPT slides:
+${JSON.stringify((draft?.useCases || []).map((uc) => ({ title: uc.title, subtitle: uc.subtitle, whatItShows: uc.whatItShows, kpis: uc.kpis, challenge: uc.challenge, solutionMoves: uc.solutionMoves, businessValue: uc.businessValue }))).slice(0, 8000)}
 
-For EACH use case invent:
-1. screenHtml — the working product screen, NOT the deck. One short visual a person would use. Use only these tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
+KPIs the HTML must cover (one from each use case, as leadership would see them together):
+${kpiLines}
+
+Invent the design at runtime for THIS company. Do not reuse a prior layout, tab tour, or generic dashboard. A VP of this function should recognise Monday morning in one glance.
+
+1. hub — ONE product screen a leader would leave open. Not a tab per use case. Not the deck. Leave useCases[].screenHtml empty.
+   - hub.title: max 8 words, in their language.
+   - hub.subtitle: 6-12 words.
+   - hub.whatItShows: one sentence, 12-22 words.
+   - hub.kpis: one entry per use case. name from that job. value is SAMPLE only. why: one sentence. from: the use-case title.
+   - hub.screenHtml: the working view UNDER the KPI strip. Use only these tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
    Allowed CSS classes:
 ${classCatalog()}
-   Style attribute is allowed only as width:N% on a fill or funnel step. No other inline style. No scripts. No images.
-   Neighbouring screens must use a DIFFERENT working view. Sample numbers only.
-
-   HARD LAYOUT RULE: screenHtml is at most TWO panels.
-   - Root is <div class="row"> with EXACTLY two children, or <div class="stack"> with a kpi strip then one viz.
+   Style attribute is allowed only as width:N% on a fill or funnel step. No scripts. No images.
+   HARD LAYOUT: <div class="row"> with EXACTLY two children.
    - Child 1: <article class="viz"> the work (one board OR one table OR one heat — not all three).
-   - Child 2: <article class="side"> the next move (queue, compare, or actions). Optional kpi strip ABOVE the row, never inside it.
-   - Do not put h3, kpis, tables, and boards as siblings inside a row. That layout is unreadable.
+   - Child 2: <article class="side"> the next move (queue, compare, or actions).
+   Do not put a kpi strip inside the row. The builder paints KPIs above this markup.
 
-2. slide — the PowerPoint composition. One idea, named in slide.idea. Then 1-4 regions on a 12-column grid.
+2. slide — for EACH use case, the PowerPoint composition. One idea, named in slide.idea. Then 1-4 regions on a 12-column grid.
    kind is one of: quote, list, pair, steps, kpis, callout, split, compare.
-   span is 4, 6, or 12. Two span-6 regions sit side by side. A span-12 region is full width.
-   Neighbouring slides must not share the same kind sequence.
+   span is 4, 6, or 12. Neighbouring slides must not share the same kind sequence.
 
-Do not restate the challenge in screenHtml. Do not copy one screen onto another with the words swapped.
+Do not restate the challenge in hub.screenHtml.
 
 ${NO_PROSE}
-{"useCases":[{"title":"${titles[0] || ""}","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
+{"hub":{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":"${titles[0] || ""}"}]},"useCases":[{"title":"${titles[0] || ""}","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
 
-One entry per use case, matched by title. screenHtml is a single root (div.row, div.stack, or similar). slide.idea: 8-16 words.`;
+One hub. One slide entry per use case, matched by title. slide.idea: 8-16 words.`;
 }
 
 export async function runReasoning({
@@ -316,10 +325,14 @@ export async function runReasoning({
   if (!current) return { result: null, trace };
 
   const designed = await tryPass({
-    label: "designing each screen",
+    label: "designing the leadership screen",
     prompt: designPrompt({ companyName, domain, requirement, draft: current }),
     onStep,
   });
+  if (designed?.hub && typeof designed.hub === "object") {
+    current.hub = designed.hub;
+    trace.design = { ...(trace.design || {}), hub: true };
+  }
   if (Array.isArray(designed?.useCases) && designed.useCases.length) {
     const byTitle = new Map(
       designed.useCases.map((uc) => [String(uc.title || "").toLowerCase().trim(), uc])
@@ -337,7 +350,7 @@ export async function runReasoning({
         slide: match.slide || uc.slide,
       };
     });
-    trace.design = { screens: designed.useCases.length };
+    trace.design = { ...(trace.design || {}), slides: designed.useCases.length };
   }
 
   const critique = await tryPass({
@@ -353,14 +366,16 @@ export async function runReasoning({
       prompt: revisePrompt({ companyName, requirement, draft: current, critique, schema }),
       onStep,
     });
-    if (Array.isArray(revised?.useCases) && revised.useCases.length >= 3) current = revised;
+    if (Array.isArray(revised?.useCases) && revised.useCases.length >= 3) {
+      current = { ...revised, hub: revised.hub || current.hub };
+    }
   }
 
   // The model is a poor judge of its own register, and it cannot be told which
   // product names to avoid without being reminded of them. So this last gate is
   // deterministic: lint the text, and send only the concrete findings back.
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const defects = lintUseCases(current.useCases, requirement);
+    const defects = lintUseCases(current.useCases, requirement, current.hub);
     if (!defects.length) break;
     trace.toneDefects = defects.length;
     const repaired = await tryPass({
@@ -375,9 +390,9 @@ export async function runReasoning({
       onStep,
     });
     if (!Array.isArray(repaired?.useCases) || repaired.useCases.length < 3) break;
-    const after = lintUseCases(repaired.useCases, requirement);
+    const after = lintUseCases(repaired.useCases, requirement, repaired.hub || current.hub);
     if (after.length >= defects.length) break;
-    current = repaired;
+    current = { ...repaired, hub: repaired.hub || current.hub };
   }
 
   const verification = await tryPass({
