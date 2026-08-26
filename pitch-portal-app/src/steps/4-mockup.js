@@ -1,6 +1,5 @@
-// Interactive HTML mockup — horizontal tabs, no page scroll. Each screen
-// explains what it shows, why it matters, and what to do, then paints a
-// layout chosen for this brief.
+// Interactive HTML mockup — one leadership screen, no page scroll. KPIs come
+// from the use cases on the slides. The working view is invented for this brief.
 
 import { getPalette } from "../lib/palette.js";
 import { dashboardCopy } from "../lib/fallbacks.js";
@@ -303,71 +302,95 @@ function renderPiece(name, ctx) {
   return "";
 }
 
-function tabInner({ companyName, domain, useCase, tabId, index, total, layout, platformName }) {
-  const copy = dashboardCopy(companyName, domain, useCase);
-  const blocks = Array.isArray(layout) ? layout : normalizePieces(useCase, index);
-  const ctx = { copy, useCase, tabId, companyName, domain, platformName };
+function stripLiftedMetrics(html) {
+  return String(html || "").replace(/<div class="workspace-metrics">[\s\S]*?<\/div>/, "");
+}
+
+function resolveHub(hub, useCases, companyName, domain) {
+  const SAMPLE = ["18", "96%", "4.2h", "3", "12", "99%"];
+  const kpis = (Array.isArray(hub?.kpis) && hub.kpis.length
+    ? hub.kpis
+    : (useCases || []).map((uc, i) => ({
+        name: uc.kpis?.[0]?.name || uc.title,
+        value: SAMPLE[i] || "—",
+        why: uc.kpis?.[0]?.why || "Leadership watches this for this job.",
+        from: uc.title,
+      }))
+  ).slice(0, 6);
+  return {
+    title: hub?.title || `${companyName} operating picture`,
+    subtitle: hub?.subtitle || `What ${toLabel(domain, 4)} leadership would watch`,
+    whatItShows:
+      hub?.whatItShows ||
+      "The numbers from each job on the slides, and the next exception that still needs a person.",
+    screenHtml: hub?.screenHtml || useCases?.[0]?.screenHtml || "",
+    kpis,
+  };
+}
+
+function hubKpiRow(hub, tabId) {
+  return `<div class="kpis">${hub.kpis
+    .map((k, i) => {
+      const why = k.why || "A leadership metric for this mandate.";
+      return `<article class="kpi">
+        <button class="info" type="button" onclick="toggleInfo('${tabId}-k${i}')" aria-label="About this metric">i</button>
+        <div id="${tabId}-k${i}" class="pop">${twoLine(why)}</div>
+        <div class="kpi-value" data-kpi="${i === 0 ? "a" : i === 1 ? "b" : "x"}">${escapeHtml(k.value || "—")}</div>
+        <div class="kpi-label">${escapeHtml(k.name || "Metric")}</div>
+      </article>`;
+    })
+    .join("")}</div>`;
+}
+
+function hubView({ companyName, domain, useCases, hub, platformName }) {
+  const resolved = resolveHub(hub, useCases, companyName, domain);
+  const copy = dashboardCopy(companyName, domain, useCases[0] || { title: resolved.title, businessProblem: domain });
+  const tabId = "hub";
+  const custom = sanitizeScreen(resolved.screenHtml, { tabId });
+  const blocks = normalizePieces(useCases[0] || {}, 0);
+  const ctx = { copy, useCase: useCases[0] || {}, tabId, companyName, domain, platformName };
   const visuals = blocks.filter((b) => b !== "kpis");
   const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
-  const custom = sanitizeScreen(useCase.screenHtml, { tabId });
-  const layoutKey = custom.ok
-    ? screenFingerprint(custom.html) || "custom"
-    : blocks.join("+");
-  const kpis = custom.ok ? "" : blocks.includes("kpis") ? kpiRow(ctx) : "";
+  const layoutKey = custom.ok ? screenFingerprint(custom.html) || "hub" : blocks.join("+");
   const stage = custom.ok
-    ? `<div class="stage custom"><button class="info" type="button" onclick="toggleInfo('${tabId}-scr')" aria-label="About this screen">i</button><div id="${tabId}-scr" class="pop">${twoLine(useCase.whatItShows || "Sample operating view for this job.")}</div><div class="screen">${custom.html}</div></div>`
+    ? `<div class="stage custom"><button class="info" type="button" onclick="toggleInfo('${tabId}-scr')" aria-label="About this screen">i</button><div id="${tabId}-scr" class="pop">${twoLine(resolved.whatItShows)}</div><div class="screen">${stripLiftedMetrics(custom.html)}</div></div>`
     : `<div class="stage${visuals.length >= 2 ? " with-side" : ""}">${panels}</div>`;
 
   return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(layoutKey)}">
     <div class="title-row">
       <div>
-        <p class="kicker">Screen ${index + 1} of ${total} · ${escapeHtml(toLabel(domain, 4))}</p>
-        <h2>${escapeHtml(useCase.title)}</h2>
-        ${useCase.subtitle ? `<p class="sub">${escapeHtml(useCase.subtitle)}</p>` : ""}
+        <p class="kicker">Leadership view · ${escapeHtml(toLabel(domain, 4))}</p>
+        <h2>${escapeHtml(resolved.title)}</h2>
+        ${resolved.subtitle ? `<p class="sub">${escapeHtml(resolved.subtitle)}</p>` : ""}
       </div>
       <button class="primary" type="button">${escapeHtml(copy.button || "Simulate an event")}</button>
     </div>
-    ${screenCaption(useCase)}
-    ${kpis}
+    <p class="caption">${escapeHtml(toSentences(resolved.whatItShows, 140))}</p>
+    ${hubKpiRow(resolved, tabId)}
     ${stage}
   </section>`;
 }
 
-export async function buildMockup({ companyName, domain, requirement = "", topUseCases, palette, deckFileName, evidenceNote = "" }) {
+export async function buildMockup({ companyName, domain, requirement = "", topUseCases, hub, palette, deckFileName, evidenceNote = "" }) {
   if (!companyName || !domain || !Array.isArray(topUseCases) || topUseCases.length === 0) {
     throw new Error("buildMockup requires companyName, domain, and a non-empty topUseCases array");
   }
 
   const colors = palette || getPalette(domain, companyName);
-  const tabs = topUseCases.slice(0, 7);
-  const layouts = assignLayouts(tabs);
+  const useCases = topUseCases.slice(0, 7);
   const apexonSrc = apexonWordmark();
   const platform = platformFromRequirement(requirement, domain);
-  const platformName = platform.name === "Target platform" ? "" : platform.name;
+  const platformName = platform.name === "Target platform" || platform.name === "Operating platform" ? "" : platform.name;
   const footerLine = platformName
     ? `${platform.name} · ${platform.components.slice(0, 2).join(" · ")}`
     : "Apexon walkthrough · sample data";
-  const nav = tabs
-    .map(
-      (uc, i) =>
-        `<button id="btn-tab-${i}" class="tab${i === 0 ? " active" : ""}" type="button" onclick="showTab('tab-${i}')">${escapeHtml(shortLabel(uc.title))}</button>`
-    )
-    .join("");
-  const panels = tabs
-    .map(
-      (uc, i) =>
-        `<div id="tab-${i}" class="view${i === 0 ? " active" : ""}">${tabInner({
-          companyName,
-          domain,
-          useCase: uc,
-          tabId: `tab-${i}`,
-          index: i,
-          total: tabs.length,
-          layout: layouts[i],
-          platformName,
-        })}</div>`
-    )
-    .join("");
+  const body = `<div id="hub" class="view active">${hubView({
+    companyName,
+    domain,
+    useCases,
+    hub,
+    platformName,
+  })}</div>`;
   const deckLink = deckFileName
     ? `<a class="header-link" href="${escapeHtml(deckFileName)}">Download presentation</a>`
     : "";
@@ -377,7 +400,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>${escapeHtml(companyName)} | ${escapeHtml(domain)} walkthrough</title>
+<title>${escapeHtml(companyName)} | ${escapeHtml(domain)} leadership view</title>
 <style>
   :root {
     --navy: #${colors.primary};
@@ -416,28 +439,16 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   }
   .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .brand img { height: 22px; width: auto; display: block; }
-  .hub { color: var(--blue60); font-size: var(--fs-small); border-left: 1px solid rgba(255,255,255,.2); padding-left: 12px; line-height: 1.25; }
+  .hub {
+    color: var(--blue60); font-size: var(--fs-small); border-left: 1px solid rgba(255,255,255,.2);
+    padding-left: 12px; line-height: 1.25; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .hub b { color: #fff; }
   .header-link {
     color: #fff; text-decoration: none; border: 1px solid rgba(117,162,237,.4);
     background: rgba(29,110,228,.18); padding: 6px 12px; border-radius: 999px; font-size: var(--fs-small); font-weight: 700;
   }
-  nav.tabs {
-    flex: 0 0 46px;
-    background: #0f1830;
-    display: flex; align-items: stretch;
-    padding: 0 14px;
-    overflow: hidden;
-  }
-  .tab {
-    color: #b9c2d6; padding: 0 16px; font-size: var(--fs-h3); font-weight: 700;
-    cursor: pointer; border: 0; background: none; border-bottom: 3px solid transparent;
-    /* Tabs share the bar and ellipsis instead of clipping mid-word. */
-    flex: 1 1 0; min-width: 0; max-width: 240px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
-  }
-  .tab:hover { color: #fff; }
-  .tab.active { color: #fff; border-bottom-color: var(--accent); }
   .sample {
     flex: 0 0 28px; margin: 0; padding: 0 22px; display: flex; align-items: center; gap: 8px;
     color: var(--muted); font-size: var(--fs-small); background: #0a1220;
@@ -451,15 +462,14 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
     display: flex; flex-direction: column;
     max-width: 1220px; width: 100%; margin: 0 auto;
   }
-  .view { display: none; flex: 1; min-height: 0; overflow: hidden; }
-  .view.active { display: flex; flex-direction: column; }
+  .view { display: flex; flex: 1; min-height: 0; overflow: hidden; flex-direction: column; }
   .view-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; gap: 10px; }
   .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex: none; }
   .kicker { margin: 0 0 4px; color: var(--accent); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
   h2 { margin: 0; font-size: var(--fs-h2); line-height: 1.25; font-weight: 700; }
   .sub { margin: 3px 0 0; color: var(--accent); font-size: var(--fs-body); font-weight: 700; }
   .caption { margin: 0; color: var(--muted); font-size: var(--fs-body); line-height: 1.45; max-width: 96ch; flex: none; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: none; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; flex: none; }
   .kpi, .viz, .side {
     background: var(--card); border: 1px solid var(--blue); border-radius: 12px;
     padding: 12px 14px; position: relative;
@@ -637,31 +647,22 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
 <header>
   <div class="brand">
     ${apexonSrc ? `<img src="${apexonSrc}" alt="Apexon" />` : "<strong>Apexon</strong>"}
-    <span class="hub">${escapeHtml(domain)} walkthrough · <b>${escapeHtml(companyName)}</b></span>
+    <span class="hub">Leadership view · <b>${escapeHtml(companyName)}</b></span>
   </div>
   ${deckLink}
 </header>
-<nav class="tabs" role="tablist">${nav}</nav>
 <p class="sample">
   <span class="page-info">
     <button class="info" type="button" onclick="toggleInfo('page-i')" aria-label="About this demonstration" style="position:static">i</button>
-    <span id="page-i" class="pop">Each tab is one job from this brief: what the screen shows, why it matters, and what to do next.<br/>Figures are sample only — not a live system.</span>
+    <span id="page-i" class="pop">This is the product screen leadership would leave open: the KPIs from the use cases on the slides, and the next action.<br/>Figures are sample only — not a live system.</span>
   </span>
   <b>Sample data</b> — walkthrough for ${escapeHtml(companyName)}. Not live company figures.${
     evidenceNote ? ` <span class="ev-note">${escapeHtml(toSentences(evidenceNote, 140))}</span>` : ""
   }
 </p>
-<main>${panels}</main>
+<main>${body}</main>
 <footer>${apexonSrc ? `<img src="${apexonSrc}" alt="" />` : ""} ${escapeHtml(footerLine)}</footer>
 <script>
-function showTab(id) {
-  document.querySelectorAll('.view').forEach(function(el) { el.classList.remove('active'); });
-  document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
-  var panel = document.getElementById(id);
-  var btn = document.getElementById('btn-' + id);
-  if (panel) panel.classList.add('active');
-  if (btn) btn.classList.add('active');
-}
 function toggleInfo(id) {
   var el = document.getElementById(id);
   if (!el) return;
