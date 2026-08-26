@@ -8,6 +8,8 @@ function toText(structured, companyName, domain, requirement) {
   const facts = Array.isArray(structured.verifiedFacts)
     ? structured.verifiedFacts.map((f) => f.fact || f).filter(Boolean).join(" ")
     : "";
+  const walk = structured.operationsWalk || "";
+  const morning = structured.leadershipMorning || "";
   const systems = Array.isArray(structured.systems)
     ? structured.systems
         .map((s) => {
@@ -22,6 +24,8 @@ function toText(structured, companyName, domain, requirement) {
   const compliance = Array.isArray(structured.compliance) ? structured.compliance.join("; ") : "";
   return [
     structured.summary || `${companyName} operates in ${domain}.`,
+    walk,
+    morning,
     facts,
     systems ? `Data systems: ${systems}.` : "",
     reporting ? `Reporting landscape: ${reporting}.` : "",
@@ -35,6 +39,8 @@ function toText(structured, companyName, domain, requirement) {
 function normalizeResearch(parsed, companyName, domain, requirement) {
   const structured = {
     summary: String(parsed.summary || "").trim(),
+    operationsWalk: String(parsed.operationsWalk || "").trim(),
+    leadershipMorning: String(parsed.leadershipMorning || "").trim(),
     verifiedFacts: Array.isArray(parsed.verifiedFacts) ? parsed.verifiedFacts.slice(0, 8) : [],
     systems: Array.isArray(parsed.systems) ? parsed.systems.slice(0, 10) : [],
     reporting: Array.isArray(parsed.reporting) ? parsed.reporting.slice(0, 6) : [],
@@ -57,22 +63,26 @@ You are an Apexon pre-sales solution architect walking into ${companyName} (${do
 
 Mandate from the account team: "${requirement}"
 
-Think like a pre-sales lead: what does this company actually do, how do they make money, what systems would their operators already have, and what would a ${domain} VP recognize as THEIR world — not a generic data-platform story and not a leftover system list from another deck.
+Do a deep brief on THIS company in THIS industry before any use case is proposed. Walk their real operation — plant, store, claims desk, branch, warehouse, clinic, network — whichever THEY run. Do not default to a factory if they are not a manufacturer.
+
+Search what is public first: official site, investor filings, annual reports, reputable news. List what you can source. Then, and only then, fill gaps with industry-typical practice — labelled as such. Do not invent a walk from generic industry knowledge and present it as this company.
 
 Return ONLY JSON, no markdown:
-{"summary":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
+{"summary":"","operationsWalk":"","leadershipMorning":"","verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
 
 Hard rules:
 - summary: 2 short sentences a business stakeholder would nod at. Public, checkable facts only. Name products, plants, channels, or customers only if public.
-- verifiedFacts: only items you can reasonably attribute to a public source (official site, filings, reputable news). Put the basis in "basis".
-- systems: name the operational systems a ${domain} company like this typically runs (ERP, MES, LIMS, POS, claims, etc.) and what each is used for in THEIR process — not a generic IT list.
+- operationsWalk: 4-6 sentences walking how THIS company actually works day to day, in ${domain} language. Who does the work, where the delay or risk sits, what a missed window costs.
+- leadershipMorning: 2-3 sentences on what a ${domain} VP at a company like ${companyName} would want on one screen at the start of the day. Name the metrics in their words, then say what each means.
+- verifiedFacts: only items you can reasonably attribute to a public source. Put the basis in "basis" as a site name or URL. If you cannot source it, do not list it.
+- systems: operational systems a ${domain} company like this typically runs, and what each is used for in THEIR process.
 - If a system is not publicly confirmed for ${companyName}, set confidence to "industry-typical" and say so in basis. Never write it as if they confirmed it.
-- reporting: how THIS industry typically reports today (overnight packs, plant scorecards, Power BI, SAP). Same confidence rule.
+- reporting: how THIS industry typically reports today. Same confidence rule.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
-- Do not assume they already run any named platform or product unless that is public or named in the mandate.
+- Do not assume they already run any named platform unless that is public or named in the mandate.
 - requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.
-- JSON must parse with JSON.parse. No markdown, no [[1]] citation tokens, no [text](url) links inside values.
-- confidence must be exactly "confirmed" or "industry-typical". Put sources only in basis as a plain URL or site name.`,
+- JSON must parse with JSON.parse. No markdown, no citation tokens, no markdown links inside values.
+- confidence must be exactly "confirmed" or "industry-typical".`,
     () => null,
     "research"
   );
