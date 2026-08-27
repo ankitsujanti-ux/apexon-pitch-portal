@@ -150,6 +150,14 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
     whyItMatters: paragraph(uc.whyItMatters, [businessProblem, challenge], 240, 90),
     action: paragraph(uc.action, [benefit, uc.solutionFit], 230, 80),
     lookFirst: clip(uc.lookFirst || uc.title || "", 48),
+    persona: clip(uc.persona || "", 48),
+    decision: clip(uc.decision || "", 90),
+    insight: clip(uc.insight || "", 140),
+    primaryKpi: clip(uc.primaryKpi || "", 40),
+    signals: (Array.isArray(uc.signals) ? uc.signals : []).map((s) => clip(s, 48)).filter(Boolean).slice(0, 4),
+    dimensions: (Array.isArray(uc.dimensions) ? uc.dimensions : []).map((s) => clip(s, 28)).filter(Boolean).slice(0, 4),
+    exceptionRule: clip(uc.exceptionRule || "", 90),
+    businessImpact: clip(uc.businessImpact || "", 120),
     blocks: Array.isArray(uc.blocks) ? uc.blocks : uc.tabLayout ? [uc.tabLayout] : [],
     columns: Array.isArray(uc.columns) ? uc.columns.map((c) => clip(c, 18)).slice(0, 4) : [],
     zones: Array.isArray(uc.zones) ? uc.zones.map((z) => clip(z, 18)).slice(0, 6) : [],
@@ -212,6 +220,8 @@ export function normalizeHub(raw, useCases, companyName, domain) {
       40
     ),
     screenHtml: typeof raw?.screenHtml === "string" ? raw.screenHtml.slice(0, 14000) : "",
+    visualConcept: clip(raw?.visualConcept || "", 48),
+    decision: clip(raw?.decision || "", 90),
     kpis,
   };
 }
@@ -321,9 +331,9 @@ Choose a slideLayout for EACH use case — pick the one that suits ITS story, an
 - "evidence" — data, effort, and what is proven. Use when feasibility is the real question.
 Each layout shows only PART of the content, so the slide stays readable. Write all fields anyway.
 
-Then design ONE leadership HTML screen — not a tab per use case. Fill hub.title, subtitle, whatItShows, and kpis. Leave hub.screenHtml EMPTY in this draft. A later pass plans the visual, then writes the markup.
+Then design ONE leadership HTML screen — not a tab per use case. Fill hub.title, subtitle, whatItShows, and kpis. Leave hub.screenHtml EMPTY and leave slide.regions EMPTY in this draft. Later passes build a KPI model, then one storyboard for PPT and HTML, then render from that storyboard.
 
-Then compose each PowerPoint slide in slide.regions — 1-4 regions, kinds quote|list|pair|steps|kpis|callout|split|compare, spans 4, 6, or 12. Neighbouring slides must differ. Do not put challenge + steps + KPIs + value on every slide.
+Do not compose PowerPoint regions in this pass. Do not write HTML. Story first.
 
 Primitives (fallback only, if hub.screenHtml is rejected):
 - kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
@@ -356,7 +366,7 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - overallBenefits: exactly 4 lines, 12-20 words each.
 - techComponents: max 3 names from this mandate only.
 
-Leave useCases[].screenHtml empty. The HTML is hub.screenHtml only.
+Leave useCases[].screenHtml empty and leave slide.regions empty. The HTML is hub.screenHtml only, written after the storyboard.
 
 Produce exactly ${count} use cases. Design title, architecture, the one leadership screen, and close from THIS brief. Use-case titles become the agenda.`;
   };
@@ -424,6 +434,7 @@ Produce exactly ${count} use cases. Design title, architecture, the one leadersh
             useCases,
           }),
           evidenceNote: clip(verification?.evidenceNote || "", 200),
+          storyboard: parsed.storyboard || trace?.uiPlan || null,
           reasoning: trace,
           source,
         };
