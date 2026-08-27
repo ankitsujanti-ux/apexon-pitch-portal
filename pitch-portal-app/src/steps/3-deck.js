@@ -560,8 +560,8 @@ function addSlideHeader(slide, palette, uc, index, total, companyName) {
     x: MARGIN, y: 0.58, w: 11.6, h: 0.42,
     fontSize: 26, bold: true, color: palette.textLight, fontFace: palette.fontTitle, wrap: true,
   });
-  if (uc.subtitle) {
-    slide.addText(truncate(uc.subtitle, 84), {
+  if (uc.slide?.idea || uc.subtitle) {
+    slide.addText(truncate(uc.slide?.idea || uc.subtitle, 84), {
       x: MARGIN, y: 1.04, w: 11.6, h: 0.28,
       fontSize: 14, color: palette.accent, fontFace: palette.fontTitle,
     });
@@ -581,13 +581,13 @@ function addEvidenceStrip(slide, palette, uc) {
       {
         text: `${label}  `,
         options: {
-          bold: true, fontSize: 8.5, fontFace: palette.fontTitle,
+          bold: true, fontSize: 10, fontFace: palette.fontTitle,
           color: confirmed === assumptions.length ? "7DDEA0" : palette.accent,
         },
       },
       {
-        text: truncate(assumptions.map((a) => a.claim).join("  ·  "), 170),
-        options: { fontSize: 8.5, color: "9AA6B8", fontFace: palette.fontBody },
+        text: truncate(assumptions.map((a) => a.claim).join("  ·  "), 140),
+        options: { fontSize: 10, color: "9AA6B8", fontFace: palette.fontBody },
       },
     ],
     { x: MARGIN, y: 6.78, w: 12.48, h: 0.2, wrap: false, valign: "middle" }
