@@ -481,7 +481,7 @@ function addArchitectureSlide(slide, palette, { companyName, domain, requirement
     });
     slide.addText(pptSafe(card.k).toUpperCase(), {
       x: x + 0.18, y: bandY + 0.14, w: cw - 0.36, h: 0.22,
-      fontSize: 9.5, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+      fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
     slide.addText(truncate(card.v, 120), {
       x: x + 0.18, y: bandY + 0.42, w: cw - 0.36, h: bandH - 0.58,
