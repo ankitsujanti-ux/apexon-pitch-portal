@@ -75,7 +75,38 @@ export function lintHubMarkup(screenHtml) {
     });
   }
 
-  return defects.slice(0, 6);
+  const headings = [...raw.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)];
+  if (headings.some((h) => textOf(h[1]).length > 72)) {
+    defects.push({
+      field: "hub.screenHtml",
+      kind: "OVERFLOW",
+      problem: "A heading is too long for its container, so it will collide with the next block.",
+      fix: "Rewrite the heading in under 8 words. Do not shrink the type.",
+    });
+  }
+
+  const vizChunk = /<article class="viz">[\s\S]*?<\/article>/i.exec(raw)?.[0] || "";
+  const vizWidgets = (vizChunk.match(/class="(heat|board|funnel|table|bars|flow|compare|timeline|matrix|queue|entities)"/gi) || []);
+  const uniqueWidgets = new Set(vizWidgets.map((w) => w.toLowerCase()));
+  if (uniqueWidgets.size >= 3) {
+    defects.push({
+      field: "hub.screenHtml",
+      kind: "CROWDED",
+      problem: "The primary visual stacks several chart types, so nothing is the message.",
+      fix: "Keep one primary visual in article.viz. Move supporting facts to the rail.",
+    });
+  }
+
+  if (vizChunk && !/(heat|board|funnel|table|bars|flow|compare|timeline|matrix|queue|gauge|entities)/i.test(vizChunk)) {
+    defects.push({
+      field: "hub.screenHtml",
+      kind: "SPARSE",
+      problem: "The primary pane has no working visual — only labels.",
+      fix: "Put one insight visual in article.viz (heat, board, table, flow, funnel, compare, or queue).",
+    });
+  }
+
+  return defects.slice(0, 8);
 }
 
 export function lintSlideCompositions(useCases) {
@@ -103,6 +134,18 @@ export function lintSlideCompositions(useCases) {
       problem: "Too many slides are just a KPI strip.",
       fix: "Use quote, steps, compare, or callout where the decision is the point.",
     });
+  }
+  for (const uc of useCases || []) {
+    const titles = (uc.slide?.regions || []).map((r) => String(r.title || "")).filter(Boolean);
+    if (titles.some((t) => t.length > 48)) {
+      defects.push({
+        useCase: uc.title,
+        field: "slide.regions",
+        kind: "OVERFLOW",
+        problem: "A region title is too long to fit the panel without colliding.",
+        fix: "Rewrite the title in under 8 words. Do not shrink the type.",
+      });
+    }
   }
   return defects;
 }
