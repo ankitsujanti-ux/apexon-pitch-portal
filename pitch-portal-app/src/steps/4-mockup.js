@@ -319,7 +319,7 @@ function resolveHub(hub, useCases, companyName, domain) {
   ).slice(0, 6);
   return {
     title: hub?.title || `${companyName} operating picture`,
-    subtitle: hub?.subtitle || `What ${toLabel(domain, 4)} leadership would watch`,
+    subtitle: hub?.subtitle || hub?.visualConcept || `What ${toLabel(domain, 4)} leadership would watch`,
     whatItShows:
       hub?.whatItShows ||
       "The numbers from each job on the slides, and the next exception that still needs a person.",
