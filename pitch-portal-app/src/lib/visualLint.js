@@ -75,6 +75,16 @@ export function lintHubMarkup(screenHtml) {
     });
   }
 
+  const cells = [...raw.matchAll(/<div class="cell[^"]*">([\s\S]*?)<\/div>/gi)];
+  if (cells.some((c) => textOf(c[1]).length > 48)) {
+    defects.push({
+      field: "hub.screenHtml",
+      kind: "OVERFLOW",
+      problem: "A heat-map cell has a sentence in it, so the label will collide with the next cell.",
+      fix: "Heat cells: a short name plus a one-word status. Put the explanation in the rail.",
+    });
+  }
+
   const headings = [...raw.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi)];
   if (headings.some((h) => textOf(h[1]).length > 72)) {
     defects.push({
