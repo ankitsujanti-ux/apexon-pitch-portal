@@ -45,6 +45,11 @@ function toText(structured, companyName, domain, requirement) {
     hypotheses ? `Hypotheses to test: ${hypotheses}` : "",
     implications ? `Business implications: ${implications}` : "",
     facts,
+    structured.company?.whatTheyDo ? `This company: ${structured.company.whatTheyDo}` : "",
+    Array.isArray(structured.industry?.pressures) && structured.industry.pressures.length
+      ? `Industry pressures: ${structured.industry.pressures.join("; ")}`
+      : "",
+    structured.intersection ? `Where they meet: ${structured.intersection}` : "",
     systems ? `Data systems: ${systems}.` : "",
     reporting ? `Reporting landscape: ${reporting}.` : "",
     compliance ? `Controls that apply: ${compliance}.` : "",
@@ -67,6 +72,9 @@ function normalizeResearch(parsed, companyName, domain, requirement) {
     systems: Array.isArray(parsed.systems) ? parsed.systems.slice(0, 10) : [],
     reporting: Array.isArray(parsed.reporting) ? parsed.reporting.slice(0, 6) : [],
     compliance: Array.isArray(parsed.compliance) ? parsed.compliance.slice(0, 6) : [],
+    company: parsed.company && typeof parsed.company === "object" ? parsed.company : {},
+    industry: parsed.industry && typeof parsed.industry === "object" ? parsed.industry : {},
+    intersection: String(parsed.intersection || "").trim(),
     requirementFit: String(parsed.requirementFit || requirement).trim(),
   };
   return {
@@ -92,12 +100,13 @@ Search what is public first: official site, investor filings, annual reports, re
 Do not merely collect facts. Translate every important finding into a BUSINESS IMPLICATION: why it matters to this client, and what problem or opportunity it creates.
 
 Return ONLY JSON, no markdown:
-{"summary":"","operationsWalk":"","leadershipMorning":"","knownFacts":[""],"assumptions":[""],"hypotheses":[""],"implications":[{"finding":"","whyItMatters":"","opportunity":""}],"verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"requirementFit":""}
+{"summary":"","operationsWalk":"","leadershipMorning":"","knownFacts":[""],"assumptions":[""],"hypotheses":[""],"implications":[{"finding":"","whyItMatters":"","opportunity":""}],"verifiedFacts":[{"fact":"","basis":""}],"systems":[{"name":"","role":"","confidence":"confirmed|industry-typical","basis":""}],"reporting":[{"name":"","confidence":"confirmed|industry-typical","basis":""}],"compliance":[""],"company":{"whatTheyDo":"","priorities":[""],"publicChallenges":[""]},"industry":{"processes":[""],"kpis":[""],"pressures":[""]},"intersection":"","requirementFit":""}
 
 Hard rules:
 - summary: 2 short sentences a business stakeholder would nod at. Public, checkable facts only. Name products, plants, channels, or customers only if public.
 - operationsWalk: 4-6 sentences walking how THIS company actually works day to day, in ${domain} language. Who does the work, where the delay or risk sits, what a missed window costs.
 - leadershipMorning: 2-3 sentences on what a ${domain} VP at a company like ${companyName} would want on one screen at the start of the day. Name the metrics in their words, then say what each means.
+- Company research and industry research are different. Fill company (what they do, priorities, public challenges) from THIS firm. Fill industry (processes, typical KPIs, pressures) from the sector. intersection: one or two sentences on where THIS company's operation meets the industry problem — that is where use cases must live.
 - knownFacts: only public, checkable items. assumptions: industry-typical, said as assumptions. hypotheses: what we would test in discovery.
 - implications: 3-6 items. finding 8-16 words. whyItMatters 10-18 words. opportunity 10-18 words — a business decision, not a dashboard name.
 - verifiedFacts: only items you can reasonably attribute to a public source. Put the basis in "basis" as a site name or URL. If you cannot source it, do not list it.
