@@ -17,7 +17,6 @@ import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
 import { TONE_RULE, lintUseCases } from "./toneGuard.js";
 import { clampCount } from "./designContract.js";
-import { lintHubMarkup, lintSlideCompositions } from "./visualLint.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
 
@@ -308,8 +307,7 @@ Rules while revising:
 - Remove invented numbers, vendors, and system names. If a claim cannot be supported, either cut it or word it as an industry-typical assumption.
 - Apply every fix exactly as described. A defect saying to remove a product name means that name must not appear anywhere in your answer.
 - Keep the storyboard: PPT slides and the HTML hub must still tell the same story. Do not invent a second narrative.
-- Give every use case a slide composition (slide.regions) that is different from its neighbours.
-- Design one hub HTML screen covering the KPIs from those use cases — not a tab per job, and not the deck restated.
+- Do not write HTML, CSS, or slide regions. Code paints those from the story and hub.visual data.
 - Overflow: rewrite shorter. Never shrink type. Drop secondary content before crowding the layout.
 - Keep the same number of use cases and the same JSON shape.
 
@@ -417,31 +415,7 @@ ${NO_PROSE}
 executiveMessage: 12-22 words, what leadership must remember. visualConcept: 2-5 words. hubPlan.primaryVisual: table, board, heat, compare, flow, funnel, or matrix — plus why. slides: one per use case, matched by title. kinds from quote, list, pair, steps, kpis, callout, split, compare.`;
 }
 
-export function repairHubPrompt({ companyName, hub, defects }) {
-  return `${BRIEF_FIRST_RULE}
-
-The leadership HTML for ${companyName} failed a layout self-check. Fix ONLY hub.screenHtml. Keep title, subtitle, whatItShows, and kpis unless they cause the defect.
-
-Defects:
-${JSON.stringify(defects).slice(0, 2500)}
-
-Current hub:
-${JSON.stringify(hub).slice(0, 6000)}
-
-Rules:
-- One primary visual in <article class="viz">. Next actions in <article class="side">.
-- Table never in the side rail.
-- One fact per table cell. One sentence per queue item.
-- Wrap in <div class="row"> with those two children.
-- Allowed tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
-- Overflow: rewrite shorter. Never shrink type.
-- No scripts, no images, no deck copy.
-
-${NO_PROSE}
-{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":""}]}`;
-}
-
-// Render PPT regions and hub HTML FROM the storyboard. Do not invent a second design.
+// Render hub visual data FROM the storyboard. Code paints HTML and slides.
 export function designPrompt({ companyName, domain, requirement, draft, uiPlan }) {
   const titles = (draft?.useCases || []).map((uc) => uc.title).filter(Boolean);
   const kpiLines = (draft?.useCases || [])
@@ -475,16 +449,11 @@ PPT is the executive story. HTML is the working product view. They share termino
    - compare: before, after — one sentence each.
    - flow: steps[] max 4 short labels.
    - actions: 2-3 next moves from hubPlan.rail, one sentence each.
-   Leave hub.screenHtml empty. Leave useCases[].screenHtml empty.
 
-2. slide — follow slides[].kinds. One idea in slide.idea (what the executive remembers). 1-4 regions on a 12-column grid.
-   kind: quote, list, pair, steps, kpis, callout, split, compare. span 4, 6, or 12.
-   Neighbouring slides must not share the same kind sequence. Region titles under 8 words.
-
-Do not restate the challenge in hub.screenHtml.
+2. slide idea only. One sentence the executive remembers. Do not emit regions, HTML, or CSS. Code composes the slide.
 
 ${NO_PROSE}
-{"hub":{"title":"","subtitle":"","whatItShows":"","kpis":[{"name":"","value":"","why":"","from":"${titles[0] || ""}"}],"visual":{"kind":"table","heading":"","columns":["",""],"rows":[["",""]],"cells":[{"label":"","state":"warn","note":""}],"lanes":[{"title":"","body":""}],"before":"","after":"","steps":[""],"actions":[""]}},"useCases":[{"title":"${titles[0] || ""}","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
+{"hub":{"title":"","subtitle":"","whatItShows":"","kpis":[{"name":"","value":"","why":"","from":"${titles[0] || ""}"}],"visual":{"kind":"table","heading":"","columns":["",""],"rows":[["",""]],"cells":[{"label":"","state":"warn","note":""}],"lanes":[{"title":"","body":""}],"before":"","after":"","steps":[""],"actions":[""]}},"useCases":[{"title":"${titles[0] || ""}","slide":{"idea":""}}]}
 
 One hub. One slide entry per use case, matched by title. slide.idea: 8-16 words.`;
 }
@@ -609,29 +578,12 @@ export async function runReasoning({
       if (!match) return uc;
       return {
         ...uc,
-        screenHtml: match.screenHtml || uc.screenHtml,
-        slide: match.slide || uc.slide,
+        slide: {
+          idea: match.slide?.idea || uc.slide?.idea || uc.insight || "",
+        },
       };
     });
     trace.design = { ...(trace.design || {}), slides: designed.useCases.length };
-  }
-
-  const layoutDefects = [
-    ...(current.hub?.visual
-      ? []
-      : lintHubMarkup(current.hub?.screenHtml).map((d) => ({ useCase: "Leadership view", ...d }))),
-    ...lintSlideCompositions(current.useCases),
-  ];
-  if (layoutDefects.length) {
-    trace.layoutDefects = layoutDefects.length;
-    const repairedHub = await tryPass({
-      label: `correcting ${layoutDefects.length} layout issues`,
-      prompt: repairHubPrompt({ companyName, hub: current.hub, defects: layoutDefects }),
-      onStep,
-    });
-    if (repairedHub?.screenHtml) {
-      current.hub = { ...current.hub, ...repairedHub };
-    }
   }
 
   const critique = await tryPass({
