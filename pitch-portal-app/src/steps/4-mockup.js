@@ -16,8 +16,79 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+function paintHubVisual(visual, useCases) {
+  const seeded =
+    visual && (visual.rows?.length || visual.cells?.length || visual.actions?.length)
+      ? visual
+      : {
+          kind: "table",
+          heading: "What needs a person this morning",
+          columns: ["Job", "Watch this", "Owner"],
+          rows: (useCases || []).slice(0, 4).map((uc) => [
+            uc.title,
+            uc.kpis?.[0]?.name || "",
+            uc.persona || "Owner",
+          ]),
+          actions: (useCases || []).slice(0, 3).map((uc) => uc.action || uc.title).filter(Boolean),
+        };
+  visual = seeded;
+  const heading = escapeHtml(visual?.heading || "What needs a person this morning");
+  const actions = (visual?.actions || []).slice(0, 3);
+  const rail = actions.length
+    ? `<article class="side"><h3>Next move</h3><ul class="queue">${actions
+        .map((text, i) => `<li><span class="n">${i + 1}</span><span>${escapeHtml(text)}</span></li>`)
+        .join("")}</ul></article>`
+    : "";
+
+  let vizInner = "";
+  const kind = visual?.kind || "table";
+  if (kind === "heat" && visual.cells?.length) {
+    vizInner = `<div class="heat">${visual.cells
+      .map(
+        (c) =>
+          `<div class="cell ${c.state || "warn"}">${escapeHtml(c.label)}${
+            c.note ? `<small>${escapeHtml(c.note)}</small>` : ""
+          }</div>`
+      )
+      .join("")}</div>`;
+  } else if (kind === "compare") {
+    vizInner = `<div class="compare"><div class="col before"><h4>Today</h4><p>${escapeHtml(
+      visual.before || "The team waits on yesterday's pack."
+    )}</p></div><div class="col after"><h4>After</h4><p>${escapeHtml(
+      visual.after || "The same person sees the exception while they can still act."
+    )}</p></div></div>`;
+  } else if (kind === "board" && visual.lanes?.length) {
+    vizInner = `<div class="board">${visual.lanes
+      .map((l) => `<div class="col"><h4>${escapeHtml(l.title)}</h4><p>${escapeHtml(l.body || "")}</p></div>`)
+      .join("")}</div>`;
+  } else if (kind === "flow" && visual.steps?.length) {
+    vizInner = `<div class="flow">${visual.steps
+      .map((step, i) =>
+        i
+          ? `<span class="arrow">→</span><div class="node"><div class="h">${escapeHtml(step)}</div></div>`
+          : `<div class="node keep"><div class="h">${escapeHtml(step)}</div></div>`
+      )
+      .join("")}</div>`;
+  } else {
+    const cols = visual?.columns?.length ? visual.columns : ["Where", "What to notice", "Owner"];
+    const rows = visual?.rows?.length ? visual.rows : [];
+    vizInner = `<table><thead><tr>${cols.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>${
+      rows
+        .map(
+          (row) =>
+            `<tr>${cols
+              .map((_, i) => `<td>${escapeHtml(row[i] || "—")}</td>`)
+              .join("")}</tr>`
+        )
+        .join("")
+    }</tbody></table>`;
+  }
+
+  return `<div class="row"><article class="viz"><h3>${heading}</h3>${vizInner}</article>${rail}</div>`;
+}
+
 function shortLabel(title) {
-  return toLabel(String(title || "Use case").replace(/[\u201C\u201D]/g, '"'), 4);
+  return toLabel(String(title || "Use case").replace(/[\u201C\u201D"]/g, '"'), 4);
 }
 
 // Panel headings are labels, not sentences. The model writes lookFirst as an
@@ -324,6 +395,7 @@ function resolveHub(hub, useCases, companyName, domain) {
       hub?.whatItShows ||
       "The numbers from each job on the slides, and the next exception that still needs a person.",
     screenHtml: hub?.screenHtml || useCases?.[0]?.screenHtml || "",
+    visual: hub?.visual || null,
     kpis,
   };
 }
@@ -346,7 +418,8 @@ function hubView({ companyName, domain, useCases, hub, platformName }) {
   const resolved = resolveHub(hub, useCases, companyName, domain);
   const copy = dashboardCopy(companyName, domain, useCases[0] || { title: resolved.title, businessProblem: domain });
   const tabId = "hub";
-  const custom = sanitizeScreen(resolved.screenHtml, { tabId });
+  const painted = paintHubVisual(resolved.visual, useCases);
+  const custom = sanitizeScreen(painted || resolved.screenHtml, { tabId });
   const blocks = normalizePieces(useCases[0] || {}, 0);
   const ctx = { copy, useCase: useCases[0] || {}, tabId, companyName, domain, platformName };
   const visuals = blocks.filter((b) => b !== "kpis");
