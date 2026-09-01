@@ -433,7 +433,7 @@ function hubView({ companyName, domain, useCases, hub, platformName }) {
         <h2>${escapeHtml(resolved.title)}</h2>
         ${resolved.subtitle ? `<p class="sub">${escapeHtml(resolved.subtitle)}</p>` : ""}
       </div>
-      <button class="primary" type="button">${escapeHtml(copy.button || "Simulate an event")}</button>
+      <button class="primary" type="button">Show the next action</button>
     </div>
     <p class="caption">${escapeHtml(toSentences(resolved.whatItShows, 140))}</p>
     ${hubKpiRow(resolved, tabId)}
