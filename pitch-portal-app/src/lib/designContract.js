@@ -1,10 +1,6 @@
-// The visual contract the agent designs against, and that the builders enforce.
-//
-// HTML: the agent writes real screen markup using only these tags and classes.
-// Anything else is stripped or the screen falls back to the block renderer.
-//
-// Deck: the agent describes a composition (regions on a 12-column grid). The
-// builder packs and paints it. The agent never emits inch coordinates.
+// The visual contract the builders enforce. The model writes the business
+// story only. It does not emit HTML, CSS, or inch coordinates. Code composes
+// every slide and paints the one leadership screen from structured data.
 //
 // Count: the brief decides how many use-case slides, not a constant. Tight
 // mandates get three. A sprawling operation can take seven. Padding is a
@@ -122,7 +118,7 @@ export function clampCount(n, fallback = 5) {
 }
 
 export function classCatalog() {
-  return `LAYOUT: one leadership screen. Builder paints KPIs. screenHtml = one primary visual in article.viz PLUS an optional article.side of next actions. Never dump h3, kpis, tables, and boards as siblings. One thought per table cell and per queue item.
+  return `LAYOUT: one leadership screen. Code paints KPIs and the working view from hub.visual data. Never write HTML. Never dump h3, kpis, tables, and boards as siblings. One thought per table cell and per queue item.
 CARDS: viz, side, kpi, kpis, callout, gauge.
 CHARTS: heat+cell (good|warn|bad), bars+bar-row+track+fill, funnel+step, matrix, board+col (kanban), lane, queue+n, timeline, flow+node (keep|mid|out)+arrow, compare+col (before|after), entities+entity.
 LISTS: alerts+alert+pill, feed, nba-list+nba.
