@@ -2,10 +2,11 @@ import { allowLocalFallback } from "../lib/azureAgentClient.js";
 import { fallbackUseCases } from "../lib/fallbacks.js";
 import { BRIEF_FIRST_RULE, defaultTechStack, normalizeArchitecture } from "../lib/briefFirst.js";
 import { runReasoning } from "../lib/reasoningPasses.js";
-import { TONE_RULE, lintUseCases } from "../lib/toneGuard.js";
+import { TONE_RULE } from "../lib/toneGuard.js";
 import { clampCount, MAX_SCREENS, MIN_SCREENS } from "../lib/designContract.js";
+import { composeHubVisual, lockUseCases } from "../lib/composeVisuals.js";
 
-export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","blocks":["table"],"columns":[],"zones":[],"entities":[],"steps":[],"recordKind":"","slideLayout":"challenge|impact|shift|journey|evidence","screenHtml":"","slide":{"idea":"","regions":[{"kind":"quote|list|pair|steps|kpis|callout|split|compare","span":12,"kicker":"","title":"","body":"","items":[""],"accent":""}]},"kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[],"demoScore":9}],"overallBenefits":["","",""],"hub":{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":""}]}}`;
+export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","persona":"","decision":"","insight":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[]}],"overallBenefits":["","",""],"hub":{"title":"","subtitle":"","whatItShows":"","visual":{"kind":"table|heat|board|compare|flow","heading":"","columns":[""],"rows":[[""]],"cells":[{"label":"","state":"warn","note":""}],"lanes":[{"title":"","body":""}],"before":"","after":"","steps":[""],"actions":[""]},"kpis":[{"name":"","value":"","why":"","from":""}]}}`;
 
 function clip(text, maxChars) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -181,79 +182,12 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
     steps: Array.isArray(uc.steps) ? uc.steps.map((s) => clip(s, 36)).filter(Boolean).slice(0, 4) : [],
     recordKind: clip(uc.recordKind || "", 24),
     slideLayout: String(uc.slideLayout || "").toLowerCase().trim(),
-    screenHtml: typeof uc.screenHtml === "string" ? uc.screenHtml.slice(0, 14000) : "",
-    slide: normalizeSlide(uc.slide),
+    screenHtml: "",
+    slide: { idea: clip(uc.slide?.idea || uc.insight || uc.decision || uc.subtitle, 90), regions: [] },
   };
 }
 
-function normalizeSlide(raw) {
-  if (!raw || typeof raw !== "object") return { idea: "", regions: [] };
-  const regions = (Array.isArray(raw.regions) ? raw.regions : [])
-    .map((r) => ({
-      kind: String(r?.kind || "pair").toLowerCase().trim(),
-      span: Number(r?.span) || 6,
-      kicker: clip(r?.kicker, 28),
-      title: clip(r?.title, 42),
-      body: clip(r?.body, 280),
-      items: (Array.isArray(r?.items) ? r.items : []).map((s) => clip(s, 140)).filter(Boolean).slice(0, 5),
-      accent: ["good", "warn", "accent", "mute"].includes(r?.accent) ? r.accent : "",
-    }))
-    .slice(0, 4);
-  return { idea: clip(raw.idea, 90), regions };
-}
-
-function normalizeVisual(raw, useCases) {
-  const kind = String(raw?.kind || "").toLowerCase().trim();
-  const allowed = new Set(["table", "heat", "board", "compare", "flow"]);
-  const picked = allowed.has(kind) ? kind : "table";
-  const columns = (Array.isArray(raw?.columns) ? raw.columns : ["Where", "What to notice", "Owner"])
-    .map((c) => clip(c, 22))
-    .filter(Boolean)
-    .slice(0, 4);
-  const rows = (Array.isArray(raw?.rows) ? raw.rows : [])
-    .map((row) => (Array.isArray(row) ? row : [row]).map((c) => clip(c, 72)).slice(0, 4))
-    .filter((row) => row.some(Boolean))
-    .slice(0, 5);
-  const fromJobs =
-    rows.length >= 2
-      ? rows
-      : (useCases || []).slice(0, 4).map((uc) => [
-          clip(uc.title, 36),
-          clip(uc.kpis?.[0]?.name || uc.insight || "", 40),
-          clip(uc.persona || "Owner", 18),
-        ]);
-  const cells = (Array.isArray(raw?.cells) ? raw.cells : [])
-    .map((c) => ({
-      label: clip(c?.label || c?.name, 18),
-      state: ["good", "warn", "bad"].includes(c?.state) ? c.state : "warn",
-      note: clip(c?.note || "", 16),
-    }))
-    .filter((c) => c.label)
-    .slice(0, 6);
-  const actions = (Array.isArray(raw?.actions) ? raw.actions : [])
-    .map((a) => clip(typeof a === "string" ? a : a?.text, 90))
-    .filter(Boolean)
-    .slice(0, 3);
-  const fallbackActions = (useCases || [])
-    .slice(0, 3)
-    .map((uc) => clip(uc.action || uc.insight || uc.title, 90))
-    .filter(Boolean);
-  return {
-    kind: picked,
-    heading: clip(raw?.heading, 48) || "What needs a person this morning",
-    columns: columns.length ? columns : ["Where", "What to notice", "Owner"],
-    rows: fromJobs,
-    cells,
-    before: clip(raw?.before, 140),
-    after: clip(raw?.after, 140),
-    steps: (Array.isArray(raw?.steps) ? raw.steps : []).map((s) => clip(s, 28)).filter(Boolean).slice(0, 4),
-    lanes: (Array.isArray(raw?.lanes) ? raw.lanes : []).map((l) => ({
-      title: clip(l?.title, 18),
-      body: clip(l?.body, 72),
-    })).filter((l) => l.title).slice(0, 3),
-    actions: actions.length ? actions : fallbackActions,
-  };
-}
+const SAMPLE_VALUES = ["18", "96%", "4.2h", "3", "12", "99%"];
 
 export function normalizeHub(raw, useCases, companyName, domain) {
   const kpis = (useCases || []).slice(0, 6).map((uc, i) => {
@@ -282,33 +216,12 @@ export function normalizeHub(raw, useCases, companyName, domain) {
       140,
       40
     ),
-    screenHtml: typeof raw?.screenHtml === "string" ? raw.screenHtml.slice(0, 14000) : "",
-    visual: normalizeVisual(raw?.visual, useCases),
+    screenHtml: "",
+    visual: composeHubVisual(raw?.visual, useCases),
     visualConcept: clip(raw?.visualConcept || "", 48),
     decision: clip(raw?.decision || "", 90),
     kpis,
   };
-}
-
-const DECK_LAYOUTS = ["challenge", "impact", "shift", "journey", "evidence"];
-
-// Guarantee neighbouring slides differ even when the agent picks the same
-// layout for everything, which is what made all five look identical.
-function spreadLayouts(useCases) {
-  const used = new Set();
-  useCases.forEach((uc, i) => {
-    const asked = DECK_LAYOUTS.includes(uc.slideLayout) ? uc.slideLayout : null;
-    let chosen = asked && !used.has(asked) ? asked : null;
-    if (!chosen) {
-      chosen =
-        DECK_LAYOUTS.find((l) => !used.has(l) && l !== useCases[i - 1]?.slideLayout) ||
-        DECK_LAYOUTS[i % DECK_LAYOUTS.length];
-    }
-    used.add(chosen);
-    if (used.size === DECK_LAYOUTS.length) used.clear();
-    uc.slideLayout = chosen;
-  });
-  return useCases;
 }
 
 function stackForBrief(list, fallbackList, requirement, domain) {
@@ -399,22 +312,11 @@ Do NOT pad short answers with generic industry sentences. Two true sentences bea
 
 ${TONE_RULE}
 
-Choose a slideLayout for EACH use case — pick the one that suits ITS story, and vary it across the set so no two neighbouring slides look alike:
-- "challenge" — the problem is the point. Use when the pain is the compelling part.
-- "impact" — the metrics are the point. Use when leadership cares about the numbers moving.
-- "shift" — today versus after, side by side. Use when the change in the way of working is the point.
-- "journey" — the sequence of steps. Use when the story is a path or flow.
-- "evidence" — data, effort, and what is proven. Use when feasibility is the real question.
-Each layout shows only PART of the content, so the slide stays readable. Write all fields anyway.
+Do not write HTML, CSS, or PowerPoint regions. Code paints the slides and the one leadership screen from this story. Fill hub.title, subtitle, whatItShows, kpis, and hub.visual data only.
 
-Then design ONE leadership HTML screen — not a tab per use case. Fill hub.title, subtitle, whatItShows, and kpis. Leave hub.screenHtml EMPTY and leave slide.regions EMPTY in this draft. Later passes build a KPI model, then one storyboard for PPT and HTML, then render from that storyboard.
+hub.visual.kind: table, heat, board, compare, or flow. One fact per table cell. actions: 2-3 next moves, one sentence each.
 
-Do not compose PowerPoint regions in this pass. Do not write HTML. Story first.
-
-Primitives (fallback only, if hub.screenHtml is rejected):
-- kpis, bars, alerts, table, heat, record, actions, flow, compare (before/after), timeline (their process steps), entities (tiles for their objects)
-
-Put a product or platform name in techComponents, flow, or labels only if the requirement itself names one. Otherwise describe the capability in plain words.
+Put a product or platform name in techComponents only if the requirement itself names one. Otherwise describe the capability in plain words.
 
 Also design architecture for THIS mandate: sources they run, 2-3 stages named for their process, target = platform named in the requirement (or "Target platform" if none), guards only if this brief is about governance.
 
@@ -430,21 +332,18 @@ Length guidance — these are MINIMUMS for the explanatory fields, so write enou
 - dataPointer.description: 12-25 words.
 - difficultyWhy: 12-25 words.
 - whatItShows: 12-22 words, ONE sentence. whyItMatters / action: 12-22 words each.
-- slideLayout: exactly one of challenge, impact, shift, journey, evidence. Vary across use cases.
 - businessProblem: 25-40 words. benefit: 20-35 words.
 - title: max 9 words. subtitle: 6-12 words, the promise of this use case.
 - deckKicker: max 4 words. deckTitle: max 9 words. deckSubtitle: max 18 words. closeLine: max 18 words.
 - architecture.stages: 2-3 titles, each 2-6 short steps.
 - architecture.target.name: only a platform named in the mandate, else "Operating platform".
-- lookFirst: max 8 words. blocks: 1-3 primitive names for the hub fallback only.
+- lookFirst: max 8 words.
 - hub.title: max 8 words. hub.whatItShows: 12-22 words, one sentence.
-- columns / zones / entities / steps: named for THIS process when used.
+- hub.visual.heading: max 8 words. hub.visual.actions: 2-3 sentences.
 - overallBenefits: exactly 4 lines, 12-20 words each.
 - techComponents: max 3 names from this mandate only.
 
-Leave useCases[].screenHtml empty and leave slide.regions empty. The HTML is hub.screenHtml only, written after the storyboard.
-
-Produce exactly ${count} use cases. Design title, architecture, the one leadership screen, and close from THIS brief. Use-case titles become the agenda.`;
+Produce exactly ${count} use cases. Design title, architecture, hub copy, and close from THIS brief. Use-case titles become the agenda.`;
   };
 
   let parsed = null;
@@ -491,13 +390,13 @@ Produce exactly ${count} use cases. Design title, architecture, the one leadersh
         .slice(0, want)
         .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain, { fromFallback: false }));
       if (useCases.length >= MIN_SCREENS) {
-        spreadLayouts(useCases);
-        attachEvidence(useCases, verification);
-        const hub = normalizeHub(parsed.hub, useCases, companyName, domain);
+        const locked = lockUseCases(useCases);
+        attachEvidence(locked, verification);
+        const hub = normalizeHub(parsed.hub, locked, companyName, domain);
         return {
-          useCases,
+          useCases: locked,
           hub,
-          topForMockup: useCases.slice(0, tabs).map((uc) => uc.title),
+          topForMockup: locked.slice(0, tabs).map((uc) => uc.title),
           overallBenefits: Array.isArray(parsed.overallBenefits)
             ? parsed.overallBenefits.map((s) => clip(String(s), 130)).filter(Boolean).slice(0, 4)
             : fallback.overallBenefits,
@@ -507,7 +406,7 @@ Produce exactly ${count} use cases. Design title, architecture, the one leadersh
             domain,
             requirement,
             researchStructured: typeof research === "object" ? research : null,
-            useCases,
+            useCases: locked,
           }),
           evidenceNote: clip(verification?.evidenceNote || "", 200),
           storyboard: parsed.storyboard || trace?.uiPlan || null,
@@ -526,10 +425,11 @@ Produce exactly ${count} use cases. Design title, architecture, the one leadersh
     );
   }
 
+  const locked = lockUseCases(fallback.useCases || []);
   return {
     ...fallback,
-    useCases: spreadLayouts(fallback.useCases || []),
-    hub: normalizeHub(fallback.hub, fallback.useCases || [], companyName, domain),
+    useCases: locked,
+    hub: normalizeHub(fallback.hub, locked, companyName, domain),
     source: "fallback",
   };
 }
