@@ -5,13 +5,25 @@ import { runReasoning } from "../lib/reasoningPasses.js";
 import { TONE_RULE } from "../lib/toneGuard.js";
 import { clampCount, MAX_SCREENS, MIN_SCREENS } from "../lib/designContract.js";
 import { composeHubVisual, lockUseCases } from "../lib/composeVisuals.js";
+import { fitTitle, isChatRequest } from "../lib/text.js";
 
 export const PACKAGE_SCHEMA = `{"deckKicker":"","deckTitle":"","deckSubtitle":"","closeLine":"","architecture":{"title":"","subtitle":"","sources":[{"name":""}],"stages":[{"title":"","steps":[""]}],"target":{"name":"","components":[""]},"guards":[{"n":"","title":"","body":""}]},"useCases":[{"title":"","subtitle":"","challenge":"","businessProblem":"","benefit":"","solutionFit":"","solutionMoves":[{"lead":"","detail":""}],"worksWith":[""],"businessValue":[""],"proofPoint":"","whatItShows":"","whyItMatters":"","action":"","lookFirst":"","persona":"","decision":"","insight":"","kpis":[{"name":"","why":""}],"dataPointer":{"description":"","availability":"existing|new","confidence":"confirmed|industry-typical"},"difficulty":"easier|moderate|harder","difficultyWhy":"","techComponents":[]}],"overallBenefits":["","",""],"hub":{"title":"","subtitle":"","whatItShows":"","visual":{"kind":"table|heat|board|compare|flow","heading":"","columns":[""],"rows":[[""]],"cells":[{"label":"","state":"warn","note":""}],"lanes":[{"title":"","body":""}],"before":"","after":"","steps":[""],"actions":[""]},"kpis":[{"name":"","value":"","why":"","from":""}]}}`;
 
 function clip(text, maxChars) {
-  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  const clean = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^an industry-typical hypothesis is that\s+/i, "");
   if (clean.length <= maxChars) return clean;
   return clean.slice(0, maxChars).replace(/\s+\S*$/, "");
+}
+
+function spokenWhy(name, why) {
+  const t = String(why || "").replace(/\s+/g, " ").trim();
+  if (/must (establish|define|confirm)|industry-typical hypothesis|give me the use case/i.test(t)) {
+    return `If ${clip(name, 24)} moves the wrong way, this job misses its window.`;
+  }
+  return t.replace(/^an industry-typical hypothesis is that\s+/i, "");
 }
 
 function sentences(text) {
@@ -94,13 +106,16 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
         .slice(0, 4)
         .map((k, ki) => ({
           name: clip(k.name, 30),
-          why: copy(
-            k.why,
-            fromFallback
-              ? [fallbackUc?.kpis?.[ki]?.why]
-              : [`If ${clip(k.name, 24)} moves the wrong way, this job misses its window.`],
-            120,
-            45
+          why: spokenWhy(
+            k.name,
+            copy(
+              k.why,
+              fromFallback
+                ? [fallbackUc?.kpis?.[ki]?.why]
+                : [`If ${clip(k.name, 24)} moves the wrong way, this job misses its window.`],
+              120,
+              45
+            )
           ),
         }))
     : fallbackUc?.kpis || [];
@@ -117,7 +132,7 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
   );
 
   return {
-    title: clip(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 60),
+    title: clip(fitTitle(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 8) || `Use case ${i + 1}`, 60),
     subtitle: copy(uc.subtitle, [uc.lookFirst, benefit], 90, 30),
     businessProblem,
     benefit,
@@ -236,11 +251,17 @@ function stackForBrief(list, fallbackList, requirement, domain) {
 }
 
 function normalizeDeckCopy(parsed, fallback, companyName, domain, requirement) {
+  const subtitle =
+    parsed.deckSubtitle && !isChatRequest(parsed.deckSubtitle)
+      ? parsed.deckSubtitle
+      : fallback.deckSubtitle && !isChatRequest(fallback.deckSubtitle)
+        ? fallback.deckSubtitle
+        : `The decisions ${companyName} leadership should take first.`;
   return {
     deckKicker: clip(parsed.deckKicker || fallback.deckKicker || companyName, 28),
     deckTitle: clip(parsed.deckTitle || fallback.deckTitle || `${companyName} operating picture`, 64),
-    deckSubtitle: clip(parsed.deckSubtitle || fallback.deckSubtitle || requirement || domain, 110),
-    closeLine: clip(parsed.closeLine || fallback.closeLine || `Walk the live demonstration with ${companyName} next.`, 90),
+    deckSubtitle: clip(isChatRequest(subtitle) ? `The decisions ${companyName} leadership should take first.` : subtitle, 140),
+    closeLine: clip(parsed.closeLine || fallback.closeLine || `Walk the live demonstration with ${companyName} next.`, 110),
   };
 }
 
@@ -279,6 +300,9 @@ Verified research (treat industry-typical items as unconfirmed):
 ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
+${isChatRequest(requirement)
+  ? `The mandate above is informal. Do NOT put those words on a slide. Restate it as the business decision ${companyName} must take. A visitor who was not in the request should still understand the pitch.`
+  : ""}
 
 Your own analysis of this brief so far — build on it, do not start over:
 ${reasoning || "(none available; reason from the mandate and research above)"}
@@ -287,7 +311,9 @@ Design the BUSINESS STORY first, then the copy. For every use case: who uses it,
 
 WRITE IN FULL SENTENCES. This is the most important instruction. Label fragments like "Payment success", "Ask clarifier", or "Less time to pay" are a FAILED answer — a reader who knows nothing about this project must understand the use case from your text alone. Explain, do not label.
 
-Reject generic titles (dashboard, chatbot, 360, insights, predictive analytics). Name the decision.
+Reject generic titles (dashboard, chatbot, 360, insights, predictive analytics). Name the decision. Titles: max 8 words, a complete phrase a VP can say out loud — never cut off on "the" or "before".
+
+Never start a sentence with "An industry-typical hypothesis is that". Put evidence labels in the evidence strip, not in the body. KPI why is: if this number moves the wrong way, what breaks. Not a to-do for the client to establish a baseline.
 
 For EVERY use case, explain the whole story the way a solution architect would on a slide:
 - challenge: 2-3 sentences on what goes wrong today, in their operation, with the consequence. Name the systems, roles, and moment it happens.
