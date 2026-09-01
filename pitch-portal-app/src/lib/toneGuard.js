@@ -11,6 +11,8 @@
 // Platforms, products, and vendors that may appear ONLY when the brief asks for
 // them. This list is never sent to the model.
 const VENDOR_NAMES = [
+  "Genesys Cloud",
+  "Genesys",
   "Microsoft Fabric",
   "OneLake",
   "Real-Time Intelligence",
@@ -90,6 +92,9 @@ const GENERIC_COPY = [
   [/leadership watches this/i, "Say what happens if this number moves the wrong way."],
   [/overnight (pack|report)s?/i, "Name the actual delay in this operation — shift report, claims cycle, store close — not a generic overnight pack."],
   [/needs a person right now/i, "Name the role and the decision."],
+  [/industry-typical hypothesis/i, "State the operational problem. Put the evidence label in the footer, not in the body."],
+  [/\bmust (establish|define|confirm) the (baseline|matching rule|required)/i, "Write what the number tells the owner, not a discovery to-do."],
+  [/give me the use case/i, "Never put the typed request on a slide. Restate the business decision."],
 ];
 
 const MAX_SENTENCE_WORDS = 32;
