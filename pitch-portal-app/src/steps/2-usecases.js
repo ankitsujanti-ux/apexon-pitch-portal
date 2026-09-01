@@ -23,6 +23,16 @@ function sentences(text) {
 
 // The pitch fails when the model answers in 3-word fragments. Each explanatory
 // field falls back to real prose built from the neighbouring fields.
+function takeCopy(primary, extras, maxChars) {
+  const first = clip(primary, maxChars);
+  if (first) return first;
+  for (const extra of extras || []) {
+    const next = clip(extra, maxChars);
+    if (next) return next;
+  }
+  return "";
+}
+
 function paragraph(primary, fallbacks, maxChars, minChars) {
   const candidates = [primary, ...fallbacks].map((t) => String(t || "").replace(/\s+/g, " ").trim());
   let out = "";
@@ -72,16 +82,22 @@ function bulletList(raw, fallbackList, maxChars, count) {
   return (fallbackList || []).slice(0, count);
 }
 
-function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
+function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fromFallback = false } = {}) {
+  const copy = fromFallback
+    ? (primary, extras, max, min) => paragraph(primary, extras, max, min)
+    : (primary, extras, max) => takeCopy(primary, extras, max);
+
   const kpis = Array.isArray(uc.kpis)
     ? uc.kpis
         .filter((k) => k?.name)
         .slice(0, 4)
         .map((k, ki) => ({
           name: clip(k.name, 30),
-          why: paragraph(
+          why: copy(
             k.why,
-            [fallbackUc?.kpis?.[ki]?.why, "Leadership watches this to know whether the change is working."],
+            fromFallback
+              ? [fallbackUc?.kpis?.[ki]?.why]
+              : [`If ${clip(k.name, 24)} moves the wrong way, this job misses its window.`],
             120,
             45
           ),
@@ -90,18 +106,18 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
   const difficulty = ["easier", "moderate", "harder"].includes(uc.difficulty)
     ? uc.difficulty
     : fallbackUc?.difficulty || "moderate";
-  const businessProblem = paragraph(uc.businessProblem, [fallbackUc?.businessProblem], 260, 90);
-  const benefit = paragraph(uc.benefit, [uc.solutionFit, fallbackUc?.benefit], 240, 80);
-  const challenge = paragraph(
+  const businessProblem = copy(uc.businessProblem, fromFallback ? [fallbackUc?.businessProblem] : [], 260, 90);
+  const benefit = copy(uc.benefit, [uc.solutionFit, fromFallback ? fallbackUc?.benefit : ""], 240, 80);
+  const challenge = copy(
     uc.challenge,
-    [businessProblem, fallbackUc?.challenge, fallbackUc?.businessProblem],
+    fromFallback ? [businessProblem, fallbackUc?.challenge] : [businessProblem],
     340,
     150
   );
 
   return {
     title: clip(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 60),
-    subtitle: paragraph(uc.subtitle, [uc.lookFirst, benefit], 90, 30),
+    subtitle: copy(uc.subtitle, [uc.lookFirst, benefit], 90, 30),
     businessProblem,
     benefit,
     solutionFit: clip(uc.solutionFit || fallbackUc?.solutionFit || "", 200),
@@ -124,12 +140,12 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
       110,
       3
     ),
-    proofPoint: paragraph(uc.proofPoint, [fallbackUc?.proofPoint], 220, 0),
+    proofPoint: copy(uc.proofPoint, fromFallback ? [fallbackUc?.proofPoint] : [], 220, 0),
     kpis,
     dataPointer: {
-      description: paragraph(
+      description: copy(
         typeof uc.dataPointer === "string" ? uc.dataPointer : uc.dataPointer?.description,
-        [fallbackUc?.dataPointer?.description],
+        fromFallback ? [fallbackUc?.dataPointer?.description] : [],
         200,
         50
       ),
@@ -143,12 +159,12 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "") {
         "industry-typical",
     },
     difficulty,
-    difficultyWhy: paragraph(uc.difficultyWhy, [fallbackUc?.difficultyWhy], 180, 40),
+    difficultyWhy: copy(uc.difficultyWhy, fromFallback ? [fallbackUc?.difficultyWhy] : [], 180, 40),
     techComponents: stackForBrief(uc.techComponents, fallbackUc?.techComponents, requirement, domain),
     demoScore: uc.demoScore || 8 - i,
-    whatItShows: paragraph(uc.whatItShows, [uc.lookFirst, businessProblem], 230, 80),
-    whyItMatters: paragraph(uc.whyItMatters, [businessProblem, challenge], 240, 90),
-    action: paragraph(uc.action, [benefit, uc.solutionFit], 230, 80),
+    whatItShows: copy(uc.whatItShows, [uc.lookFirst, businessProblem], 230, 80),
+    whyItMatters: copy(uc.whyItMatters, [businessProblem, challenge], 240, 90),
+    action: copy(uc.action, [benefit, uc.solutionFit], 230, 80),
     lookFirst: clip(uc.lookFirst || uc.title || "", 48),
     persona: clip(uc.persona || "", 48),
     decision: clip(uc.decision || "", 90),
@@ -186,7 +202,58 @@ function normalizeSlide(raw) {
   return { idea: clip(raw.idea, 90), regions };
 }
 
-const SAMPLE_VALUES = ["18", "96%", "4.2h", "3", "12", "99%"];
+function normalizeVisual(raw, useCases) {
+  const kind = String(raw?.kind || "").toLowerCase().trim();
+  const allowed = new Set(["table", "heat", "board", "compare", "flow"]);
+  const picked = allowed.has(kind) ? kind : "table";
+  const columns = (Array.isArray(raw?.columns) ? raw.columns : ["Where", "What to notice", "Owner"])
+    .map((c) => clip(c, 22))
+    .filter(Boolean)
+    .slice(0, 4);
+  const rows = (Array.isArray(raw?.rows) ? raw.rows : [])
+    .map((row) => (Array.isArray(row) ? row : [row]).map((c) => clip(c, 72)).slice(0, 4))
+    .filter((row) => row.some(Boolean))
+    .slice(0, 5);
+  const fromJobs =
+    rows.length >= 2
+      ? rows
+      : (useCases || []).slice(0, 4).map((uc) => [
+          clip(uc.title, 36),
+          clip(uc.kpis?.[0]?.name || uc.insight || "", 40),
+          clip(uc.persona || "Owner", 18),
+        ]);
+  const cells = (Array.isArray(raw?.cells) ? raw.cells : [])
+    .map((c) => ({
+      label: clip(c?.label || c?.name, 18),
+      state: ["good", "warn", "bad"].includes(c?.state) ? c.state : "warn",
+      note: clip(c?.note || "", 16),
+    }))
+    .filter((c) => c.label)
+    .slice(0, 6);
+  const actions = (Array.isArray(raw?.actions) ? raw.actions : [])
+    .map((a) => clip(typeof a === "string" ? a : a?.text, 90))
+    .filter(Boolean)
+    .slice(0, 3);
+  const fallbackActions = (useCases || [])
+    .slice(0, 3)
+    .map((uc) => clip(uc.action || uc.insight || uc.title, 90))
+    .filter(Boolean);
+  return {
+    kind: picked,
+    heading: clip(raw?.heading, 48) || "What needs a person this morning",
+    columns: columns.length ? columns : ["Where", "What to notice", "Owner"],
+    rows: fromJobs,
+    cells,
+    before: clip(raw?.before, 140),
+    after: clip(raw?.after, 140),
+    steps: (Array.isArray(raw?.steps) ? raw.steps : []).map((s) => clip(s, 28)).filter(Boolean).slice(0, 4),
+    lanes: (Array.isArray(raw?.lanes) ? raw.lanes : []).map((l) => ({
+      title: clip(l?.title, 18),
+      body: clip(l?.body, 72),
+    })).filter((l) => l.title).slice(0, 3),
+    actions: actions.length ? actions : fallbackActions,
+  };
+}
 
 export function normalizeHub(raw, useCases, companyName, domain) {
   const kpis = (useCases || []).slice(0, 6).map((uc, i) => {
@@ -201,12 +268,8 @@ export function normalizeHub(raw, useCases, companyName, domain) {
     return {
       name: clip(fromAgent?.name || named?.name || uc.title, 30),
       value: clip(fromAgent?.value || SAMPLE_VALUES[i] || "—", 12),
-      why: paragraph(
-        fromAgent?.why,
-        [named?.why, uc.whyItMatters, "Leadership watches this to know whether this job is holding."],
-        120,
-        24
-      ),
+      why: takeCopy(fromAgent?.why, [named?.why, uc.whyItMatters], 120) ||
+        `If ${clip(named?.name || "this number", 24)} moves the wrong way, this job misses its window.`,
       from: clip(uc.title, 60),
     };
   });
@@ -220,6 +283,7 @@ export function normalizeHub(raw, useCases, companyName, domain) {
       40
     ),
     screenHtml: typeof raw?.screenHtml === "string" ? raw.screenHtml.slice(0, 14000) : "",
+    visual: normalizeVisual(raw?.visual, useCases),
     visualConcept: clip(raw?.visualConcept || "", 48),
     decision: clip(raw?.decision || "", 90),
     kpis,
@@ -321,6 +385,18 @@ For EVERY use case, explain the whole story the way a solution architect would o
 - kpis: exactly 4. Each name is the metric; each why is a full sentence saying what the metric tells leadership and why it moves with this change.
 - proofPoint: one sentence of industry evidence or a comparable pattern, only if you are confident. Otherwise "".
 
+Write like a person in the room, not a brochure.
+
+BAD: "Leadership watches this to know whether the change is working."
+GOOD: "If first-pass yield on the combine line drops below 94%, today's build plan slips before second shift."
+
+BAD: "Issues are caught inside the window where a decision still changes the outcome."
+GOOD: "Quality sees the hold while the batch is still on the line, not after it has shipped."
+
+KPI why must be: If this number moves the wrong way, what breaks. Not "leadership watches this."
+
+Do NOT pad short answers with generic industry sentences. Two true sentences beat five interchangeable ones.
+
 ${TONE_RULE}
 
 Choose a slideLayout for EACH use case — pick the one that suits ITS story, and vary it across the set so no two neighbouring slides look alike:
@@ -413,7 +489,7 @@ Produce exactly ${count} use cases. Design title, architecture, the one leadersh
       const useCases = list
         .filter((uc) => uc?.title && uc?.businessProblem)
         .slice(0, want)
-        .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain));
+        .map((uc, i) => normalizeUseCase(uc, i, fallback.useCases[i], requirement, domain, { fromFallback: false }));
       if (useCases.length >= MIN_SCREENS) {
         spreadLayouts(useCases);
         attachEvidence(useCases, verification);
