@@ -455,8 +455,8 @@ A single generation call cannot deliberate. The workflow above is **executed as 
 | 4. Draft | 7 | Full-sentence pitch content. Hub markup empty. Slide regions empty. |
 | 4a. KPI model | 7a | Persona, decision, signals, dimensions, insight per use case |
 | 4b. Storyboard | 8–9 | **One JSON** for PPT and HTML. No markup yet. |
-| 4c. Design | 8–14 | Render hub.screenHtml and slide.regions **from that storyboard** |
-| 4d. Layout self-check | 14 | Lint: overflow, table in the rail, copy-paste slides. Repair if needed. |
+| 4c. Design | 8–14 | Return hub.visual data and slide.idea from the storyboard. Code paints PPT and HTML. |
+| 4d. Compose | — | `composeVisuals.js` locks slide regions and hub visual. The model cannot draw pixels. |
 | 5. Critique | 15 | Hostile CXO + design scores 1–10; below 7 forces revise |
 | 6. Revise | 11 | Fix named defects only |
 | 7. Verify | evidence | Label every load-bearing claim |
@@ -514,7 +514,7 @@ The **only** thing carried over from anything shared previously is the dark them
 - Dark navy canvas. **One** leadership screen. Viewport-fit, no page scroll.
 - KPI strip from the use cases (sample numbers, never claimed live).
 - One short caption (`hub.whatItShows`), then the working view. No challenge / solution / business-case column.
-- The agent writes `hub.screenHtml`. A sanitizer keeps only design-system tags and classes. If rejected, `blocks` paints a fallback.
+- The model returns `hub.visual` as data (kind, rows, actions). Code paints the page. It does not write HTML.
 
 ---
 
@@ -524,7 +524,7 @@ Read this before expecting the enterprise spec to appear 1:1 in the files.
 
 1. **One HTML screen, not a screen per use case.** You asked for this earlier. The enterprise spec's "design each screen from scratch" applies to **each PPT use-case slide** and to **the one leadership hub**. We will not go back to a tab tour unless you change that product rule.
 
-2. **The HTML cannot draw every chart type in the enterprise list.** Sankey, geographic maps, network graphs, and true waterfalls are valid *ideas*. At runtime they must be expressed with the allowed design-system primitives or the sanitizer strips them. If you want those chart types as real graphics, that is a builder change, not a prompt change.
+2. **The model does not draw the page.** It returns story copy and `hub.visual` data. Code paints every pixel of the PPT and the HTML. Sankey, maps, and network graphs remain ideas that map onto table / heat / board / compare / flow.
 
 3. **Candidate count is ~12, not 20.** Twenty full candidates in one JSON pass overflows the model and the Render time budget. 10–12 is the practical wide net; 3–7 reach the slides.
 
