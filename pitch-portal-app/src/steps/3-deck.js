@@ -2,7 +2,7 @@
 // Order: title → agenda → architecture → use cases → thank you.
 
 import fs from "fs";
-import { toLabel, toSentences } from "../lib/text.js";
+import { toLabel, fitLine, fitTitle, isChatRequest } from "../lib/text.js";
 import { packRegions } from "../lib/slideGrid.js";
 import { composeSlide } from "../lib/composeVisuals.js";
 import path from "path";
@@ -80,7 +80,11 @@ function pptSafe(text) {
 // Body copy keeps whole sentences so a shortened paragraph still reads as
 // finished prose. Nothing is ever cut mid-word.
 function truncate(text, maxChars) {
-  return toSentences(pptSafe(text), maxChars);
+  return fitLine(pptSafe(text), maxChars);
+}
+
+function heading(text, maxWords = 8) {
+  return fitTitle(pptSafe(text), maxWords);
 }
 
 // Short slots (kickers, node labels, step names) get a clean noun phrase rather
@@ -112,13 +116,21 @@ function applyMaster(slide, palette, { page, wave = false }) {
 }
 
 function deckNarrative(useCases, companyName, domain, requirement) {
+  const rawAsk = isChatRequest(requirement);
   return {
-    kicker: truncate(useCases.deckKicker || companyName, 28),
-    title: truncate(useCases.deckTitle || `${companyName} operating picture`, 64),
-    subtitle: truncate(useCases.deckSubtitle || requirement || `${domain} leadership walkthrough`, 110),
+    kicker: heading(useCases.deckKicker || companyName, 4),
+    title: heading(useCases.deckTitle || `${companyName} operating picture`, 9),
+    subtitle: truncate(
+      useCases.deckSubtitle ||
+        (rawAsk
+          ? `Where AI should change how ${companyName} serves members, and what to prove first.`
+          : requirement) ||
+        `${domain} leadership walkthrough`,
+      140
+    ),
     closeLine: truncate(
       useCases.closeLine || `Walk the live demonstration with ${companyName} next.`,
-      90
+      110
     ),
   };
 }
@@ -187,12 +199,15 @@ function addTitleSlide(slide, palette, { companyName, domain, narrative, page })
 }
 
 function agendaItems({ companyName, requirement, useCases, narrative }) {
+  const why = isChatRequest(requirement)
+    ? narrative.subtitle
+    : truncate(requirement, 90);
   return [
-    { label: "Why we are here", note: truncate(requirement, 52) },
-    { label: "Proposed architecture", note: truncate(requirement, 52) },
+    { label: "Why we are here", note: why },
+    { label: "How this would work", note: truncate(`The path ${companyName} would take, on systems it already runs.`, 90) },
     ...useCases.map((uc) => ({
       label: slideTitle(uc, companyName),
-      note: truncate(uc.benefit || uc.businessProblem, 52),
+      note: truncate(uc.slide?.idea || uc.benefit || uc.businessProblem, 90),
     })),
     { label: "Discussion and next step", note: narrative.closeLine },
   ];
@@ -227,7 +242,7 @@ function addAgendaSlide(slide, palette, { companyName, requirement, useCases, na
       color: palette.accent,
       fontFace: palette.fontTitle,
     });
-    slide.addText(truncate(item.label, 36), {
+    slide.addText(heading(item.label, 8), {
       x: x + 0.78,
       y,
       w: 5.3,
@@ -238,7 +253,7 @@ function addAgendaSlide(slide, palette, { companyName, requirement, useCases, na
       fontFace: palette.fontTitle,
       wrap: true,
     });
-    slide.addText(truncate(item.note, 70), {
+    slide.addText(truncate(item.note, 90), {
       x: x + 0.78,
       y: y + 0.4,
       w: 5.3,
@@ -352,7 +367,7 @@ function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bod
 function slideTitle(uc, companyName) {
   const raw = String(uc.title || "Use case");
   const stripped = raw.replace(new RegExp(`\\s*[\\u2014\\u2013\\-]\\s*${companyName}\\s*$`, "i"), "").trim();
-  return truncate(stripped || raw, 48);
+  return heading(stripped || raw, 8);
 }
 
 function difficultyLabel(uc) {
@@ -376,12 +391,12 @@ function addArchitectureSlide(slide, palette, { companyName, domain, requirement
   const guards = (arch.guards || []).slice(0, 3);
   const platformNamed = target.name && target.name !== "Operating platform";
 
-  slide.addText(truncate(arch.title || "How this works", 46), {
-    x: MARGIN, y: 0.3, w: 12.4, h: 0.4, fontSize: 26, bold: true,
-    color: palette.textLight, fontFace: palette.fontTitle,
+  slide.addText(heading(arch.title || "How this works", 8), {
+    x: MARGIN, y: 0.3, w: 12.4, h: 0.42, fontSize: 26, bold: true,
+    color: palette.textLight, fontFace: palette.fontTitle, wrap: true,
   });
-  slide.addText(truncate(arch.subtitle || `What ${companyName} would put in place, and what it runs on.`, 150), {
-    x: MARGIN, y: 0.76, w: 12.4, h: 0.3, fontSize: 13, color: palette.accent, fontFace: palette.fontBody,
+  slide.addText(truncate(arch.subtitle || `What ${companyName} would put in place, and what it runs on.`, 160), {
+    x: MARGIN, y: 0.76, w: 12.4, h: 0.36, fontSize: 13, color: palette.accent, fontFace: palette.fontBody, wrap: true,
   });
   slide.addShape("rect", { x: MARGIN, y: 1.16, w: 1.1, h: 0.03, fill: { color: palette.accent } });
 
