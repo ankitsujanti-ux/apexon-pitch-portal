@@ -16,7 +16,7 @@ import { askAgent } from "./azureAgentClient.js";
 import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
 import { TONE_RULE, lintUseCases } from "./toneGuard.js";
-import { clampCount, classCatalog } from "./designContract.js";
+import { clampCount } from "./designContract.js";
 import { lintHubMarkup, lintSlideCompositions } from "./visualLint.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
@@ -464,18 +464,18 @@ ${kpiLines}
 
 PPT is the executive story. HTML is the working product view. They share terminology, KPIs, and insight. They do NOT share layout. Do not paste the HTML into a slide. Do not paste the slide essay into the HTML.
 
-1. hub — ONE product screen. Implement hubPlan.primaryVisual and visualConcept. Not a tab per use case. Not the deck. Leave useCases[].screenHtml empty.
+1. hub — ONE product screen. Do NOT write HTML. Return hub.visual as data. The builder paints the page so labels cannot overlap.
    - hub.title: max 8 words. hub.subtitle: 6-12 words. hub.whatItShows: the hubPlan.insight in 12-22 words.
-   - hub.kpis: one per use case. value is SAMPLE only. why: one sentence. from: the use-case title.
-   - hub.screenHtml: Allowed tags: article, section, div, h3, h4, p, span, b, small, ul, ol, li, table, thead, tbody, tr, th, td, button.
-   Allowed CSS classes:
-${classCatalog()}
-   Style attribute is allowed only as width:N% on a fill or funnel step. No scripts. No images.
-   Structure: <div class="row"> with two children — <article class="viz"> the primary visual, <article class="side"> hubPlan.rail.
-   Semantic classes only: good, warn, bad. One thought per table cell. Headings under 8 words. One sentence per queue item. Never put a table in the side rail.
-   Overflow order: rewrite shorter → fewer cells → rebalance viz vs rail. NEVER shrink type.
-   Microcopy names the decision ("Orders at risk from the constraint"), not "Click here" or "AI Insights".
-   The builder paints KPIs above this markup.
+   - hub.kpis: one per use case. value is SAMPLE only. why: If this number moves the wrong way, what breaks. from: the use-case title.
+   - hub.visual.kind: table, heat, board, compare, or flow — match hubPlan.primaryVisual.
+   - hub.visual.heading: max 8 words.
+   - table: columns (2-4 short headers) and rows (3-5), one fact per cell.
+   - heat: cells[{label, state: good|warn|bad, note}] max 6. label under 4 words.
+   - board: lanes[{title, body}] max 3.
+   - compare: before, after — one sentence each.
+   - flow: steps[] max 4 short labels.
+   - actions: 2-3 next moves from hubPlan.rail, one sentence each.
+   Leave hub.screenHtml empty. Leave useCases[].screenHtml empty.
 
 2. slide — follow slides[].kinds. One idea in slide.idea (what the executive remembers). 1-4 regions on a 12-column grid.
    kind: quote, list, pair, steps, kpis, callout, split, compare. span 4, 6, or 12.
@@ -484,7 +484,7 @@ ${classCatalog()}
 Do not restate the challenge in hub.screenHtml.
 
 ${NO_PROSE}
-{"hub":{"title":"","subtitle":"","whatItShows":"","screenHtml":"","kpis":[{"name":"","value":"","why":"","from":"${titles[0] || ""}"}]},"useCases":[{"title":"${titles[0] || ""}","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
+{"hub":{"title":"","subtitle":"","whatItShows":"","kpis":[{"name":"","value":"","why":"","from":"${titles[0] || ""}"}],"visual":{"kind":"table","heading":"","columns":["",""],"rows":[["",""]],"cells":[{"label":"","state":"warn","note":""}],"lanes":[{"title":"","body":""}],"before":"","after":"","steps":[""],"actions":[""]}},"useCases":[{"title":"${titles[0] || ""}","slide":{"idea":"","regions":[{"kind":"quote","span":12,"kicker":"","title":"","body":"","items":[],"accent":""}]}}]}
 
 One hub. One slide entry per use case, matched by title. slide.idea: 8-16 words.`;
 }
@@ -590,6 +590,7 @@ export async function runReasoning({
   if (designed?.hub && typeof designed.hub === "object") {
     current.hub = {
       ...designed.hub,
+      visual: designed.hub.visual || current.hub?.visual,
       visualConcept: designed.hub.visualConcept || current.hub?.visualConcept,
       decision: designed.hub.decision || current.hub?.decision,
     };
@@ -616,7 +617,9 @@ export async function runReasoning({
   }
 
   const layoutDefects = [
-    ...lintHubMarkup(current.hub?.screenHtml).map((d) => ({ useCase: "Leadership view", ...d })),
+    ...(current.hub?.visual
+      ? []
+      : lintHubMarkup(current.hub?.screenHtml).map((d) => ({ useCase: "Leadership view", ...d }))),
     ...lintSlideCompositions(current.useCases),
   ];
   if (layoutDefects.length) {
