@@ -86,6 +86,12 @@ const JARGON = [
   [/\bdigital transformation\b/gi, "say what specifically changes"],
 ];
 
+const GENERIC_COPY = [
+  [/leadership watches this/i, "Say what happens if this number moves the wrong way."],
+  [/overnight (pack|report)s?/i, "Name the actual delay in this operation — shift report, claims cycle, store close — not a generic overnight pack."],
+  [/needs a person right now/i, "Name the role and the decision."],
+];
+
 const MAX_SENTENCE_WORDS = 32;
 
 // The tone contract sent to the model. Deliberately contains no vendor names.
@@ -223,6 +229,17 @@ export function lintUseCases(useCases, brief, hub) {
           problem: `Contains a ${words}-word sentence; an executive will not re-read it.`,
           fix: `Split it into sentences under ${MAX_SENTENCE_WORDS} words each.`,
         });
+      }
+      for (const [pattern, instead] of GENERIC_COPY) {
+        if (pattern.test(value)) {
+          defects.push({
+            useCase: uc.title,
+            field,
+            kind: "GENERIC",
+            problem: "This sentence could be pasted onto any company.",
+            fix: instead,
+          });
+        }
       }
     }
   }
