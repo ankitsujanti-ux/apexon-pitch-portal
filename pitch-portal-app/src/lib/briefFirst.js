@@ -1,6 +1,8 @@
 // Permanent brief-first rule. Sent on every Foundry call and used by the
 // PPT/HTML builders so outputs follow THIS requirement, not a prior example.
 
+import { toLabel } from "./text.js";
+
 export const BRIEF_FIRST_RULE = `CRITICAL — THINK BEFORE YOU DESIGN. REQUIREMENT FIRST.
 
 You are an AI Enterprise Pitch Designer for Apexon: strategist, industry researcher, business analyst, solution architect, information designer, and presentation engineer. You turn a client requirement into a researched, industry-specific, executive pitch: PPT plus ONE interactive HTML leadership screen.
@@ -57,6 +59,7 @@ export function platformFromRequirement(requirement, domain = "") {
   else components.push("Trace every number to its source");
 
   const named = [
+    [/genesys/, "Genesys Cloud"],
     [/fabric/, "Microsoft Fabric"],
     [/databricks/, "Databricks"],
     [/snowflake/, "Snowflake"],
@@ -84,8 +87,10 @@ function domainSources(domain, requirement) {
   if (/food|beverage|chocolate|cocoa|confection|bakery|dairy/.test(t)) {
     return ["ERP", "MES / historian", "LIMS / quality", "WMS", "Supplier portal"];
   }
-  if (/health|hospital|pharma|payer|provider|clinic/.test(t)) {
-    return ["EHR / EMR", "Claims", "ERP", "Scheduling", "Quality registry"];
+  if (/health|hospital|pharma|payer|provider|clinic|blue cross/.test(t)) {
+    const health = ["Claims", "Eligibility / benefits", "CRM", "Contact center", "Care management"];
+    if (/genesys/.test(t)) health[3] = "Genesys Cloud";
+    return health;
   }
   if (/bank|payment|card|finance|lending/.test(t)) {
     return ["Core system", "CRM", "Payments", "Risk / cases", "Warehouse"];
@@ -105,9 +110,10 @@ function domainSources(domain, requirement) {
 function uniqueNames(list) {
   const seen = new Set();
   const out = [];
+  const junk = /^(assumed source|assumed sources|source \d+|tbd|n\/?a|system|unknown|placeholder)$/i;
   for (const raw of list) {
     const name = clip(raw, 28);
-    if (!name) continue;
+    if (!name || junk.test(name)) continue;
     const key = name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -192,9 +198,9 @@ export function normalizeArchitecture(raw, ctx) {
     .filter((st) => st?.title)
     .slice(0, 3)
     .map((st, i) => ({
-      title: clip(st.title, 42),
+      title: toLabel(st.title, 8),
       color: STAGE_COLORS[i],
-      steps: (Array.isArray(st.steps) ? st.steps : []).map((step) => clip(step, 42)).filter(Boolean).slice(0, 6),
+      steps: (Array.isArray(st.steps) ? st.steps : []).map((step) => toLabel(step, 8)).filter(Boolean).slice(0, 6),
     }))
     .filter((st) => st.steps.length);
 
@@ -215,7 +221,7 @@ export function normalizeArchitecture(raw, ctx) {
     }));
 
   return {
-    title: clip(raw.title || inferred.title, 42) || "Proposed architecture",
+    title: toLabel(raw.title || inferred.title, 8) || "How this would work",
     subtitle: clip(raw.subtitle || inferred.subtitle, 140),
     sources: (sources.length ? sources : inferred.sources.map((s) => s.name)).slice(0, 8).map((name) => ({ name })),
     stages: stages.length
