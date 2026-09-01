@@ -4,6 +4,7 @@
 import fs from "fs";
 import { toLabel, toSentences } from "../lib/text.js";
 import { packRegions } from "../lib/slideGrid.js";
+import { composeSlide } from "../lib/composeVisuals.js";
 import path from "path";
 import pptxgen from "pptxgenjs";
 import { getPalette } from "../lib/palette.js";
@@ -291,7 +292,12 @@ function addThanksSlide(slide, palette, { companyName, narrative, page }) {
   });
 }
 
-function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bodyMax = 160 }) {
+function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bodyMax }) {
+  const reserved = (kicker ? 0.22 : 0) + (title ? 0.38 : 0) + 0.22;
+  const lines = Math.max(1, Math.floor((h - reserved) / 0.22));
+  const cols = Math.max(12, Math.floor((w - 0.32) * 10));
+  const fit = Math.max(40, lines * cols);
+  const max = Math.min(Number.isFinite(bodyMax) ? bodyMax : fit, fit);
   slide.addShape("roundRect", {
     x,
     y,
@@ -330,7 +336,7 @@ function addPanel(slide, palette, { x, y, w, h, kicker, title, body, accent, bod
     });
     cursorY += 0.38;
   }
-  slide.addText(truncate(body, bodyMax) || " ", {
+  slide.addText(truncate(body, max) || " ", {
     x: x + 0.16,
     y: cursorY,
     w: w - 0.32,
@@ -536,17 +542,6 @@ function addBulletPanel(slide, palette, { x, y, w, h, kicker, items, accent, ite
   );
 }
 
-const SLIDE_LAYOUTS = ["challenge", "impact", "shift", "journey", "evidence"];
-
-// One idea per slide. Each layout deliberately shows a SUBSET of the content —
-// putting challenge + moves + works-with + value + 4 KPIs + data + effort on
-// every slide is what made all five look identical and unreadable.
-function layoutFor(uc, index) {
-  const wanted = String(uc.slideLayout || "").toLowerCase().trim();
-  if (SLIDE_LAYOUTS.includes(wanted)) return wanted;
-  return SLIDE_LAYOUTS[index % SLIDE_LAYOUTS.length];
-}
-
 function addSlideHeader(slide, palette, uc, index, total, companyName) {
   slide.addText(`${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`, {
     x: MARGIN, y: 0.3, w: 1.2, h: 0.24,
@@ -593,210 +588,6 @@ function addEvidenceStrip(slide, palette, uc) {
     { x: MARGIN, y: 6.78, w: 12.48, h: 0.2, wrap: false, valign: "middle" }
   );
 }
-
-// Layout A — the problem is the message. Big statement, then the three moves.
-function layoutChallenge(slide, palette, uc) {
-  slide.addText(truncate(uc.challenge || uc.businessProblem, 330), {
-    x: MARGIN, y: 1.72, w: 7.1, h: 2.0,
-    fontSize: 15, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-    lineSpacingMultiple: 1.25,
-  });
-  slide.addText("WHAT WE DO ABOUT IT", {
-    x: MARGIN, y: 3.94, w: 7.1, h: 0.24,
-    fontSize: 10.5, bold: true, color: "75A2ED", fontFace: palette.fontTitle,
-  });
-  (uc.solutionMoves || []).slice(0, 3).forEach((move, i) => {
-    slide.addText(
-      [
-        { text: `${pptSafe(move.lead).replace(/[.:]$/, "")}. `, options: { bold: true, color: palette.heading, fontSize: 12, fontFace: palette.fontTitle } },
-        { text: truncate(move.detail, 150), options: { color: palette.textLight, fontSize: 12, fontFace: palette.fontBody } },
-      ],
-      { x: MARGIN, y: 4.26 + i * 0.78, w: 7.1, h: 0.72, wrap: true, valign: "top" }
-    );
-  });
-  addBulletPanel(slide, palette, {
-    x: 7.9, y: 1.72, w: 4.98, h: 4.86,
-    kicker: "What you get", items: uc.businessValue, accent: "0E7C66", itemMax: 150,
-  });
-}
-
-// Layout B — the numbers are the message.
-function layoutImpact(slide, palette, uc) {
-  slide.addText(truncate(uc.whyItMatters || uc.businessProblem, 210), {
-    x: MARGIN, y: 1.72, w: 12.48, h: 0.62,
-    fontSize: 14, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-  });
-  const kpis = (uc.kpis || []).slice(0, 4);
-  const w = kpis.length ? (12.48 - (kpis.length - 1) * 0.18) / kpis.length : 3;
-  kpis.forEach((kpi, i) => {
-    const x = MARGIN + i * (w + 0.18);
-    slide.addShape("roundRect", {
-      x, y: 2.54, w, h: 2.5, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
-    });
-    slide.addText(String(i + 1).padStart(2, "0"), {
-      x: x + 0.18, y: 2.7, w: w - 0.36, h: 0.3,
-      fontSize: 15, bold: true, color: palette.accent, fontFace: palette.fontTitle,
-    });
-    slide.addText(truncate(kpi.name, 30), {
-      x: x + 0.18, y: 3.04, w: w - 0.36, h: 0.56,
-      fontSize: 15, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true, valign: "top",
-    });
-    slide.addText(truncate(kpi.why, 140), {
-      x: x + 0.18, y: 3.64, w: w - 0.36, h: 1.24,
-      fontSize: 11.5, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-    });
-  });
-  addBulletPanel(slide, palette, {
-    x: MARGIN, y: 5.2, w: 12.48, h: 1.38,
-    kicker: "Why these move", items: uc.businessValue, accent: "0E7C66", itemMax: 150,
-  });
-}
-
-// Layout C — today versus after.
-function layoutShift(slide, palette, uc) {
-  const half = (12.48 - 0.3) / 2;
-  // Size the panels to the longer of the two columns instead of a fixed 3.3in,
-  // which left a large void under short copy.
-  const challengeLines = Math.ceil(truncate(uc.challenge || uc.businessProblem, 330).length / 46);
-  const moveLines = (uc.solutionMoves || []).slice(0, 3).length * 3;
-  const panelH = Math.min(3.3, Math.max(2.1, 0.55 + Math.max(challengeLines, moveLines) * 0.24));
-  const valueItems = (uc.businessValue || []).slice(0, 3);
-  const bulletH = Math.max(1.0, 0.52 + valueItems.length * 0.3);
-  // Both panels are sized to their own copy, then the pair is centred in the
-  // body. Stretching either one to reach the footer is what produced the void.
-  const bodyTop = 1.62;
-  const bodyBottom = 6.5;
-  const stackH = panelH + 0.24 + bulletH;
-  const top = Math.max(bodyTop, bodyTop + (bodyBottom - bodyTop - stackH) / 2);
-  slide.addShape("roundRect", {
-    x: MARGIN, y: top, w: half, h: panelH, rectRadius: 0.08,
-    fill: { color: "1A1410" }, line: { color: "8A6A3A", width: 1 },
-  });
-  slide.addText("HOW IT RUNS TODAY", {
-    x: MARGIN + 0.2, y: top + 0.18, w: half - 0.4, h: 0.24,
-    fontSize: 10.5, bold: true, color: "FFD48A", fontFace: palette.fontTitle,
-  });
-  slide.addText(truncate(uc.challenge || uc.businessProblem, 330), {
-    x: MARGIN + 0.2, y: top + 0.5, w: half - 0.4, h: panelH - 0.6,
-    fontSize: 13.5, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-    lineSpacingMultiple: 1.2,
-  });
-  slide.addShape("roundRect", {
-    x: MARGIN + half + 0.3, y: top, w: half, h: panelH, rectRadius: 0.08,
-    fill: { color: "0E211A" }, line: { color: "0E7C66", width: 1.25 },
-  });
-  slide.addText("HOW IT RUNS AFTER", {
-    x: MARGIN + half + 0.5, y: top + 0.18, w: half - 0.4, h: 0.24,
-    fontSize: 10.5, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
-  });
-  (uc.solutionMoves || []).slice(0, 3).forEach((move, i) => {
-    slide.addText(
-      [
-        { text: `${pptSafe(move.lead).replace(/[.:]$/, "")}. `, options: { bold: true, color: "FFFFFF", fontSize: 12.5, fontFace: palette.fontTitle } },
-        { text: truncate(move.detail, 130), options: { color: palette.textLight, fontSize: 12.5, fontFace: palette.fontBody } },
-      ],
-      {
-        x: MARGIN + half + 0.5,
-        y: top + 0.52 + i * ((panelH - 0.62) / 3),
-        w: half - 0.4,
-        h: (panelH - 0.62) / 3,
-        wrap: true,
-        valign: "top",
-      }
-    );
-  });
-  addBulletPanel(slide, palette, {
-    x: MARGIN, y: top + panelH + 0.24, w: 12.48, h: bulletH,
-    kicker: "What that is worth", items: valueItems, accent: "0E7C66", itemMax: 150,
-  });
-}
-
-// Layout D — the path the work takes.
-function layoutJourney(slide, palette, uc) {
-  const steps = (uc.steps && uc.steps.length ? uc.steps : (uc.solutionMoves || []).map((m) => m.lead)).slice(0, 4);
-  const gap = 0.24;
-  const w = steps.length ? (12.48 - (steps.length - 1) * gap) / steps.length : 3;
-  steps.forEach((step, i) => {
-    const x = MARGIN + i * (w + gap);
-    slide.addShape("roundRect", {
-      x, y: 1.78, w, h: 1.9, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: i === steps.length - 1 ? "0E7C66" : "75A2ED", width: 1.25 },
-    });
-    slide.addShape("ellipse", {
-      x: x + 0.2, y: 1.96, w: 0.34, h: 0.34, fill: { color: palette.accent },
-    });
-    slide.addText(String(i + 1), {
-      x: x + 0.2, y: 1.99, w: 0.34, h: 0.28,
-      fontSize: 12, bold: true, color: "FFFFFF", fontFace: palette.fontTitle, align: "center",
-    });
-    slide.addText(truncate(step, 60), {
-      x: x + 0.2, y: 2.42, w: w - 0.4, h: 1.1,
-      fontSize: 13, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true, valign: "top",
-    });
-    if (i < steps.length - 1) {
-      slide.addText("→", {
-        x: x + w, y: 2.5, w: gap, h: 0.3,
-        fontSize: 16, bold: true, color: "75A2ED", fontFace: palette.fontTitle, align: "center",
-      });
-    }
-  });
-  slide.addText(truncate(uc.whatItShows || uc.benefit, 260), {
-    x: MARGIN, y: 3.86, w: 12.48, h: 0.72,
-    fontSize: 13.5, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-  });
-  addBulletPanel(slide, palette, {
-    x: MARGIN, y: 4.72, w: 6.1, h: 1.86,
-    kicker: "Works with what you have", items: uc.worksWith, itemMax: 130,
-  });
-  addBulletPanel(slide, palette, {
-    x: MARGIN + 6.38, y: 4.72, w: 6.1, h: 1.86,
-    kicker: "What you get", items: uc.businessValue, accent: "0E7C66", itemMax: 130,
-  });
-}
-
-// Layout E — what it rests on: data, effort, honesty.
-function layoutEvidence(slide, palette, uc) {
-  slide.addText(truncate(uc.challenge || uc.businessProblem, 300), {
-    x: MARGIN, y: 1.72, w: 12.48, h: 0.86,
-    fontSize: 14, color: palette.textLight, fontFace: palette.fontBody, wrap: true, valign: "top",
-    lineSpacingMultiple: 1.2,
-  });
-  const stack = Array.isArray(uc.techComponents) && uc.techComponents.length
-    ? uc.techComponents.slice(0, 3).join(" · ")
-    : "Runs on the platform you choose — nothing here depends on one.";
-  addPanel(slide, palette, {
-    x: MARGIN, y: 2.74, w: 4.06, h: 2.0,
-    kicker: uc.dataPointer?.availability === "new" ? "Data needed — new source" : "Data needed — already there",
-    body: typeof uc.dataPointer === "object" ? uc.dataPointer?.description : uc.dataPointer,
-    bodyMax: 210,
-  });
-  addPanel(slide, palette, {
-    x: MARGIN + 4.24, y: 2.74, w: 4.06, h: 2.0,
-    kicker: `Effort — ${uc.difficulty === "easier" ? "easier" : uc.difficulty === "harder" ? "harder" : "moderate"}`,
-    body: uc.difficultyWhy || difficultyLabel(uc),
-    bodyMax: 210,
-  });
-  addPanel(slide, palette, {
-    x: MARGIN + 8.48, y: 2.74, w: 4.0, h: 2.0,
-    kicker: "How we land it",
-    body: uc.proofPoint ? `${stack}. ${uc.proofPoint}` : stack,
-    accent: palette.accent,
-    bodyMax: 210,
-  });
-  addBulletPanel(slide, palette, {
-    x: MARGIN, y: 4.92, w: 12.48, h: 1.66,
-    kicker: "What you get", items: uc.businessValue, accent: "0E7C66", itemMax: 150,
-  });
-}
-
-const LAYOUT_RENDERERS = {
-  challenge: layoutChallenge,
-  impact: layoutImpact,
-  shift: layoutShift,
-  journey: layoutJourney,
-  evidence: layoutEvidence,
-};
 
 function paintPacked(slide, palette, uc, regions) {
   const placed = packRegions(regions);
@@ -878,14 +669,11 @@ function paintPacked(slide, palette, uc, regions) {
 }
 
 function addUseCaseSlide(slide, palette, uc, index, total, companyName) {
-  addSlideHeader(slide, palette, uc, index, total, companyName);
-  const regions = uc.slide?.regions;
-  if (Array.isArray(regions) && regions.length) {
-    paintPacked(slide, palette, uc, regions);
-  } else {
-    (LAYOUT_RENDERERS[layoutFor(uc, index)] || layoutChallenge)(slide, palette, uc);
-  }
-  addEvidenceStrip(slide, palette, uc);
+  const composed = composeSlide(uc, index);
+  const painted = { ...uc, slide: composed };
+  addSlideHeader(slide, palette, painted, index, total, companyName);
+  paintPacked(slide, palette, painted, composed.regions);
+  addEvidenceStrip(slide, palette, painted);
 }
 
 export async function buildDeck({
