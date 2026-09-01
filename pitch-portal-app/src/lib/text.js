@@ -98,7 +98,43 @@ export function looksTruncated(text) {
   if (!clean) return false;
   if (clean.endsWith(ELLIPSIS) || clean.endsWith("...")) return true;
   // Ends on a word that cannot end a sentence.
-  return /\b(and|or|the|a|an|of|to|in|on|for|with|so|that|from|by|at|as|is|are|was|were|but|because|while|when|which|their|its|this|these|then)$/i.test(
+  return /\b(and|or|the|a|an|of|to|in|on|for|with|so|that|from|by|at|as|is|are|was|were|but|because|while|when|which|their|its|this|these|then|next)$/i.test(
     clean.replace(/[.!?]$/, "")
   );
+}
+
+export function isChatRequest(text) {
+  return /^(give me|give us|can you|please |i want|i need|how (can|do|to)|use case how|show me)\b/i.test(
+    squash(text)
+  );
+}
+
+function stripHedging(text) {
+  return squash(text)
+    .replace(/^an industry-typical hypothesis is that\s+/i, "")
+    .replace(/^it is (assumed|hypothesized|believed) that\s+/i, "")
+    .replace(/^we (assume|hypothesize) that\s+/i, "");
+}
+
+// A spoken line that still reads as a finished thought. Prefer whole sentences.
+// If the only sentence is too long, take the first clause — never "clear next".
+export function fitLine(text, maxChars) {
+  const clean = stripHedging(text);
+  if (!clean) return "";
+  if (clean.length <= maxChars && !looksTruncated(clean)) return clean;
+  const parts = sentences(clean);
+  let out = "";
+  for (const part of parts) {
+    const next = out ? `${out} ${part}` : part;
+    if (next.length > maxChars) break;
+    out = next;
+  }
+  if (out && !looksTruncated(out)) return out;
+  const clause = clean.split(/\s*[,;—]\s*/)[0].trim();
+  if (clause && clause.length <= maxChars && !looksTruncated(clause)) return clause;
+  return toWords(clean, Math.max(8, Math.floor(maxChars / 6)));
+}
+
+export function fitTitle(text, maxWords = 8) {
+  return toLabel(stripHedging(text), maxWords);
 }
