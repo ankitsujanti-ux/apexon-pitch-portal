@@ -7,6 +7,7 @@ import { logoDataUri as apexonWordmark } from "../lib/templateTheme.js";
 import { platformFromRequirement } from "../lib/briefFirst.js";
 import { toChars, toLabel, toSentences, squash } from "../lib/text.js";
 import { sanitizeScreen, screenFingerprint } from "../lib/sanitizeScreen.js";
+import { composeHubVisual } from "../lib/composeVisuals.js";
 
 function escapeHtml(str) {
   return String(str || "")
@@ -53,9 +54,9 @@ function paintHubVisual(visual, useCases) {
       .join("")}</div>`;
   } else if (kind === "compare") {
     vizInner = `<div class="compare"><div class="col before"><h4>Today</h4><p>${escapeHtml(
-      visual.before || "The team waits on yesterday's pack."
+      visual.before || ""
     )}</p></div><div class="col after"><h4>After</h4><p>${escapeHtml(
-      visual.after || "The same person sees the exception while they can still act."
+      visual.after || ""
     )}</p></div></div>`;
   } else if (kind === "board" && visual.lanes?.length) {
     vizInner = `<div class="board">${visual.lanes
@@ -384,7 +385,7 @@ function resolveHub(hub, useCases, companyName, domain) {
     : (useCases || []).map((uc, i) => ({
         name: uc.kpis?.[0]?.name || uc.title,
         value: SAMPLE[i] || "—",
-        why: uc.kpis?.[0]?.why || "Leadership watches this for this job.",
+        why: uc.kpis?.[0]?.why || `If this number moves the wrong way, this job misses its window.`,
         from: uc.title,
       }))
   ).slice(0, 6);
@@ -394,7 +395,7 @@ function resolveHub(hub, useCases, companyName, domain) {
     whatItShows:
       hub?.whatItShows ||
       "The numbers from each job on the slides, and the next exception that still needs a person.",
-    screenHtml: hub?.screenHtml || useCases?.[0]?.screenHtml || "",
+    screenHtml: "",
     visual: hub?.visual || null,
     kpis,
   };
@@ -418,16 +419,12 @@ function hubView({ companyName, domain, useCases, hub, platformName }) {
   const resolved = resolveHub(hub, useCases, companyName, domain);
   const copy = dashboardCopy(companyName, domain, useCases[0] || { title: resolved.title, businessProblem: domain });
   const tabId = "hub";
-  const painted = paintHubVisual(resolved.visual, useCases);
-  const custom = sanitizeScreen(painted || resolved.screenHtml, { tabId });
-  const blocks = normalizePieces(useCases[0] || {}, 0);
-  const ctx = { copy, useCase: useCases[0] || {}, tabId, companyName, domain, platformName };
-  const visuals = blocks.filter((b) => b !== "kpis");
-  const panels = visuals.map((name) => renderPiece(name, ctx)).join("");
-  const layoutKey = custom.ok ? screenFingerprint(custom.html) || "hub" : blocks.join("+");
-  const stage = custom.ok
-    ? `<div class="stage custom"><button class="info" type="button" onclick="toggleInfo('${tabId}-scr')" aria-label="About this screen">i</button><div id="${tabId}-scr" class="pop">${twoLine(resolved.whatItShows)}</div><div class="screen">${stripLiftedMetrics(custom.html)}</div></div>`
-    : `<div class="stage${visuals.length >= 2 ? " with-side" : ""}">${panels}</div>`;
+  const visual = composeHubVisual(resolved.visual, useCases);
+  const painted = paintHubVisual(visual, useCases);
+  const custom = sanitizeScreen(painted, { tabId });
+  const html = custom.ok ? custom.html : painted;
+  const layoutKey = screenFingerprint(html) || visual.kind || "hub";
+  const stage = `<div class="stage custom"><button class="info" type="button" onclick="toggleInfo('${tabId}-scr')" aria-label="About this screen">i</button><div id="${tabId}-scr" class="pop">${twoLine(resolved.whatItShows)}</div><div class="screen">${stripLiftedMetrics(html)}</div></div>`;
 
   return `<section class="view-body" data-live="${escapeHtml(copy.event)}" data-layout="${escapeHtml(layoutKey)}">
     <div class="title-row">
@@ -631,6 +628,7 @@ export async function buildMockup({ companyName, domain, requirement = "", topUs
   td { padding: 8px; border-bottom: 1px solid #243556; }
   .stage.custom { display: flex; flex-direction: column; position: relative; min-height: 0; }
   .stage.custom > .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .stage.custom > .screen > .row { flex: 1; min-height: 0; height: 100%; }
   .workspace {
     flex: 1; min-height: 0; display: grid; grid-template-rows: auto 1fr; gap: 12px;
   }
