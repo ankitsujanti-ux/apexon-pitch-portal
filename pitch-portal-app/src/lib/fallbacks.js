@@ -202,7 +202,7 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       businessProblem: problem,
       benefit: fit,
       solutionFit: `${fit} This maps to: ${sentence(requirement, "the stated mandate")}.`,
-      challenge: `${problem} The data already exists across ${domain} systems, but it arrives as an overnight report rather than a signal someone can act on. By the time the pack is read, the window to change the outcome has usually closed.`,
+      challenge: `${problem} The data already exists across ${domain} systems, but it arrives after the shift has already moved on rather than as a signal someone can act on. By the time the pack is read, the window to change the outcome has usually closed.`,
       solutionMoves: [
         {
           lead: "See it live",
@@ -250,7 +250,7 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       entities: [companyName, domain, "Shift", "Owner"].slice(0, 4),
       steps: ["See the exception", "Assign an owner", "Act in the window", "Record the outcome"],
       kpis: shape.kpis || [
-        { name: "Open exceptions", why: "How many items need a person right now, which tells leadership if the team is keeping up." },
+        { name: "Open exceptions", why: "How many items the shift lead still has to own, which tells leadership if the team is keeping up." },
         { name: "On-time signal", why: "Whether operations are staying inside the agreed window rather than drifting quietly." },
         { name: "Oldest open item", why: "How long the slowest issue has waited, which is where cost and risk build up." },
         { name: "Feed health", why: "Whether the underlying data is still landing, because a stale view is worse than no view." },
@@ -293,7 +293,7 @@ export function fallbackUseCases({ companyName, domain, requirement, numUseCases
       kpis: useCases.slice(0, 6).map((uc, i) => ({
         name: uc.kpis?.[0]?.name || uc.title,
         value: ["18", "96%", "4.2h", "3", "12", "99%"][i] || "—",
-        why: uc.kpis?.[0]?.why || "Leadership watches this for this job.",
+        why: uc.kpis?.[0]?.why || `If this number moves the wrong way, ${companyName} misses the window.`,
         from: uc.title,
       })),
     },
