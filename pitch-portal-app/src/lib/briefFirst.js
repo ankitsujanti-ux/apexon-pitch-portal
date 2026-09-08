@@ -88,21 +88,27 @@ function domainSources(domain, requirement) {
     return ["ERP", "MES / historian", "LIMS / quality", "WMS", "Supplier portal"];
   }
   if (/health|hospital|pharma|payer|provider|clinic|blue cross/.test(t)) {
-    const health = ["Claims", "Eligibility / benefits", "CRM", "Contact center", "Care management"];
+    const health = ["EHR / EMR", "Claims (837/835)", "ADT Feeds", "CRM", "Care management"];
     if (/genesys/.test(t)) health[3] = "Genesys Cloud";
     return health;
   }
   if (/bank|payment|card|finance|lending/.test(t)) {
-    return ["Core system", "CRM", "Payments", "Risk / cases", "Warehouse"];
+    return ["Core banking", "Card / Wire switch", "AML / KYC Risk", "CRM", "GL Warehouse"];
   }
   if (/retail|e-?comm|store|merchandise/.test(t)) {
-    return ["POS", "eCommerce", "ERP", "WMS", "Loyalty / CRM"];
+    return ["POS", "eCommerce / OMS", "ERP", "WMS", "Loyalty / CRM"];
   }
   if (/insur/.test(t)) {
-    return ["Policy admin", "Claims", "CRM", "Document store", "Warehouse"];
+    return ["Policy admin", "Claims / FNOL", "Actuarial tables", "CRM", "Document store"];
   }
   if (/logist|supply|freight|warehouse/.test(t)) {
-    return ["TMS", "WMS", "ERP", "Yard / IoT", "Customer portal"];
+    return ["TMS", "WMS", "ELD / Telematics", "Yard / IoT", "Carrier EDI"];
+  }
+  if (/telecom|network/.test(t)) {
+    return ["RAN Telemetry", "OSS / Alarms", "BSS / Billing", "CRM / Tickets", "Field dispatch"];
+  }
+  if (/energy|utilit|power|grid/.test(t)) {
+    return ["SCADA / EMS", "AMI Smart meters", "GIS grid map", "CMMS asset logs", "Weather telemetry"];
   }
   return ["ERP", "Ops systems", "Files / APIs", "Quality / ops", "Reporting marts"];
 }
