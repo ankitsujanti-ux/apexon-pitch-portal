@@ -70,12 +70,19 @@ The mandate here is "${req}". That means bringing sell-through and inventory tog
 Typical systems include ERP, MES, quality/QMS, WMS, and machine historians. Orders, inventory, OEE, and quality events already exist.
 
 The mandate here is "${req}". That means joining those sources and turning line and order events into one operating picture. Every assisted decision stays inside governance: access control, lineage, and audit.`,
+    insurance: `${companyName} is an ${domain} carrier. The core business is underwriting risk, managing policy lifecycles, and adjudicating claims fairly and rapidly.
+Typical systems include policy administration systems, claims intake / FNOL platforms, actuarial loss tables, billing engines, and CRM. Policy, claims, and loss run data already exist.
+The mandate here is "${req}". That means unifying policy and claims telemetry to streamline intake, detect fraud or subrogation, and price risk accurately while maintaining strict statutory compliance.`,
+    logistics: `${companyName} operates in ${domain}. Day-to-day operations focus on freight movement, fleet dispatch, driver hours of service, warehouse dwell time, and on-time customer delivery.
+Typical systems include TMS, WMS, telematics/ELD feeds, yard management, and EDI carrier networks. Fleet GPS, shipment milestones, and dock appointments already exist.
+The mandate here is "${req}". That means connecting shipment telemetry with dock schedules to proactively mitigate delays, optimize fleet capacity, and safeguard cold-chain cargo integrity.`,
+    telecom: `${companyName} is a ${domain} provider. The business depends on network uptime, subscriber satisfaction, low call drop rates, and maximizing infrastructure return on investment.
+Typical systems include OSS/BSS, RAN telemetry, fiber monitoring systems, CRM, and billing mediation platforms. Cell performance, alarm logs, and subscriber records already exist.
+The mandate here is "${req}". That means joining network telemetry with customer servicing data to resolve outages rapidly, reduce subscriber churn, and optimize field service operations.`,
+    energy: `${companyName} is an ${domain} provider. Operations focus on grid reliability, power generation dispatch, balancing supply and demand, and maintaining capital-intensive generation and distribution assets.
+Typical systems include SCADA, EMS/GMS, AMI smart meter networks, GIS, and CMMS asset management. Substation telemetry, meter consumption, and asset health sensors already exist.
+The mandate here is "${req}". That means integrating SCADA sensor streams with market and weather data to reduce outage durations, optimize renewable dispatch, and predict equipment failures before downtime occurs.`,
   };
-
-  packs.insurance = packs.finance;
-  packs.logistics = packs.retail;
-  packs.telecom = packs.manufacturing;
-  packs.energy = packs.manufacturing;
 
   return packs[key] || packs.manufacturing;
 }
@@ -173,16 +180,357 @@ const PACKS = {
       demoScore: 6,
     },
   ],
+  health: [
+    {
+      title: (c) => `Claim denial and coding radar — ${c}`,
+      problem: (c) => `${c} discovers billing and coding errors only after payer denial, delaying cash flow and driving expensive appeals.`,
+      fit: () => "Pre-submission claims are checked against payer policy rules to catch errors before filing.",
+      data: "EHR/EMR clinical notes, 837/835 EDI feeds, fee schedules",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "Claims and EHR encounter feeds already exist in hospital billing systems. Joining them creates pre-bill validation.",
+      kpis: [
+        { name: "First-pass clean claims", why: "Share of claims paid on initial submission without rework or manual touch." },
+        { name: "Denial rate", why: "Overall percentage of billed charges rejected by commercial and government payers." },
+        { name: "Days in AR", why: "Average time accounts receivable remains unpaid, driving working capital." },
+        { name: "Prior-auth hold time", why: "Hours spent waiting on payer approvals before scheduling high-value procedures." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Patient flow and capacity pulse — ${c}`,
+      problem: (c) => `${c} manages ED crowding, bed availability, and staffing through delayed shift reports, leading to admission bottlenecks.`,
+      fit: () => "Live admission, discharge, and bed status telemetry gives clinical operations an active command center.",
+      data: "EHR admission/discharge/transfer (ADT) feeds, telemetry units, nurse call logs",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Prior authorization assistant — ${c}`,
+      problem: (c) => `${c} clinicians spend hours assembling clinical evidence for payer prior authorizations, delaying patient care.`,
+      fit: () => "Assisted review extracts required clinical documentation and submits complete packets directly to payer portals.",
+      data: "EHR progress notes, diagnostic reports, payer coverage guidelines",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Care gap and quality measures — ${c}`,
+      problem: (c) => `${c} misses HEDIS and Star rating incentives due to unclosed preventive care and chronic disease gaps.`,
+      fit: () => "Surfaces overdue screenings and chronic care visits directly within the care coordinator queue.",
+      data: "Claims history, lab results, appointment scheduling",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Clinical audit and HIPAA lineage — ${c}`,
+      problem: (c) => `${c} struggles to produce auditable data access logs across distributed clinical repositories during regulatory review.`,
+      fit: () => "Maintains complete record lineage, PHI access boundaries, and compliance audit logs.",
+      data: "HIPAA access logs, role-based security metadata, data warehouse lineage",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  finance: [
+    {
+      title: (c) => `Real-time fraud and AML radar — ${c}`,
+      problem: (c) => `${c} detects payment anomalies and money laundering patterns in batch runs after settlement has already finalized.`,
+      fit: () => "Streaming transaction scoring detects synthetic identities and suspicious fund flows in milliseconds.",
+      data: "Card swipe/wire telemetry, device fingerprinting, KYC risk profiles",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "Transaction authorization streams and core banking ledgers already capture payment metadata.",
+      kpis: [
+        { name: "Fraud false-positive rate", why: "Minimizes legitimate transactions erroneously blocked at the point of sale." },
+        { name: "Detection-to-hold latency", why: "Milliseconds between transaction ingestion and automated account restriction." },
+        { name: "Chargeback ratio", why: "Disputed transactions as a percentage of total volume, maintaining scheme compliance." },
+        { name: "AML alert backlog", why: "Number of compliance cases awaiting human review within statutory deadlines." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Liquidity and intraday treasury pulse — ${c}`,
+      problem: (c) => `${c} monitors cash reserves and settlement obligations on next-day reports, risking intraday overdraft penalties.`,
+      fit: () => "Unifies multi-currency correspondent accounts, clearing houses, and obligations into a live cash ladder.",
+      data: "Fedwire/SWIFT feeds, general ledger balances, open trade positions",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Dispute and chargeback assistant — ${c}`,
+      problem: (c) => `${c} operations teams take days to compile representment documents for cardholder dispute cases.`,
+      fit: () => "Assembles merchant receipts, proof of delivery, and transaction logs into automated chargeback responses.",
+      data: "Card network dispute portals, merchant processing logs, CRM cases",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Credit risk and exposure radar — ${c}`,
+      problem: (c) => `${c} assesses counterparty and borrower credit health using outdated quarterly statements.`,
+      fit: () => "Combines real-time bureau updates, repayment telemetry, and macro indicators into dynamic credit limits.",
+      data: "Loan servicing systems, credit bureau webhooks, cash-flow feeds",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Regulatory compliance and SOX lineage — ${c}`,
+      problem: (c) => `${c} spends weeks preparing data provenance trails for Federal Reserve, SEC, or PRA examinations.`,
+      fit: () => "Automated data lineage guarantees every reporting line item can be traced to source ledger transactions.",
+      data: "General ledger entries, transformation logs, regulatory reporting marts",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  retail: [
+    {
+      title: (c) => `Store replenishment and stockout radar — ${c}`,
+      problem: (c) => `${c} experiences lost revenue from phantom inventory and out-of-stock shelves while warehouse stock sits idle.`,
+      fit: () => "POS sales rates and RFID/WMS shelf scans trigger dynamic auto-replenishment before stockouts occur.",
+      data: "POS scan feeds, warehouse WMS levels, in-transit manifests",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "POS scan streams and warehouse inventory are standard in modern retail ERP/WMS stacks.",
+      kpis: [
+        { name: "On-shelf availability", why: "Percentage of top SKU assortment in stock and ready for purchase in aisle." },
+        { name: "Out-of-stock rate", why: "Missed sales opportunities during high-velocity foot traffic hours." },
+        { name: "Inventory turn rate", why: "Velocity of working capital converting from warehouse stock to register sales." },
+        { name: "Shrink percentage", why: "Discrepancy between book inventory and physical shelf counts." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Dynamic pricing and promo tracker — ${c}`,
+      problem: (c) => `${c} runs markdown schedules on fixed calendar cycles rather than localized sell-through and competitor pricing.`,
+      fit: () => "Live price elasticity models recommend localized markdowns and promotional adjustments in real time.",
+      data: "Competitor scrape feeds, e-commerce clickstream, store sales velocity",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Omnichannel fulfillment optimizer — ${c}`,
+      problem: (c) => `${c} fulfills online orders from distant distribution hubs while closer retail store inventory expires.`,
+      fit: () => "Directs ship-from-store, BOPIS, and hub routing based on distance, margin, and aged stock levels.",
+      data: "Order management system (OMS), local store inventory, carrier rate cards",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Customer churn and loyalty radar — ${c}`,
+      problem: (c) => `${c} detects declining shopper visit frequency only after the customer has stopped purchasing entirely.`,
+      fit: () => "Tracks visit recency and basket composition to trigger personalized retention incentives.",
+      data: "Loyalty account history, mobile app engagement, POS transactions",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Supply chain origin and compliance trail — ${c}`,
+      problem: (c) => `${c} faces supplier compliance and traceability challenges across international vendor networks.`,
+      fit: () => "Maintains end-to-end provenance and ethical sourcing compliance for every SKU.",
+      data: "Customs manifests, vendor audit certificates, bill of materials",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  insurance: [
+    {
+      title: (c) => `First notice of loss and claims triage — ${c}`,
+      problem: (c) => `${c} policyholders wait days for initial claim assignments and adjusters due to manual intake queues.`,
+      fit: () => "Instant claims parsing classifies incident severity, verifies coverage, and assigns qualified adjusters immediately.",
+      data: "FNOL digital submissions, policy admin records, telematics/damage photos",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "Policy admin systems and FNOL intake channels already capture incident reports.",
+      kpis: [
+        { name: "FNOL-to-assignment time", why: "Hours to evaluate coverage and route claim to an adjuster." },
+        { name: "Claims settlement cycle time", why: "Total days from incident report to policyholder payment." },
+        { name: "Loss adjustment expense (LAE)", why: "Operational cost incurred per resolved claim." },
+        { name: "Fraud referral rate", why: "Suspicious claims flagged for Special Investigation Unit (SIU) review." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Underwriting risk and pricing pulse — ${c}`,
+      problem: (c) => `${c} prices commercial and personal policies using historical loss tables that lag emerging climate and loss trends.`,
+      fit: () => "Integrates live geospatial, weather, and property risk signals into automated underwriting models.",
+      data: "Geospatial hazard data, municipal building permits, historical loss runs",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Subrogation and recovery radar — ${c}`,
+      problem: (c) => `${c} overlooks third-party liability recovery opportunities due to manual closed-file reviews.`,
+      fit: () => "Analyzes incident narratives and police reports to flag viable subrogation claims automatically.",
+      data: "Police incident reports, telematics data, third-party carrier registry",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Policyholder retention and churn signal — ${c}`,
+      problem: (c) => `${c} loses high-value policyholders at renewal without advance warning of competitor rate shopping.`,
+      fit: () => "Identifies rate increase sensitivity and claim friction to trigger preemptive renewal discounts.",
+      data: "Policy renewal queues, billing payment history, customer service interactions",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Solvency and statutory reporting trail — ${c}`,
+      problem: (c) => `${c} spends significant actuarial effort consolidating reserve filings for state insurance commissioners.`,
+      fit: () => "Provides transparent reserving lineage and automated NAIC/Solvency II statutory schedules.",
+      data: "Actuarial models, loss triangle tables, ledger reserves",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  logistics: [
+    {
+      title: (c) => `Fleet and shipment ETA exception radar — ${c}`,
+      problem: (c) => `${c} discovers freight delays and missed dock appointments only after consignees call with complaints.`,
+      fit: () => "GPS telemetry and traffic weather feeds continuously recalculate shipment ETAs and flag delays in advance.",
+      data: "ELD/GPS feeds, TMS booking records, live traffic/weather APIs",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "ELD telematics and TMS tracking feeds are standard infrastructure in logistics fleets.",
+      kpis: [
+        { name: "On-Time In-Full (OTIF)", why: "Percentage of shipments delivered on scheduled window without shortage." },
+        { name: "Average dwell time", why: "Hours drivers wait at customer loading docks, incurring detention costs." },
+        { name: "Fleet utilization", why: "Active revenue-generating transit hours versus idle yard time." },
+        { name: "Cost per ton-mile", why: "Total operating expenditure per unit of freight moved." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Yard and dock door optimizer — ${c}`,
+      problem: (c) => `${c} suffers trailer congestion and detention penalties from uncoordinated yard spotting and dock schedules.`,
+      fit: () => "Directs yard hostlers and assign dock doors dynamically based on inbound priority and driver hours.",
+      data: "Yard management RFID, warehouse dock scheduling, gate cameras",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Freight rate and dynamic routing radar — ${c}`,
+      problem: (c) => `${c} locks contracted carrier rates on lanes where spot market capacity could reduce haul costs.`,
+      fit: () => "Compares spot market boards and contracted capacity to recommend optimal carrier allocation.",
+      data: "DAT/FreightWaves spot rate feeds, carrier tenders, historical fuel surcharges",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Cold chain and cargo integrity monitor — ${c}`,
+      problem: (c) => `${c} incurs cargo spoilage claims when reefer temperature excursions go unnoticed during transit.`,
+      fit: () => "Continuous IoT sensor monitoring alerts drivers and dispatchers the moment cargo temperatures drift.",
+      data: "Reefer IoT telemetry, bill of lading temp requirements, seal breach sensors",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Carrier safety and compliance trail — ${c}`,
+      problem: (c) => `${c} faces liability risks when third-party brokered carriers lack verified DOT authority or insurance.`,
+      fit: () => "Real-time FMCSA verification checks carrier safety scores and COIs before load dispatch.",
+      data: "FMCSA SAFER database, certificate of insurance repositories, carrier onboarding portal",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  telecom: [
+    {
+      title: (c) => `Network outage and congestion radar — ${c}`,
+      problem: (c) => `${c} experiences subscriber churn when cell site degradation and fiber cuts go undetected until call volume surges.`,
+      fit: () => "Cell tower telemetry and radio access network (RAN) metrics flag degradation and reroute traffic dynamically.",
+      data: "RAN telemetry, OSS alarm feeds, fiber optical power monitors",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "OSS and RAN telemetry emit real-time alarms across network operations centers (NOC).",
+      kpis: [
+        { name: "Mean time to repair (MTTR)", why: "Minutes required from network alarm trigger to service restoration." },
+        { name: "Call drop rate", why: "Percentage of voice and video calls disconnected due to signal degradation." },
+        { name: "Cell site throughput", why: "Average downstream bandwidth delivered per active sector." },
+        { name: "Subscriber churn rate", why: "Monthly customer disconnections driven by coverage and quality friction." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Subscriber churn and retention pulse — ${c}`,
+      problem: (c) => `${c} detects customer plan cancellations only after port-out requests arrive from rival carriers.`,
+      fit: () => "Correlates repeated support calls, device upgrades, and billing queries to trigger proactive retention offers.",
+      data: "Billing dispute logs, IVR call transcripts, network coverage tickets",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Field service and truck roll optimizer — ${c}`,
+      problem: (c) => `${c} rolls expensive field technician trucks for customer premise issues that could be resolved remotely.`,
+      fit: () => "Automated line diagnostics identify ONT/modem misconfigurations before dispatching field crews.",
+      data: "TR-069 router telemetry, OSS ticketing, technician GPS tracking",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `5G service slicing and SLA tracker — ${c}`,
+      problem: (c) => `${c} risks enterprise contract penalties when dedicated enterprise 5G network slices breach latency guarantees.`,
+      fit: () => "Monitors slice-specific packet latency and jitter to maintain strict enterprise SLAs.",
+      data: "5G Core (5GC) UPF logs, edge compute telemetry, SLA contract terms",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Spectrum and regulatory compliance trail — ${c}`,
+      problem: (c) => `${c} must provide audited tower radiation, spectrum usage, and E911 location accuracy logs to regulatory bodies.`,
+      fit: () => "Generates automated compliance reports for FCC/regulatory filings with complete telemetry provenance.",
+      data: "Tower emission logs, E911 dispatch records, spectrum lease contracts",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
+  energy: [
+    {
+      title: (c) => `Grid load and outage radar — ${c}`,
+      problem: (c) => `${c} faces transformer overload and extended customer outages when storm damage disrupts distribution grids.`,
+      fit: () => "Smart meter AMI feeds and SCADA sensors detect fault locations instantly and optimize automated switching.",
+      data: "SCADA telemetry, AMI smart meter pings, weather radar feeds",
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: "SCADA and AMI smart meters continuously broadcast voltage and outage signals.",
+      kpis: [
+        { name: "SAIDI (System Outage Duration)", why: "Average minutes of interrupted electrical service per customer per year." },
+        { name: "SAIFI (System Outage Frequency)", why: "Average number of service interruptions per customer per year." },
+        { name: "Substation load balance", why: "Peak utilization percentage across key step-down transformers." },
+        { name: "Renewable curtailment %", why: "Percentage of solar/wind generation rejected due to local grid congestion." },
+      ],
+      demoScore: 10,
+    },
+    {
+      title: (c) => `Renewable generation and dispatch pulse — ${c}`,
+      problem: (c) => `${c} pays spot market imbalance penalties when solar and wind production diverges from day-ahead forecasts.`,
+      fit: () => "Microclimate forecasts and inverter telemetry optimize battery storage charging and real-time generation bidding.",
+      data: "Inverter sensor feeds, solar irradiance meters, ISO market clearing prices",
+      availability: "existing",
+      demoScore: 9,
+    },
+    {
+      title: (c) => `Turbine and asset predictive maintenance — ${c}`,
+      problem: (c) => `${c} incurs major generation losses and repair expenses when turbine bearings fail between scheduled turnarounds.`,
+      fit: () => "Vibration analysis and oil temperature thermography detect early bearing fatigue months before failure.",
+      data: "Vibration sensors, thermal imaging, CMMS maintenance history",
+      availability: "existing",
+      demoScore: 8,
+    },
+    {
+      title: (c) => `Meter-to-cash and theft detection radar — ${c}`,
+      problem: (c) => `${c} suffers non-technical line losses and billing errors from unmetered taps and malfunctioning smart meters.`,
+      fit: () => "Balances feeder output against downstream meter consumption to pinpoint unmetered energy loss.",
+      data: "Feeder meter telemetry, customer billing records, meter tamper alarms",
+      availability: "existing",
+      demoScore: 7,
+    },
+    {
+      title: (c) => `Emissions and ESG compliance trail — ${c}`,
+      problem: (c) => `${c} struggles to produce auditable Scope 1 and Scope 2 carbon accounting reports for EPA and ESG audits.`,
+      fit: () => "Tracks generation fuel consumption and grid emission factors into verified audit reports.",
+      data: "Continuous emission monitoring (CEMS), fuel purchase ledgers, renewable energy credits (RECs)",
+      availability: "new",
+      demoScore: 6,
+    },
+  ],
 };
-
-PACKS.health = PACKS.manufacturing;
-PACKS.finance = PACKS.manufacturing;
-PACKS.retail = PACKS.manufacturing;
-PACKS.insurance = PACKS.manufacturing;
-PACKS.logistics = PACKS.manufacturing;
-PACKS.telecom = PACKS.manufacturing;
-PACKS.energy = PACKS.manufacturing;
-
 export function fallbackUseCases({ companyName, domain, requirement, numUseCases = 5, numMockupTabs = 5 }) {
   const shapes = PACKS[industryKey(domain, requirement)] || PACKS.manufacturing;
   const layouts = [
