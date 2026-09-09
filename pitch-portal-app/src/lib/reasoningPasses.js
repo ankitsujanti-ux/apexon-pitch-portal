@@ -17,6 +17,8 @@ import { extractJson } from "./parseJson.js";
 import { BRIEF_FIRST_RULE } from "./briefFirst.js";
 import { TONE_RULE, lintUseCases } from "./toneGuard.js";
 import { clampCount } from "./designContract.js";
+import { retrieveGroundingKnowledge } from "./knowledge/ragRetriever.js";
+import { evaluatePitchPlan } from "./evaluator.js";
 
 const NO_PROSE = `Return ONLY the JSON object. No preamble, no markdown fence, no commentary.`;
 
@@ -160,18 +162,20 @@ function designScoreDefects(critique) {
   ];
 }
 
-// Pass 1 — interrogate the brief before proposing anything.
-export function framePrompt({ companyName, domain, requirement, research }) {
+// Pass 1 — interrogate the brief before proposing anything, grounded by sector playbooks.
+export function framePrompt({ companyName, domain, requirement, research, ragGrounding }) {
   return `${BRIEF_FIRST_RULE}
 
-You are an Apexon enterprise pitch strategist. Before proposing anything, interrogate the brief. Do not design slides yet.
+You are an Apexon enterprise pitch strategist. Before proposing anything, interrogate the brief using our Sector Playbook knowledge base. Do not design slides yet.
 
 Company: ${companyName}
 Industry: ${domain}
 Mandate: "${requirement}"
 
-Research:
-${String(research).slice(0, 3000)}
+Verified Research:
+${String(research).slice(0, 2400)}
+
+${ragGrounding?.formattedText ? `Sector Grounding & Playbook Intelligence:\n${ragGrounding.formattedText}\n` : ""}
 
 Do not propose solutions yet. Answer only these questions:
 1. What is this mandate actually asking for, restated as the BUSINESS DECISION behind it — not a restatement of the request?
@@ -186,11 +190,11 @@ ${NO_PROSE}
 mandateRestated: 25-40 words, the decision not the dashboard. leadershipMustBelieve: 2-4 items, 10-20 words each. knownFacts / assumptions / hypotheses: 2-4 each. unknowns: 3-5 honest gaps. criteria: 4-5 judging criteria specific to this mandate. failureModes: 2-3 ways this pitch goes wrong.`;
 }
 
-// Pass 2 — diverge widely before narrowing.
-export function divergePrompt({ companyName, domain, requirement, research, frame }) {
+// Pass 2 — diverge widely before narrowing, anchored by sector use cases.
+export function divergePrompt({ companyName, domain, requirement, research, frame, ragGrounding }) {
   return `${BRIEF_FIRST_RULE}
 
-You are walking ${companyName}'s operation in your head — the plant floor, the claims desk, the store, the trading floor, whichever applies to ${domain}.
+You are walking ${companyName}'s operation in your head — the clinical ward, trading floor, store aisle, warehouse dock, or plant floor for ${domain}.
 
 Mandate: "${requirement}"
 Mandate restated: ${frame?.mandateRestated || requirement}
@@ -198,9 +202,11 @@ Judging criteria for this brief:
 ${lines(frame?.criteria)}
 
 Research:
-${String(research).slice(0, 2600)}
+${String(research).slice(0, 2000)}
 
-Generate 12 CANDIDATE use cases. Do not filter yet. Cast wide: obvious operational ones, one or two a competitor would miss, one that is uncomfortable but valuable.
+${ragGrounding?.formattedText ? `Sector Playbook Reference Use Cases & Systems:\n${ragGrounding.formattedText}\n` : ""}
+
+Generate 12 CANDIDATE use cases directly aligned with ${companyName}'s mandate and ${domain} operations. Cast wide: immediate operational priorities, strategic moves, and high-impact interventions.
 
 Reject titles that are capabilities, not decisions: Sales Dashboard, Inventory Dashboard, AI Chatbot, Predictive Analytics, Customer 360, Operational Dashboard. Convert those into the specific decision this company must take.
 
@@ -212,7 +218,7 @@ ${NO_PROSE}
 Exactly 12 candidates. title max 9 words, a decision not a dashboard. job 15-25 words. whoFeelsIt: the actual role. decision 10-18 words. whyThisClient 10-18 words. whyItFitsMandate 12-20 words. dataNeeded 8-16 words. kpis 6-12 words. weakness: 8-16 words.`;
 }
 
-// Pass 3 — score against the stated criteria and justify the cut.
+// Pass 3 — score against the multi-criteria matrix and justify the cut.
 export function selectPrompt({ companyName, domain, requirement, frame, candidates, count }) {
   return `${BRIEF_FIRST_RULE}
 
@@ -224,13 +230,17 @@ ${JSON.stringify(candidates).slice(0, 4000)}
 Criteria for this brief:
 ${lines(frame?.criteria)}
 
-Score each 1-10 on: clientRelevance, industryRelevance, businessValue, executiveRelevance, dataLikely, technologyRelevance, differentiation, visualizationPotential, storytellingPotential.
+Score each 1-10 on the Multi-Criteria Pitch Intelligence Matrix:
+- clientRelevance (Weight: 30%): Direct alignment with this specific client mandate.
+- industryRelevance (Weight: 20%): Native fit for ${domain} operational workflows.
+- businessValue (Weight: 20%): Measurable dollar, time, risk, or experience impact.
+- dataLikely (Weight: 10%): Data sources typically exist in this industry.
+- technologyRelevance (Weight: 10%): Platform fit for this mandate.
+- storytellingPotential (Weight: 10%): Compelling 5-minute boardroom story.
 
-Compute average as the mean of those nine. Below ${SCORE_FLOOR} is rejected — do not select it even if it is easy to demo. 7.5-8.5 may be selected only if nothing stronger exists. Above 8.5 is preferred.
+Compute weighted average score. Below ${SCORE_FLOOR} is strictly rejected. Prefer candidates scoring 8.5+.
 
-Then choose how many this brief actually needs. At least 3, at most 7. A tight mandate is 3. A sprawling operation is 6 or 7. Prefer fewer that a leader would remember over padding. If you were asked for a specific count, honour it: ${count ? `choose exactly ${count}.` : "choose the count yourself."}
-
-Reject generic capabilities even if they scored well on visualizationPotential.
+Then choose how many this brief actually needs. At least 3, at most 7. Prefer fewer that a leader will remember over padding. If you were asked for a specific count, honour it: ${count ? `choose exactly ${count}.` : "choose the count yourself."}
 
 ${NO_PROSE}
 {"selected":[{"title":"","scores":{"clientRelevance":9,"industryRelevance":9,"businessValue":9,"executiveRelevance":8,"dataLikely":7,"technologyRelevance":7,"differentiation":8,"visualizationPotential":8,"storytellingPotential":8},"average":8.1,"whyChosen":""}],"rejected":[{"title":"","average":6.2,"whyNot":""}]}
@@ -471,16 +481,20 @@ export async function runReasoning({
 }) {
   const trace = {};
 
+  // Retrieve sector playbook & use-case library grounding
+  const ragGrounding = retrieveGroundingKnowledge({ companyName, domain, requirement, research });
+  trace.ragGrounding = ragGrounding.raw;
+
   const frame = await tryPass({
-    label: "framing the brief",
-    prompt: framePrompt({ companyName, domain, requirement, research }),
+    label: "framing the brief with sector playbook",
+    prompt: framePrompt({ companyName, domain, requirement, research, ragGrounding }),
     onStep,
   });
   trace.frame = frame;
 
   const diverged = await tryPass({
-    label: "brainstorming options",
-    prompt: divergePrompt({ companyName, domain, requirement, research, frame }),
+    label: "brainstorming options from sector knowledge",
+    prompt: divergePrompt({ companyName, domain, requirement, research, frame, ragGrounding }),
     onStep,
   });
   const candidates = Array.isArray(diverged?.candidates) ? diverged.candidates : [];
@@ -640,5 +654,10 @@ export async function runReasoning({
   });
   trace.verification = verification;
 
-  return { result: current, verification, trace };
+  // Evaluator Agent: Quality and relevance audit
+  const evaluation = evaluatePitchPlan({ companyName, domain, requirement, pitchPlan: current });
+  trace.evaluation = evaluation;
+  console.log(`[reason:evaluator] Relevance score: ${evaluation.score}/100, Passed: ${evaluation.passed}`);
+
+  return { result: current, verification, evaluation, trace };
 }
