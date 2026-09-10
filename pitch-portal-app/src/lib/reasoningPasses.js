@@ -492,6 +492,11 @@ export async function runReasoning({
   });
   trace.frame = frame;
 
+  if (!frame) {
+    console.warn("runReasoning: Azure AI Foundry unavailable. Using Grounded Sector Playbooks & RAG Knowledge.");
+    return { result: null, trace };
+  }
+
   const diverged = await tryPass({
     label: "brainstorming options from sector knowledge",
     prompt: divergePrompt({ companyName, domain, requirement, research, frame, ragGrounding }),
