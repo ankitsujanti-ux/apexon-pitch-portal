@@ -18,13 +18,13 @@ const AGENT_SCOPE = "https://ai.azure.com/.default";
 const AGENT_BASE_URL =
   "https://fabric-acelerator-poc.services.ai.azure.com/api/projects/fabric-acelerator-project/agents/DemoAgent/endpoint/protocols/openai";
 
-const AGENT_TIMEOUT_MS = 180000;
+const AGENT_TIMEOUT_MS = 25000;
 
 let credential = null;
 let clientPromise = null;
 
 export function allowLocalFallback() {
-  return process.env.NODE_ENV !== "production" && process.env.REQUIRE_AZURE !== "1";
+  return process.env.REQUIRE_AZURE !== "1";
 }
 
 function hasServicePrincipal() {
@@ -45,8 +45,10 @@ async function getCredential() {
     return credential;
   }
 
-  const onAppService = Boolean(process.env.WEBSITE_INSTANCE_ID);
-  if (!onAppService) {
+  const isHeadlessOrServer = Boolean(
+    process.env.RENDER || process.env.WEBSITE_INSTANCE_ID || process.env.NODE_ENV === "production" || !process.stdin?.isTTY
+  );
+  if (!isHeadlessOrServer) {
     try {
       const { cachePersistencePlugin } = await import("@azure/identity-cache-persistence");
       useIdentityPlugin(cachePersistencePlugin);
@@ -57,20 +59,24 @@ async function getCredential() {
 
   let authenticationRecord;
   if (fs.existsSync(AUTH_RECORD_PATH)) {
-    authenticationRecord = deserializeAuthenticationRecord(
-      fs.readFileSync(AUTH_RECORD_PATH, "utf8")
-    );
+    try {
+      authenticationRecord = deserializeAuthenticationRecord(
+        fs.readFileSync(AUTH_RECORD_PATH, "utf8")
+      );
+    } catch (e) {
+      console.warn("Could not deserialize auth record:", e.message);
+    }
   }
 
   credential = new InteractiveBrowserCredential({
-    ...(onAppService ? {} : { tokenCachePersistenceOptions: { enabled: true } }),
+    ...(isHeadlessOrServer ? {} : { tokenCachePersistenceOptions: { enabled: true } }),
     authenticationRecord,
   });
 
   if (!authenticationRecord) {
-    if (onAppService) {
+    if (isHeadlessOrServer) {
       throw new Error(
-        "No saved Azure login on the server. The live API reuses the same DemoAgent login as local (.auth-record.json)."
+        "No interactive Azure login available on server environment. Using Grounded Sector Playbooks & RAG Intelligence."
       );
     }
     const record = await credential.authenticate(AGENT_SCOPE);
@@ -85,9 +91,13 @@ async function createClient() {
   return new OpenAI({
     baseURL: AGENT_BASE_URL,
     apiKey: async () => {
-      const token = await cred.getToken(AGENT_SCOPE);
+      const tokenPromise = cred.getToken(AGENT_SCOPE);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Azure token acquisition timed out (8s).")), 8000)
+      );
+      const token = await Promise.race([tokenPromise, timeoutPromise]);
       if (!token?.token) {
-        throw new Error("Could not get an Azure AI Foundry access token. Check the service principal or sign in again.");
+        throw new Error("Could not get an Azure AI Foundry access token.");
       }
       return token.token;
     },
@@ -120,8 +130,10 @@ function errorMessage(err) {
 }
 
 export function isTransientAgentError(err) {
-  const status = errorStatus(err);
   const message = errorMessage(err);
+  if (/token acquisition|no interactive azure login|unauthenticated|access token/i.test(message)) return false;
+  const status = errorStatus(err);
+  if (status === 401 || status === 403) return false;
   if (status === 429 || (status >= 500 && status < 600)) return true;
   if (/server had an error processing your request/i.test(message)) return true;
   if (err?.code === "ETIMEDOUT" || err?.code === "ECONNRESET" || err?.code === "ERR_CANCELED") return true;
