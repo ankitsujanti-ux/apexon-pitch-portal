@@ -1,22 +1,36 @@
 // Hybrid RAG Retriever for Pitch Intelligence
-// Matches user brief against sector playbooks and use-case libraries.
+// Matches user brief against sector playbooks and use-case libraries,
+// or dynamically synthesizes domain intelligence for any custom sector/usecase.
 
-import { SECTOR_PLAYBOOKS } from "./sectorPlaybooks.js";
+import { SECTOR_PLAYBOOKS, synthesizeDynamicDomainPlaybook } from "./sectorPlaybooks.js";
 
-export function findSectorPlaybook(domain = "", requirement = "") {
+export function findSectorPlaybook(domain = "", requirement = "", companyName = "") {
+  const domLower = `${domain || ""}`.toLowerCase().trim();
   const query = `${domain} ${requirement}`.toLowerCase();
   
+  // 1. First check if explicit domain matches any sector aliases
+  if (domLower) {
+    for (const [key, playbook] of Object.entries(SECTOR_PLAYBOOKS)) {
+      if (playbook.aliases && playbook.aliases.some((alias) => domLower.includes(alias))) {
+        return { key, playbook };
+      }
+    }
+  }
+
+  // 2. Second check if requirement contains strong sector signals
   for (const [key, playbook] of Object.entries(SECTOR_PLAYBOOKS)) {
-    if (playbook.aliases.some((alias) => query.includes(alias))) {
+    if (playbook.aliases && playbook.aliases.some((alias) => query.includes(alias))) {
       return { key, playbook };
     }
   }
   
-  return { key: "manufacturing", playbook: SECTOR_PLAYBOOKS.manufacturing };
+  // 3. Synthesize domain playbook dynamically if not in predefined list
+  const dynamicPlaybook = synthesizeDynamicDomainPlaybook(domain, requirement, companyName);
+  return { key: "custom_domain", playbook: dynamicPlaybook };
 }
 
 export function retrieveGroundingKnowledge({ companyName, domain, requirement, research }) {
-  const { key, playbook } = findSectorPlaybook(domain, requirement);
+  const { key, playbook } = findSectorPlaybook(domain, requirement, companyName);
   const reqLower = `${requirement || ""}`.toLowerCase();
   
   // Score use-case library patterns by keyword relevance
