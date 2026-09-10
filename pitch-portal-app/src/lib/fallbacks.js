@@ -3,6 +3,7 @@
 // are not empty generic placeholders.
 
 import { inferArchitecture, defaultTechStack } from "./briefFirst.js";
+import { findSectorPlaybook } from "./knowledge/ragRetriever.js";
 
 function sentence(text, fallback) {
   const clean = String(text || "").replace(/\s+/g, " ").trim();
@@ -33,58 +34,30 @@ function industryKey(domain, requirement) {
   if (/health|hospital|pharma|payer|provider|clinic/.test(t)) return "health";
   if (/bank|payment|card|finance|lending/.test(t)) return "finance";
   if (/retail|e-?comm|store|merchandise/.test(t)) return "retail";
+  if (/auto|vehicle|ev|connected car/.test(t)) return "automotive";
+  if (/aviation|airline|airport|flight|aircraft/.test(t)) return "aviation";
   if (/insur/.test(t)) return "insurance";
   if (/logist|supply|freight|warehouse/.test(t)) return "logistics";
   if (/telecom|network/.test(t)) return "telecom";
   if (/energy|utilit|oil|gas/.test(t)) return "energy";
+  if (/media|streaming|content|entertainment/.test(t)) return "media";
+  if (/education|university|school|edtech/.test(t)) return "education";
   return "manufacturing";
 }
 
 export function fallbackResearch({ companyName, domain, requirement }) {
-  const key = industryKey(domain, requirement);
-  const req = sentence(requirement, "a governed Azure data and AI platform");
+  const { key, playbook } = findSectorPlaybook(domain, requirement, companyName);
+  const req = sentence(requirement, "a governed Microsoft Fabric data and AI operations platform");
 
-  const packs = {
-    food: `${companyName} is a ${domain} producer. Day-to-day work is recipes, batches, quality holds, ingredients, and shipping finished goods on time. Leaders care about yield, food safety, and whether today's run will meet tomorrow's orders.
+  const businessAreasText = (playbook.businessAreas || []).slice(0, 5).join(", ");
+  const systemsText = (playbook.dataSystems || []).slice(0, 4).map(s => `${s.name} (${s.role})`).join("; ");
+  const guardsText = (playbook.complianceGuards || []).map(g => `${g.title}`).join(", ");
 
-Typical systems include ERP (orders and inventory), MES or a production historian (line events), LIMS or quality systems (lab results and holds), WMS (warehouse), and supplier portals. The useful data is already there: batch records, temperatures, quality checks, cocoa or ingredient inventory, and customer orders. It is rarely in one place in time to act.
+    return `${companyName} operates in ${playbook.sector || domain}. Day-to-day operations center on ${businessAreasText}. Leaders care about real-time operational visibility, reducing turnaround latency, and catching exceptions before customer experience, revenue, or regulatory SLAs are impacted.
 
-The mandate here is "${req}". That means joining those sources and putting line and quality events in front of the plant while a run can still be corrected. Every food-safety control stays in place: FDA, HACCP, allergen labeling, and lot traceability.`,
-    health: `${companyName} operates in ${domain}. Work centers on patients or members, encounters, claims, quality measures, and staffing. Delays in seeing exceptions (denials, census spikes, missed SLAs) show up as cost and risk.
+Typical systems include ${systemsText}. The operational, transactional, and telemetry data already exists across these feeds, but it is rarely unified in one place in time to drive proactive decision-making.
 
-Typical systems include EHR/EMR, claims platforms, ERP, scheduling, and quality registries. PHI and payer data already exist but sit behind access controls and batch reports.
-
-The mandate here is "${req}". That means bringing those sources together and showing exceptions where the rules allow it. Only approved data is used, and every step leaves an audit trail under HIPAA, payer rules, and retention policy.`,
-    finance: `${companyName} is a ${domain} business. Revenue depends on transactions, risk, customer servicing, and staying inside regulatory bounds. Overnight reports are too slow when fraud, liquidity, or service exceptions move during the day.
-
-Typical systems include core banking or card processing, CRM, payment switches, data warehouses, and case-management tools. Transaction, customer, and risk data already exist.
-
-The mandate here is "${req}". That means joining those feeds and surfacing exceptions during the day rather than overnight. Every decision stays inside existing controls: PCI, SOX, model risk, and access logging.`,
-    retail: `${companyName} sells in ${domain}. The operating problem is matching demand, stock, and fulfillment while promotions and supply shift during the day.
-
-Typical systems include POS, e-commerce, ERP, WMS, and loyalty/CRM. Sales, inventory, and fulfillment events already exist but land in separate reports.
-
-The mandate here is "${req}". That means bringing sell-through and inventory together, then flagging stockouts and late deliveries while they can still be fixed. Merchants get a briefing built only from numbers that exist.`,
-    manufacturing: `${companyName} is a ${domain} organization. Plants, suppliers, and planners need to see what is happening on the line and in the order book, not yesterday's snapshot.
-
-Typical systems include ERP, MES, quality/QMS, WMS, and machine historians. Orders, inventory, OEE, and quality events already exist.
-
-The mandate here is "${req}". That means joining those sources and turning line and order events into one operating picture. Every assisted decision stays inside governance: access control, lineage, and audit.`,
-    insurance: `${companyName} is an ${domain} carrier. The core business is underwriting risk, managing policy lifecycles, and adjudicating claims fairly and rapidly.
-Typical systems include policy administration systems, claims intake / FNOL platforms, actuarial loss tables, billing engines, and CRM. Policy, claims, and loss run data already exist.
-The mandate here is "${req}". That means unifying policy and claims telemetry to streamline intake, detect fraud or subrogation, and price risk accurately while maintaining strict statutory compliance.`,
-    logistics: `${companyName} operates in ${domain}. Day-to-day operations focus on freight movement, fleet dispatch, driver hours of service, warehouse dwell time, and on-time customer delivery.
-Typical systems include TMS, WMS, telematics/ELD feeds, yard management, and EDI carrier networks. Fleet GPS, shipment milestones, and dock appointments already exist.
-The mandate here is "${req}". That means connecting shipment telemetry with dock schedules to proactively mitigate delays, optimize fleet capacity, and safeguard cold-chain cargo integrity.`,
-    telecom: `${companyName} is a ${domain} provider. The business depends on network uptime, subscriber satisfaction, low call drop rates, and maximizing infrastructure return on investment.
-Typical systems include OSS/BSS, RAN telemetry, fiber monitoring systems, CRM, and billing mediation platforms. Cell performance, alarm logs, and subscriber records already exist.
-The mandate here is "${req}". That means joining network telemetry with customer servicing data to resolve outages rapidly, reduce subscriber churn, and optimize field service operations.`,
-    energy: `${companyName} is an ${domain} provider. Operations focus on grid reliability, power generation dispatch, balancing supply and demand, and maintaining capital-intensive generation and distribution assets.
-Typical systems include SCADA, EMS/GMS, AMI smart meter networks, GIS, and CMMS asset management. Substation telemetry, meter consumption, and asset health sensors already exist.
-The mandate here is "${req}". That means integrating SCADA sensor streams with market and weather data to reduce outage durations, optimize renewable dispatch, and predict equipment failures before downtime occurs.`,
-  };
-
-  return packs[key] || packs.manufacturing;
+The mandate here is "${req}". That means unifying those sources into a single governed Lakehouse and delivering real-time intelligence, automated exception alerts, and Copilot assistants to operational teams while preserving strict governance: ${guardsText || "enterprise role-based security, access logging, and immutable audit lineage"}.`;
 }
 
 const PACKS = {
@@ -532,7 +505,37 @@ const PACKS = {
   ],
 };
 export function fallbackUseCases({ companyName, domain, requirement, numUseCases = 5, numMockupTabs = 5 }) {
-  const shapes = PACKS[industryKey(domain, requirement)] || PACKS.manufacturing;
+  const { key, playbook } = findSectorPlaybook(domain, requirement, companyName);
+  let shapes = PACKS[key] || [];
+
+  if (!shapes || shapes.length < numUseCases) {
+    const libraryShapes = (playbook.useCaseLibrary || []).map((lib) => ({
+      title: (c) => `${lib.name} — ${c}`,
+      problem: (c) => `${lib.businessProblem.replace(/company/gi, c)}`,
+      fit: () => `${lib.benefit}`,
+      data: (lib.dataFeeds || []).join(", ") || `${domain} operational data feeds`,
+      availability: "existing",
+      difficulty: "easier",
+      difficultyWhy: `Uses standard ${domain} data streams already captured by enterprise systems.`,
+      kpis: lib.kpis || playbook.commonKpis?.slice(0, 4) || [],
+      demoScore: 10,
+    }));
+
+    const businessAreaShapes = (playbook.businessAreas || []).map((area, idx) => ({
+      title: (c) => `${area} exception radar — ${c}`,
+      problem: (c) => `${c} discovers operational bottlenecks and latency across ${area.toLowerCase()} only after downstream delays occur.`,
+      fit: () => `Unified real-time telemetry and predictive models flag ${area.toLowerCase()} anomalies while time remains to intervene.`,
+      data: (playbook.dataSystems || []).map((s) => s.name).slice(0, 3).join(", ") || `${domain} core feeds`,
+      availability: idx >= 3 ? "new" : "existing",
+      difficulty: idx >= 3 ? "moderate" : "easier",
+      difficultyWhy: `Integrates existing ${domain} system feeds with streaming lakehouse analytics.`,
+      kpis: playbook.commonKpis?.slice(0, 4) || [],
+      demoScore: 9 - idx,
+    }));
+
+    shapes = [...shapes, ...libraryShapes, ...businessAreaShapes];
+  }
+
   const layouts = [
     ["alerts", "table"],
     ["record", "actions"],
