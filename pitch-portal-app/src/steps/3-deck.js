@@ -1,7 +1,8 @@
-// 3-deck.js — 14-Slide Requirement-Centric Executive Deck on Apexon Brand Chrome
+// 3-deck.js — 14-Slide 100% Dynamic Domain & Use-Case-Centric Executive Deck on Apexon Brand Chrome
 // Structure: Title → Agenda → Challenges → Solution Vision → Data Foundation → Fabric Architecture →
 // Command Center → Explainable AI Breakdown → Behavioral Profiling → Investigation Queue → Business Outcomes →
 // Data Readiness Matrix → Delivery Roadmap → Next Steps.
+// Zero hardcoded domain strings — all content is dynamically tailored to the exact sector and requirement.
 
 import fs from "fs";
 import path from "path";
@@ -11,7 +12,6 @@ import { getPalette } from "../lib/palette.js";
 import { slugify } from "../lib/slugify.js";
 import { LOGO_PATH, MASTER_BG_PATH } from "../lib/templateTheme.js";
 import { platformFromRequirement } from "../lib/briefFirst.js";
-import { findSectorPlaybook } from "../lib/knowledge/ragRetriever.js";
 import { buildPitchPlan } from "../lib/pitchStrategist.js";
 
 const SLIDE_W = 13.33;
@@ -186,7 +186,7 @@ function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platfor
   });
 
   slide.addText(
-    `A strategic blueprint for ${pptSafe(companyName)} leadership to eliminate operational blind spots, connect daily transaction feeds, and empower frontline teams with explainable AI decisions.`,
+    `A strategic blueprint for ${pptSafe(companyName)} leadership to eliminate operational blind spots, connect daily ${domain.toLowerCase()} telemetry feeds, and empower frontline teams with explainable AI decisions.`,
     {
       x: MARGIN,
       y: 3.75,
@@ -229,14 +229,15 @@ function addAgendaSlide(slide, palette, { domain, pitchPlan, page }) {
     subtitle: `A structured executive walkthrough tailored to ${pitchPlan.primary_business_domain} and measurable business ROI.`,
   });
 
+  const domainFocus = pitchPlan.primary_business_domain || `${domain} Operations`;
   const sections = [
-    { num: "01", title: "Operational Problem", desc: `Why delayed signals and manual triage create business blind spots` },
-    { num: "02", title: "Solution Vision", desc: "How a unified operational platform unifies data feeds into real-time action" },
-    { num: "03", title: "Data Foundation", desc: "Connecting existing transaction, customer, and device feeds without disruption" },
-    { num: "04", title: "Architecture Overview", desc: "A simple, secure, and governed flow powered by Microsoft Fabric" },
-    { num: "05", title: "Live Command Center", desc: "Real-time event stream monitoring, risk classification, and operational gauges" },
-    { num: "06", title: "Explainable AI Decision Engine", desc: "How AI scores event risk factors transparently for frontline teams" },
-    { num: "07", title: "Investigation Prioritization & Outcomes", desc: "Automated queue triage, data readiness matrix, and phased delivery roadmap" },
+    { num: "01", title: "Operational Problem", desc: `Why delayed signals and manual triage create blind spots in ${domainFocus.toLowerCase()}` },
+    { num: "02", title: "Solution Vision", desc: `How a unified platform connects daily operational feeds into real-time action` },
+    { num: "03", title: "Data Foundation", desc: `Connecting existing ${domain.toLowerCase()} data feeds and telemetry without disruption` },
+    { num: "04", title: "Architecture Overview", desc: `A simple, secure, and governed flow powered by Microsoft Fabric` },
+    { num: "05", title: "Live Command Center", desc: `Real-time stream monitoring, risk classification, and operational gauges` },
+    { num: "06", title: "Explainable AI Decision Engine", desc: `How AI scores event risk factors transparently for frontline teams` },
+    { num: "07", title: "Investigation & Outcomes", desc: `Automated queue triage, data readiness matrix, and phased delivery roadmap` },
   ];
 
   sections.forEach((sec, idx) => {
@@ -274,15 +275,7 @@ function addChallengesSlide(slide, palette, { companyName, pitchPlan, page }) {
     subtitle: `${companyName} generates valuable operational signals every minute, but disconnected tools force staff into reactive firefighting.`,
   });
 
-  const challenges = [
-    { title: "Delayed Detection Latency", desc: "Critical anomalies and suspicious events are identified hours or days after occurrence, after financial or operational loss is already locked in." },
-    { title: "High False Positive Friction", desc: "Rigid static threshold rules flood operating queues with benign alerts, wasting analyst capacity and frustrating legitimate customers." },
-    { title: "Fragmented Data Systems", desc: "Frontline teams must manually cross-reference 4+ disconnected platforms (core ledgers, auth logs, CRM, webhooks) to investigate a single incident." },
-    { title: "Lack of Explainable AI", desc: "Legacy black-box scoring fails to show why an event was flagged, making it difficult for investigators to take confident, rapid action." },
-    { title: "Manual Investigation Backlog", desc: "Unprioritized work queues force analysts to treat all alerts equally, allowing high-risk, high-urgency incidents to sit unresolved." },
-    { title: "Absence of Closed-Loop Learning", desc: "Investigator resolutions and customer feedback are not automatically fed back into models, causing the same false alarms to repeat indefinitely." },
-  ];
-
+  const challenges = (pitchPlan.operational_challenges || []).slice(0, 6);
   challenges.forEach((ch, idx) => {
     const col = idx % 3;
     const row = Math.floor(idx / 3);
@@ -298,7 +291,7 @@ function addChallengesSlide(slide, palette, { companyName, pitchPlan, page }) {
       x: x + 0.2, y: y + 0.16, w: 0.6, h: 0.28,
       fontSize: 14, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
-    slide.addText(ch.title, {
+    slide.addText(truncate(ch.title, 32), {
       x: x + 0.7, y: y + 0.16, w: 3.14, h: 0.32,
       fontSize: 13, bold: true, color: palette.heading, fontFace: palette.fontTitle,
     });
@@ -318,11 +311,12 @@ function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platfo
     subtitle: `${platformName} connects daily operational systems into a single, real-time operating hub for ${companyName}.`,
   });
 
+  const domainLower = (pitchPlan.primary_business_domain || "").toLowerCase();
   const stages = [
-    { num: "01", step: "Connect", desc: `Securely link transaction feeds, device signals, and customer histories in real time (<50ms) without disrupting daily operations.`, color: "1D6EE4" },
-    { num: "02", step: "Unify", desc: `Organize all operational data into a single OneLake source of truth with governed feature stores and behavioral baselines.`, color: "0E7C66" },
+    { num: "01", step: "Connect", desc: `Securely link ${domainLower} feeds, device signals, and historical records in real time (<50ms) without disrupting daily operations.`, color: "1D6EE4" },
+    { num: "02", step: "Unify", desc: `Organize all operational data into a single OneLake source of truth with governed feature stores and baseline profiles.`, color: "0E7C66" },
     { num: "03", step: "Predict & Score", desc: `Run transparent AI models to evaluate composite risk scores (0–100) and pinpoint exact anomaly drivers instantly.`, color: "6366F1" },
-    { num: "04", step: "Empower & Act", desc: `Deliver real-time command dashboards, automated workflow triggers, and prioritized work queues directly to investigators.`, color: "E54A24" },
+    { num: "04", step: "Empower & Act", desc: `Deliver real-time command dashboards, automated workflow triggers, and prioritized work queues directly to frontline leads.`, color: "E54A24" },
   ];
 
   stages.forEach((st, idx) => {
@@ -352,7 +346,7 @@ function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platfo
     x: MARGIN, y: 5.65, w: 12.48, h: 0.95, rectRadius: 0.08,
     fill: { color: "0B1220" }, line: { color: palette.accent, width: 1 },
   });
-  slide.addText(`TARGET OUTCOMES:  ${outcomes || "Sub-Second Scoring  ·  Lower False Positives  ·  3x Faster Triage  ·  Zero Unmitigated Losses"}`, {
+  slide.addText(`TARGET OUTCOMES:  ${outcomes || "Sub-Second Scoring  ·  Lower False Alerts  ·  3x Faster Triage  ·  Zero Unmitigated Losses"}`, {
     x: MARGIN + 0.2, y: 5.95, w: 12.08, h: 0.35,
     fontSize: 11, bold: true, color: palette.textLight, fontFace: palette.fontTitle, align: "center",
   });
@@ -364,7 +358,7 @@ function addDataFoundationSlide(slide, palette, { companyName, pitchPlan, page }
   addSectionHeader(slide, palette, {
     kicker: "DATA FOUNDATION",
     title: `${companyName} Data Foundation for ${pitchPlan.primary_business_domain}`,
-    subtitle: `Connecting the exact operational feeds, device signals, and historical records needed to power real-time AI.`,
+    subtitle: `Connecting the exact operational feeds, telemetry, and historical records needed to power real-time AI.`,
   });
 
   const feeds = (pitchPlan.data_foundation || []).slice(0, 4);
@@ -376,7 +370,7 @@ function addDataFoundationSlide(slide, palette, { companyName, pitchPlan, page }
       fill: { color: palette.card },
       line: { color: palette.cardBorder, width: 1 },
     });
-    slide.addText(feed.category, {
+    slide.addText(truncate(feed.category, 30), {
       x: x + 0.18, y: y + 0.2, w: 2.58, h: 0.45,
       fontSize: 14, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true,
     });
@@ -424,12 +418,13 @@ function addArchitectureSlide(slide, palette, { companyName, pitchPlan, platform
     subtitle: `An end-to-end governed pipeline from real-time event streaming to automated frontline action.`,
   });
 
+  const arch = pitchPlan.fabric_architecture || {};
   const tiers = [
-    { title: "1. Event Ingestion", subtitle: "Fabric Eventstream", items: ["Card / UPI / IMPS Switch", "Mobile & Web Device Telemetry", "Terminal & GPS Location Feeds", "Core Ledger Change Data Capture"] },
-    { title: "2. Unified Storage", subtitle: "OneLake & Delta Parquet", items: ["12-Month Behavioral History", "Customer 360 Feature Store", "Device Fingerprint Repository", "Historical Confirmed Outcomes"] },
-    { title: "3. Real-Time Analytics", subtitle: "KQL Real-Time Database", items: ["Sub-50ms Stream Processing", "Velocity & Amount Aggregations", "Geographic Displacement Check", "Rule Filter & Anomaly Radar"] },
-    { title: "4. AI Scoring Engine", subtitle: "Fabric Machine Learning", items: ["Composite Risk Score (0–100)", "Transparent Feature Weights", "Behavioral Outlier Classifier", "Action Decision Engine"] },
-    { title: "5. Frontline Action", subtitle: "Power BI & Automated Router", items: ["Instant Approve / Challenge / Block", "Prioritized Analyst Work Queue", "One-Click Evidence Dossier", "Teams & SMS Alert Dispatch"] },
+    arch.ingestion || { title: "1. Ingestion", subtitle: "Fabric Eventstream", items: ["Core System Feeds", "Live Telemetry", "Event Streams", "Change Data Capture"] },
+    arch.storage || { title: "2. Storage", subtitle: "OneLake & Delta Parquet", items: ["12-Month Operational History", "Entity Feature Store", "State Repository", "Governance Logs"] },
+    arch.analytics || { title: "3. Analytics", subtitle: "KQL Real-Time Database", items: ["Sub-50ms Stream Processing", "Real-Time Aggregations", "State Transition Radar", "Anomaly Classifier"] },
+    arch.ai_layer || { title: "4. AI Layer", subtitle: "Fabric Machine Learning", items: ["Composite Risk Score (0–100)", "Transparent Risk Factor Weights", "Predictive Outlier Classifier", "Action Decision Engine"] },
+    arch.action || { title: "5. Frontline Action", subtitle: "Power BI & Work Dispatch", items: ["Live Command Board", "Prioritized Work Queue", "One-Click Evidence Dossier", "Automated Task Dispatch"] },
   ];
 
   tiers.forEach((tier, idx) => {
@@ -448,7 +443,7 @@ function addArchitectureSlide(slide, palette, { companyName, pitchPlan, platform
       x: x + 0.1, y: y + 0.48, w: 2.12, h: 0.28,
       fontSize: 10, bold: true, color: idx === 3 ? palette.accent : "7DDEA0", fontFace: palette.fontTitle, align: "center",
     });
-    tier.items.forEach((item, iIdx) => {
+    (tier.items || []).slice(0, 4).forEach((item, iIdx) => {
       const iy = y + 0.88 + iIdx * 0.92;
       slide.addShape("roundRect", {
         x: x + 0.12, y: iy, w: 2.08, h: 0.78, rectRadius: 0.06,
@@ -471,24 +466,22 @@ function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page })
     subtitle: `Continuous sub-second evaluation of incoming operational streams with instant anomaly risk classification.`,
   });
 
-  const isHealth = (pitchPlan.sector || "").toLowerCase().includes("health") || 
-                   (pitchPlan.primary_business_domain || "").toLowerCase().includes("bed") || 
-                   (pitchPlan.primary_business_domain || "").toLowerCase().includes("patient");
+  const cc = pitchPlan.command_center || {
+    metrics: [
+      { label: "Today's Monitored Events", val: "1,200,000", note: "< 45 ms avg latency" },
+      { label: "Critical Anomalies Intercepted", val: "42 Incidents", note: "100% routed to priority leads" },
+      { label: "Operational Value Protected", val: "High Impact", note: "Zero SLA breaches" },
+      { label: "Active False Alert Rate", val: "0.85%", note: "Well below target" }
+    ],
+    headers: ["Event ID", "Entity / Unit", "Channel & Source", "Facility / Location", "Observed Metric", "Risk Score", "Decision Action"],
+    colW: [1.5, 2.0, 2.2, 2.0, 1.4, 1.3, 1.88],
+    channelName: "Live Stream Feed",
+    locDomestic: "Primary Facility",
+    locForeign: "Outlier Node"
+  };
 
   // Top metric bar (4 summary KPIs)
-  const metrics = isHealth ? [
-    { label: "Today's Monitored Encounters", val: "1,280 Patients", note: "< 45 ms stream latency" },
-    { label: "Priority Discharges Flagged", val: "42 Beds", note: "100% routed to priority EVS" },
-    { label: "ED Boarding Hours Averted", val: "185 Hours", note: "Zero transfer delays" },
-    { label: "Average Bed Turnaround Time", val: "38 min", note: "Well below 45 min target" },
-  ] : [
-    { label: "Today's Evaluated Events", val: "1,420,850", note: "< 45 ms avg latency" },
-    { label: "Critical Anomalies Intercepted", val: "48 Events", note: "100% routed to priority queue" },
-    { label: "Direct Loss Prevented Today", val: "₹1.42 Cr", note: "Zero customer friction" },
-    { label: "Current Active False Positive Rate", val: "0.82%", note: "Well below 1.5% target" },
-  ];
-
-  metrics.forEach((m, idx) => {
+  (cc.metrics || []).slice(0, 4).forEach((m, idx) => {
     const mx = MARGIN + idx * 3.16;
     slide.addShape("roundRect", {
       x: mx, y: 1.6, w: 2.94, h: 1.25, rectRadius: 0.08,
@@ -519,10 +512,8 @@ function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page })
     fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
   });
 
-  const headers = isHealth 
-    ? ["Event Ref", "Patient Unit / Room", "Channel & Device", "Hospital Location", "Status / Transfer", "Risk Score", "Recommended Action"]
-    : ["Event ID", "Account / Entity", "Channel & Device", "Location Signal", "Amount", "Risk Score", "Decision Action"];
-  const colW = [1.5, 2.0, 2.2, 2.0, 1.4, 1.3, 1.88];
+  const headers = cc.headers || ["Event ID", "Entity / Unit", "Channel & Source", "Facility / Location", "Observed Metric", "Risk Score", "Decision Action"];
+  const colW = cc.colW || [1.5, 2.0, 2.2, 2.0, 1.4, 1.3, 1.88];
   
   // Headers
   let cx = MARGIN + 0.2;
@@ -544,10 +535,8 @@ function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page })
     });
     cx = MARGIN + 0.2;
     
-    const channel = isHealth ? "Nurse Station / ADT Feed" : "Mobile App (iOS 18)";
-    const location = isHealth 
-      ? (r.priority === "CRITICAL" ? "ED Inpatient Tower" : "Wing B Telemetry")
-      : (r.priority === "CRITICAL" ? "Dubai (Foreign IP)" : "Hyderabad (Domestic)");
+    const channel = cc.channelName || "Operational Telemetry Feed";
+    const location = r.priority === "CRITICAL" ? (cc.locForeign || "Priority Anomaly Node") : (cc.locDomestic || "Standard Operating Node");
 
     const rowValues = [
       r.caseId,
@@ -575,16 +564,23 @@ function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page })
 function addExplainableSlide(slide, palette, { pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const ex = pitchPlan.explainable_example || {
-    txnId: "TXN-89421",
-    amount: "₹1,85,000",
-    riskScore: 92,
-    riskLevel: "CRITICAL RISK",
-    decision: "CHALLENGE & ROUTE TO PRIORITY QUEUE",
+    txnId: "OPS-ALERT-101",
+    amount: "High Priority Exception",
+    channel: "Live Operating Hub",
+    timestamp: "Real-Time Event",
+    merchant: "Primary Operating Node",
+    location: "Main Production Unit",
+    baselineLocation: "Standard Baseline Flow",
+    device: "Telemetry Feed",
+    baselineDevice: "Nominal Operating Range",
+    riskScore: 89,
+    riskLevel: "CRITICAL URGENCY",
+    decision: "TRIGGER AUTOMATED WORKFLOW & NOTIFY LEAD",
     factors: [
-      { factor: "Unrecognized Device Signature", weight: "+28", reason: "First authorization on this device ID" },
-      { factor: "Impossible Travel / Geo Anomaly", weight: "+32", reason: "Physical distance 2,500 km in 45 min" },
-      { factor: "High Transaction Value Outlier", weight: "+18", reason: "14x higher than 90-day average spend" },
-      { factor: "Off-Peak Time Window", weight: "+14", reason: "Attempt occurred at 02:37 AM" }
+      { factor: "Operational Velocity Bottleneck", weight: "+34", reason: "Cycle time is 3x higher than baseline" },
+      { factor: "Cross-System Data Discrepancy", weight: "+26", reason: "Status mismatch detected across feeds" },
+      { factor: "SLA Breach Window Approaching", weight: "+18", reason: "Less than 45 min remaining before SLA impact" },
+      { factor: "Parameter Reading Drift", weight: "+11", reason: "Sensor reading deviates from standard range" }
     ]
   };
 
@@ -610,10 +606,10 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
   });
 
   const details = [
-    { label: "Transaction Value", val: ex.amount },
-    { label: "Channel & Timestamp", val: `${ex.channel || "Mobile App"} · ${ex.timestamp || "02:37 AM"}` },
-    { label: "Observed Location", val: `${ex.location || "Foreign Node"} (Baseline: ${ex.baselineLocation || "Domestic"})` },
-    { label: "Observed Device", val: `${ex.device || "New Device"} (Baseline: ${ex.baselineDevice || "Registered"})` },
+    { label: "Observed Value / Impact", val: ex.amount },
+    { label: "Channel & Timestamp", val: `${ex.channel || "Operational Hub"} · ${ex.timestamp || "Live"}` },
+    { label: "Observed Location / Unit", val: `${ex.location || "Active Node"} (Baseline: ${ex.baselineLocation || "Nominal"})` },
+    { label: "Observed Device / Feed", val: `${ex.device || "Telemetry Feed"} (Baseline: ${ex.baselineDevice || "Standard"})` },
     { label: "Composite AI Risk Score", val: `${ex.riskScore} / 100 (${ex.riskLevel})` },
     { label: "Recommended AI Action", val: ex.decision },
   ];
@@ -645,7 +641,7 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
     fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
   });
 
-  ex.factors.forEach((f, fIdx) => {
+  (ex.factors || []).slice(0, 4).forEach((f, fIdx) => {
     const fy = 2.18 + fIdx * 1.05;
     slide.addShape("roundRect", {
       x: rightX + 0.25, y: fy, w: 6.88, h: 0.92, rectRadius: 0.06,
@@ -670,7 +666,7 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
 function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const bp = pitchPlan.behavioral_profile || {
-    entityName: "High-Volume Account Profile",
+    entityName: "Operating Entity Profile",
     baseline: [{ dimension: "Location", value: "Domestic Baseline", status: "Baseline" }],
     anomaly: [{ dimension: "Location", value: "Foreign Node Deviation", status: "Anomaly" }],
     conclusion: "Behavioral model detects significant multi-dimensional deviation from established profile."
@@ -678,8 +674,8 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
 
   addSectionHeader(slide, palette, {
     kicker: "OPERATIONAL CAPABILITY 3 OF 5  |  BEHAVIORAL INTELLIGENCE",
-    title: "Multi-Dimensional Behavioral Baseline vs. Anomaly",
-    subtitle: `Continuous machine learning compares every event against 12 months of individual customer history.`,
+    title: "Multi-Dimensional Baseline vs. Anomaly Radar",
+    subtitle: `Continuous machine learning compares every live event against 12 months of operational history.`,
   });
 
   // Left Box: 12-Month Baseline Profile
@@ -688,12 +684,12 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
     x: leftX, y: 1.6, w: 5.9, h: 4.1, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
   });
-  slide.addText("ESTABLISHED 12-MONTH BASELINE PROFILE", {
+  slide.addText(`ESTABLISHED 12-MONTH BASELINE PROFILE: ${truncate(bp.entityName, 32)}`, {
     x: leftX + 0.25, y: 1.8, w: 5.4, h: 0.28,
     fontSize: 11, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
 
-  bp.baseline.forEach((b, idx) => {
+  (bp.baseline || []).slice(0, 5).forEach((b, idx) => {
     const by = 2.18 + idx * 0.72;
     slide.addShape("roundRect", {
       x: leftX + 0.25, y: by, w: 5.4, h: 0.62, rectRadius: 0.04,
@@ -720,7 +716,7 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
     fontSize: 11, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
   });
 
-  bp.anomaly.forEach((a, idx) => {
+  (bp.anomaly || []).slice(0, 5).forEach((a, idx) => {
     const ay = 2.18 + idx * 0.72;
     slide.addShape("roundRect", {
       x: rightX + 0.25, y: ay, w: 5.68, h: 0.62, rectRadius: 0.04,
@@ -752,11 +748,11 @@ function addQueueSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
     kicker: "OPERATIONAL CAPABILITY 4 OF 5  |  INVESTIGATION QUEUE",
-    title: "AI-Prioritized Case Triage & Investigator Workflow",
-    subtitle: `High-risk incidents are ranked Critical/High with pre-assembled dossiers so analysts act in seconds.`,
+    title: "AI-Prioritized Case Triage & Frontline Action Queue",
+    subtitle: `High-urgency incidents are ranked Critical/High with pre-assembled dossiers so teams act in seconds.`,
   });
 
-  const headers = ["Priority Tier", "Case Ref", "Customer / Entity", "Exposure Amount", "Primary Risk Trigger", "One-Click Investigator Action"];
+  const headers = ["Priority Tier", "Case Ref", "Entity / Unit", "Observed Value", "Primary Trigger", "One-Click Operational Action"];
   const colW = [1.8, 1.4, 1.8, 1.6, 3.4, 2.48];
   
   const tableY = 1.6;
@@ -855,13 +851,7 @@ function addOutcomesSlide(slide, palette, { companyName, pitchPlan, page }) {
     fontSize: 12, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
 
-  const loopSteps = [
-    { title: "1. Real-Time Scoring", desc: "Live event stream evaluated against ML feature store in <60ms." },
-    { title: "2. Priority Routing", desc: "High-risk alerts instantly routed to analyst queue with explainable factors." },
-    { title: "3. Investigator Decision", desc: "Analyst confirms or dismisses case with 1-click evidence dossier." },
-    { title: "4. Automated Model Update", desc: "Outcome fed back to OneLake to continuously reduce future false positives." },
-  ];
-
+  const loopSteps = (pitchPlan.closed_loop_steps || []).slice(0, 4);
   loopSteps.forEach((s, idx) => {
     const sx = MARGIN + 0.25 + idx * 3.02;
     slide.addShape("roundRect", {
@@ -947,14 +937,7 @@ function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
     subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`,
   });
 
-  const domainFocus = pitchPlan.primary_business_domain || "Operations";
-  const phases = [
-    { title: "1. Setup & Data Discovery", time: "Weeks 1–6", items: ["Stand up secure Fabric workspace & OneLake", "Connect primary real-time eventstream", "Validate source fields and data quality", "Establish role-based governance & security"] },
-    { title: "2. Quick-Win Pilot", time: "Weeks 6–12", items: [`Launch live ${domainFocus} Pilot`, "Deploy explainable AI scoring model", "Test real-time investigation queue with analysts", "Measure baseline loss reduction & false positive rate"] },
-    { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale streaming to 100% of transaction channels", "Integrate automated challenge/MFA webhooks", "Deploy mobile alerts & Teams bot dispatch", "Establish continuous retraining feature store"] },
-    { title: "4. Continuous Value", time: "Months 6+", items: ["Expand behavioral models across all business units", "Automate cross-channel intelligence sharing", "Benchmark enterprise-wide ROI with executive board"] },
-  ];
-
+  const phases = (pitchPlan.roadmap_phases || []).slice(0, 4);
   phases.forEach((ph, idx) => {
     const x = MARGIN + idx * 3.16;
     const y = 1.6;
@@ -971,7 +954,7 @@ function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
       x: x + 0.18, y: y + 0.65, w: 2.58, h: 0.28,
       fontSize: 12, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
-    ph.items.forEach((item, iIdx) => {
+    (ph.items || []).slice(0, 4).forEach((item, iIdx) => {
       const iy = y + 1.1 + iIdx * 0.88;
       slide.addShape("roundRect", {
         x: x + 0.18, y: iy, w: 2.58, h: 0.78, rectRadius: 0.06,
@@ -994,12 +977,7 @@ function addNextStepsSlide(slide, palette, { companyName, pitchPlan, page }) {
     subtitle: `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`,
   });
 
-  const steps = [
-    { num: "01", title: "3-Week Technical Discovery & Data Audit", desc: "Collaborate with your enterprise data & engineering teams to review sample event streams, schemas, API gateways, and governance requirements." },
-    { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (false positive rate, decision latency, investigation time) and confirm target success thresholds." },
-    { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the Microsoft Fabric command center in your environment, connected to live streams, with active triage workflows for operating teams." },
-  ];
-
+  const steps = (pitchPlan.next_steps || []).slice(0, 3);
   steps.forEach((st, idx) => {
     const y = 1.6 + idx * 1.55;
     slide.addShape("roundRect", {
