@@ -160,7 +160,7 @@ function addTitleSlide(slide, palette, { companyName, domain, requirement, platf
     fontFace: palette.fontTitle,
   });
   slide.addText(
-    truncate(`Unifying ${domain} Operations with Real-Time Data and AI`, 70),
+    truncate(`Transforming ${domain} Operations with Real-Time Data & AI`, 70),
     {
       x: MARGIN,
       y: 1.85,
@@ -176,8 +176,8 @@ function addTitleSlide(slide, palette, { companyName, domain, requirement, platf
   );
   slide.addText(
     truncate(
-      `A data-driven blueprint to improve operational flow, efficiency, and real-time decision-making across ${companyName}.`,
-      160
+      `A strategic blueprint for ${companyName} leadership to eliminate operational delays, connect daily systems, and empower frontline teams with real-time intelligence.`,
+      170
     ),
     {
       x: MARGIN,
@@ -200,7 +200,7 @@ function addTitleSlide(slide, palette, { companyName, domain, requirement, platf
     fill: { color: palette.card },
     line: { color: palette.cardBorder, width: 1 },
   });
-  slide.addText(`PREPARED FOR: ${pptSafe(companyName)}   |   SECTOR: ${pptSafe(domain)}   |   APEXON BRIEFING`, {
+  slide.addText(`PREPARED FOR: ${pptSafe(companyName)}   |   SECTOR: ${pptSafe(domain)}   |   EXECUTIVE BRIEFING`, {
     x: MARGIN + 0.25,
     y: 5.1,
     w: 11.0,
@@ -213,22 +213,23 @@ function addTitleSlide(slide, palette, { companyName, domain, requirement, platf
 }
 
 // Slide 2: Agenda
-function addAgendaSlide(slide, palette, { page }) {
+function addAgendaSlide(slide, palette, { domain, playbook, page }) {
   applyMaster(slide, palette, { page, wave: true });
   addSectionHeader(slide, palette, {
-    kicker: "AGENDA",
-    title: "What We Will Cover",
-    subtitle: "A structured executive walkthrough from operational challenges to roadmap and business value.",
+    kicker: "EXECUTIVE AGENDA",
+    title: "What We Will Cover Today",
+    subtitle: `A structured executive walkthrough tailored to ${domain} operations and measurable business ROI.`,
   });
 
+  const areas = (playbook.businessAreas || []).slice(0, 3).join(", ");
   const sections = [
-    { num: "01", title: "Operational Challenges", desc: "Where fragmented data and latency slow day-to-day operations" },
-    { num: "02", title: "Solution Vision", desc: "A unified real-time analytics and AI operating platform" },
-    { num: "03", title: "Data Landscape", desc: "Connecting enterprise, operational, and telemetry data" },
-    { num: "04", title: "Reference Architecture", desc: "End-to-end ingestion, OneLake storage, AI, and activation" },
-    { num: "05", title: "Priority Use Cases", desc: "Five high-impact operational scenarios, demo-ready" },
-    { num: "06", title: "Technical Feasibility", desc: "Data readiness, architectural complexity, and time-to-value" },
-    { num: "07", title: "Roadmap & Expected Impact", desc: "Phased delivery milestones and projected business ROI" },
+    { num: "01", title: "Operational Challenges", desc: `Where data silos and latency slow daily decisions across ${areas.toLowerCase()}` },
+    { num: "02", title: "Solution Vision", desc: "How a unified data platform connects teams and speeds up workflows" },
+    { num: "03", title: "Data Landscape", desc: "Connecting your existing systems without replacing what already works" },
+    { num: "04", title: "Architecture Overview", desc: "A simple, secure, and governed roadmap for enterprise AI" },
+    { num: "05", title: "Priority Use Cases", desc: "Five high-impact business scenarios with clear operational payoffs" },
+    { num: "06", title: "Feasibility Assessment", desc: "Why this is achievable quickly using existing enterprise data" },
+    { num: "07", title: "Roadmap & Expected Value", desc: "Phased delivery timeline and measurable business return on investment" },
   ];
 
   sections.forEach((sec, idx) => {
@@ -261,14 +262,14 @@ function addAgendaSlide(slide, palette, { page }) {
 function addChallengesSlide(slide, palette, { companyName, domain, playbook, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
-    kicker: "THE CHALLENGE",
-    title: `Fragmented Data Slows ${domain} Operations`,
-    subtitle: `${companyName}'s operating scale generates rich data, but silos prevent proactive, intraday decisions.`,
+    kicker: "CURRENT OPERATIONAL CHALLENGES",
+    title: `Siloed Data Slows Down ${domain} Operations`,
+    subtitle: `${companyName} generates valuable operational signals every minute, but disconnected tools force staff into reactive firefighting.`,
   });
 
   const challenges = (playbook.businessAreas || []).slice(0, 6).map((area, i) => ({
     title: area,
-    desc: `Disconnected legacy feeds across ${area.toLowerCase()} create operational delays, manual spreadsheet compilation, and reactive issue management.`,
+    desc: `Disconnected information across ${area.toLowerCase()} forces staff into manual spreadsheet checks, creating operational blind spots and delayed response times.`,
   }));
 
   challenges.forEach((ch, idx) => {
@@ -298,19 +299,19 @@ function addChallengesSlide(slide, palette, { companyName, domain, playbook, pag
 }
 
 // Slide 4: Solution Vision
-function addSolutionVisionSlide(slide, palette, { companyName, platformName, page }) {
+function addSolutionVisionSlide(slide, palette, { companyName, domain, playbook, platformName, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
     kicker: "THE SOLUTION VISION",
-    title: `One Unified Data & AI Operations Platform`,
-    subtitle: `${platformName} unifies enterprise, clinical/operational, and telemetry data into a single governed lakehouse.`,
+    title: `One Unified ${domain} Data & AI Operations Platform`,
+    subtitle: `${platformName} connects daily operational systems into a single, real-time operating hub for ${companyName}.`,
   });
 
   const stages = [
-    { num: "01", step: "Connect", desc: "Ingest live operational feeds, ERP, telemetry, and CRM data in real time.", color: "1D6EE4" },
-    { num: "02", step: "Unify", desc: "Single governed lakehouse (OneLake) with standardized data models and access rules.", color: "0E7C66" },
-    { num: "03", step: "Predict & Analyze", desc: "Real-Time Intelligence + machine learning models to detect bottlenecks and anomalies.", color: "6366F1" },
-    { num: "04", step: "Act", desc: "Real-time dashboards, automated alerts, and Copilot assistance for operating teams.", color: "E54A24" },
+    { num: "01", step: "Connect", desc: `Securely link existing core systems, transactional feeds, and frontline telemetry without disrupting daily operations.`, color: "1D6EE4" },
+    { num: "02", step: "Unify", desc: `Organize all ${domain.toLowerCase()} data into one trusted single source of truth that every department can rely on.`, color: "0E7C66" },
+    { num: "03", step: "Predict", desc: `Apply smart pattern recognition and AI models to detect bottlenecks and anomalies hours before they impact the business.`, color: "6366F1" },
+    { num: "04", step: "Empower & Act", desc: `Deliver clear visual dashboards, instant mobile alerts, and AI assistants directly to frontline operating leads.`, color: "E54A24" },
   ];
 
   stages.forEach((st, idx) => {
@@ -335,13 +336,15 @@ function addSolutionVisionSlide(slide, palette, { companyName, platformName, pag
     });
   });
 
+  // Dynamic domain outcomes
+  const outcomes = (playbook.commonKpis || []).slice(0, 4).map(k => k.name).join("  ·  ");
   slide.addShape("roundRect", {
     x: MARGIN, y: 5.65, w: 12.48, h: 0.95, rectRadius: 0.08,
     fill: { color: "0B1220" }, line: { color: palette.accent, width: 1 },
   });
-  slide.addText("TARGET OUTCOMES:  Faster Same-Day Decisions  ·  Higher Capacity Utilization  ·  Reduced Operational Delays  ·  Lower Operating Cost", {
+  slide.addText(`TARGET OUTCOMES:  ${outcomes || "Faster Same-Day Decisions  ·  Higher Operational Output  ·  Fewer Manual Errors  ·  Lower Operating Costs"}`, {
     x: MARGIN + 0.2, y: 5.95, w: 12.08, h: 0.35,
-    fontSize: 12, bold: true, color: palette.textLight, fontFace: palette.fontTitle, align: "center",
+    fontSize: 11, bold: true, color: palette.textLight, fontFace: palette.fontTitle, align: "center",
   });
 }
 
@@ -349,15 +352,15 @@ function addSolutionVisionSlide(slide, palette, { companyName, platformName, pag
 function addDataLandscapeSlide(slide, palette, { domain, playbook, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
-    kicker: "DATA LANDSCAPE",
-    title: "Three Core Data Domains, One Governed Lakehouse",
-    subtitle: "Every domain lands in its native structure without ripping out existing enterprise systems of record.",
+    kicker: "CONNECTED DATA LANDSCAPE",
+    title: "Bringing Your Systems Together Without Disruption",
+    subtitle: `Every ${domain.toLowerCase()} system connects seamlessly without ripping out or replacing your current enterprise software.`,
   });
 
   const domains = [
-    { title: "Operational & Core Systems", systems: (playbook.dataSystems || []).slice(0, 3) },
-    { title: "Real-Time Telemetry & Feeds", systems: (playbook.dataSystems || []).slice(3, 5) },
-    { title: "Enterprise & Governance", systems: (playbook.dataSystems || []).slice(5, 7) },
+    { title: "Core Systems of Record", desc: "Existing operational databases & transactional history", systems: (playbook.dataSystems || []).slice(0, 3) },
+    { title: "Live Activity & Feeds", desc: "Real-time updates, event streams & location signals", systems: (playbook.dataSystems || []).slice(3, 5) },
+    { title: "Enterprise & Governance", desc: "Security rules, compliance logs & business reporting", systems: (playbook.dataSystems || []).slice(5, 7) },
   ];
 
   domains.forEach((dom, idx) => {
@@ -369,11 +372,15 @@ function addDataLandscapeSlide(slide, palette, { domain, playbook, page }) {
       line: { color: palette.cardBorder, width: 1 },
     });
     slide.addText(dom.title, {
-      x: x + 0.2, y: y + 0.2, w: 3.56, h: 0.45,
+      x: x + 0.2, y: y + 0.2, w: 3.56, h: 0.35,
       fontSize: 15, bold: true, color: palette.heading, fontFace: palette.fontTitle,
     });
+    slide.addText(dom.desc, {
+      x: x + 0.2, y: y + 0.52, w: 3.56, h: 0.28,
+      fontSize: 10, color: "B8C3D4", fontFace: palette.fontBody,
+    });
     (dom.systems || []).forEach((sys, sIdx) => {
-      const sy = y + 0.85 + sIdx * 1.25;
+      const sy = y + 0.88 + sIdx * 1.25;
       slide.addShape("roundRect", {
         x: x + 0.18, y: sy, w: 3.6, h: 1.05, rectRadius: 0.06,
         fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
@@ -391,20 +398,28 @@ function addDataLandscapeSlide(slide, palette, { domain, playbook, page }) {
 }
 
 // Slide 6: Reference Architecture
-function addReferenceArchitectureSlide(slide, palette, { platformName, page }) {
+function addReferenceArchitectureSlide(slide, palette, { domain, playbook, platformName, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
-    kicker: "TECHNICAL ARCHITECTURE",
-    title: `${platformName} Reference Architecture`,
-    subtitle: "End-to-end telemetry ingestion, Lakehouse Delta storage, AI modeling, and multi-channel activation.",
+    kicker: "ARCHITECTURE OVERVIEW",
+    title: `How the ${platformName} Platform Works for ${domain}`,
+    subtitle: `A secure, end-to-end flow from your existing ${domain.toLowerCase()} systems to real-time decision dashboards.`,
   });
 
+  const sourceItems = (playbook.dataSystems || []).slice(0, 4).map(s => truncate(s.name, 26));
+  const activationItems = [
+    `${domain} Operations Hub`,
+    "Instant Alert Routing",
+    "Automated Workflows",
+    "AI Decision Copilot"
+  ];
+
   const tiers = [
-    { title: "Source Systems", items: ["Core Enterprise", "Operational Telemetry", "IoT / Edge Devices", "CRM / External APIs"] },
-    { title: "Ingestion", items: ["Data Factory (Batch)", "Eventstream (Live)", "Mirroring for DBs", "REST Webhooks"] },
-    { title: "OneLake Storage", items: ["Delta Lakehouse", "Bronze (Raw)", "Silver (Cleaned)", "Gold (Curated Marts)"] },
-    { title: "Analytics & AI", items: ["Real-Time Intel (KQL)", "ML / Data Science", "Anomaly Classifiers", "Copilot in Fabric"] },
-    { title: "Activation", items: ["Power BI Dashboards", "Teams / Mobile Alerts", "Automated Webhooks", "Operating Portals"] },
+    { title: "1. Existing Systems", items: sourceItems.length ? sourceItems : ["Core Enterprise ERP", "Daily Operations", "Frontline Scans/Devices", "Partner & Web APIs"] },
+    { title: "2. Fast Ingestion", items: ["Scheduled Batch", "Real-Time Streaming", "Direct Database Links", "Secure Webhooks"] },
+    { title: "3. Unified Hub", items: ["Single Source of Truth", "Cleaned & Standardized", "Governed Lakehouse", "Role-Based Access"] },
+    { title: "4. Smart AI & Radar", items: ["Live Anomaly Radar", "Predictive Analytics", "Bottleneck Classifiers", "AI Copilot Assistant"] },
+    { title: "5. Frontline Action", items: activationItems },
   ];
 
   tiers.forEach((tier, idx) => {
@@ -433,68 +448,89 @@ function addReferenceArchitectureSlide(slide, palette, { platformName, page }) {
   });
 }
 
-// Slides 7-11: Full 360° Use-Case Deep Dives
+// Slides 7-11: Detailed 360° Use Case
 function addDetailedUseCaseSlide(slide, palette, uc, idx, total, { platformName, page }) {
   applyMaster(slide, palette, { page });
-  slide.addText(`USE CASE ${idx + 1} OF ${total}`.toUpperCase(), {
-    x: MARGIN, y: 0.32, w: 12.4, h: 0.22,
-    fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
-  });
-  slide.addText(pptSafe(uc.title), {
-    x: MARGIN, y: 0.58, w: 12.4, h: 0.46,
-    fontSize: 22, bold: true, color: palette.heading, fontFace: palette.fontTitle,
-  });
-  slide.addText(truncate(uc.subtitle || uc.benefit, 120), {
-    x: MARGIN, y: 1.06, w: 12.4, h: 0.32,
-    fontSize: 12, color: "B8C3D4", fontFace: palette.fontBody,
+  
+  const title = uc.title || `Priority Operational Use Case ${idx + 1}`;
+  const summary = uc.summary || uc.description || "Streamlining core daily operations through real-time predictive analytics and automated workflows.";
+  const problem = uc.businessProblem || uc.problem || "Fragmented systems create manual coordination delays, high operational overhead, and blind spots during peak periods.";
+  const solution = uc.proposedSolution || uc.solution || `The ${platformName} platform unifies operational feeds, continuously runs predictive models, and triggers real-time alerts to frontline decision makers.`;
+  
+  // Extract or synthesize 3 domain-accurate KPIs
+  const rawKpis = Array.isArray(uc.kpis) && uc.kpis.length > 0 ? uc.kpis : [];
+  const kpiCards = [
+    {
+      metric: rawKpis[0]?.target || rawKpis[0]?.value || "25–35%",
+      label: rawKpis[0]?.name || "Operational Velocity Lift",
+      detail: rawKpis[0]?.impact || "Accelerates daily cycle times and eliminates handoff bottlenecks across teams.",
+    },
+    {
+      metric: rawKpis[1]?.target || rawKpis[1]?.value || "15–20%",
+      label: rawKpis[1]?.name || "Cost & Waste Reduction",
+      detail: rawKpis[1]?.impact || "Minimizes manual rework, idle capacity, and operational leakages.",
+    },
+    {
+      metric: rawKpis[2]?.target || rawKpis[2]?.value || "Real-Time",
+      label: rawKpis[2]?.name || "Decision Speed & Visibility",
+      detail: rawKpis[2]?.impact || "Provides instant situational awareness and proactive alerts before SLAs breach.",
+    },
+  ];
+
+  addSectionHeader(slide, palette, {
+    kicker: `USE CASE ${idx + 1} OF ${total}  |  OPERATIONAL FOCUS`,
+    title: truncate(title, 55),
+    subtitle: truncate(summary, 120),
   });
 
-  // Left Column: The Problem & The Solution Approach
+  // Top Left: The Business Problem (w: 6.1)
+  const leftX = MARGIN;
   slide.addShape("roundRect", {
-    x: MARGIN, y: 1.48, w: 7.8, h: 2.45, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "8A3D2A", width: 1 },
+    x: leftX, y: 1.6, w: 6.1, h: 2.3, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: "E54A24", width: 1.5 },
   });
-  slide.addText("THE OPERATIONAL PROBLEM", {
-    x: MARGIN + 0.2, y: 1.62, w: 7.4, h: 0.25,
-    fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+  slide.addText("THE OPERATIONAL CHALLENGE", {
+    x: leftX + 0.25, y: 1.8, w: 5.6, h: 0.28,
+    fontSize: 12, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(uc.businessProblem || uc.challenge, 280), {
-    x: MARGIN + 0.2, y: 1.92, w: 7.4, h: 1.85,
-    fontSize: 12, color: palette.textLight, fontFace: palette.fontBody, wrap: true,
+  slide.addText(problem, {
+    x: leftX + 0.25, y: 2.15, w: 5.6, h: 1.6,
+    fontSize: 11, color: "E2E8F0", fontFace: palette.fontBody, wrap: true,
   });
 
+  // Top Right: The Platform Solution (w: 6.18)
+  const rightX = MARGIN + 6.3;
   slide.addShape("roundRect", {
-    x: MARGIN, y: 4.05, w: 7.8, h: 2.45, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "0E7C66", width: 1 },
+    x: rightX, y: 1.6, w: 6.18, h: 2.3, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
   });
-  slide.addText(`THE ${pptSafe(platformName).toUpperCase()} + AI APPROACH`, {
-    x: MARGIN + 0.2, y: 4.19, w: 7.4, h: 0.25,
-    fontSize: 11, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
+  slide.addText("THE PLATFORM SOLUTION", {
+    x: rightX + 0.25, y: 1.8, w: 5.68, h: 0.28,
+    fontSize: 12, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(uc.benefit || uc.solutionFit, 280), {
-    x: MARGIN + 0.2, y: 4.49, w: 7.4, h: 1.85,
-    fontSize: 12, color: palette.textLight, fontFace: palette.fontBody, wrap: true,
+  slide.addText(solution, {
+    x: rightX + 0.25, y: 2.15, w: 5.68, h: 1.6,
+    fontSize: 11, color: "E2E8F0", fontFace: palette.fontBody, wrap: true,
   });
 
-  // Right Column: Expected Impact KPI Callouts
-  const kpis = (uc.kpis || []).slice(0, 3);
-  const sampleMetrics = ["↑18%", "-25%", "Live"];
-  kpis.forEach((kpi, kIdx) => {
-    const ky = 1.48 + kIdx * 1.71;
+  // Bottom: 3 KPI / Business Impact Cards
+  kpiCards.forEach((kpi, kIdx) => {
+    const kx = MARGIN + kIdx * 4.22;
+    const ky = 4.05;
     slide.addShape("roundRect", {
-      x: MARGIN + 8.04, y: ky, w: 4.44, h: 1.55, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: palette.accent, width: 1 },
+      x: kx, y: ky, w: 4.04, h: 2.45, rectRadius: 0.08,
+      fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
     });
-    slide.addText(sampleMetrics[kIdx] || "↑20%", {
-      x: MARGIN + 8.24, y: ky + 0.16, w: 4.04, h: 0.48,
+    slide.addText(kpi.metric, {
+      x: kx + 0.2, y: ky + 0.2, w: 3.64, h: 0.45,
       fontSize: 26, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
-    slide.addText(kpi.name, {
-      x: MARGIN + 8.24, y: ky + 0.68, w: 4.04, h: 0.3,
-      fontSize: 12, bold: true, color: palette.heading, fontFace: palette.fontTitle,
+    slide.addText(kpi.label, {
+      x: kx + 0.2, y: ky + 0.72, w: 3.64, h: 0.35,
+      fontSize: 12, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true,
     });
-    slide.addText(truncate(kpi.why, 90), {
-      x: MARGIN + 8.24, y: ky + 1.0, w: 4.04, h: 0.45,
+    slide.addText(kpi.detail, {
+      x: kx + 0.2, y: ky + 1.12, w: 3.64, h: 1.15,
       fontSize: 10, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
     });
   });
@@ -504,72 +540,73 @@ function addDetailedUseCaseSlide(slide, palette, uc, idx, total, { platformName,
 function addFeasibilitySlide(slide, palette, { useCases, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
-    kicker: "TECHNICAL FEASIBILITY",
-    title: "Feasible on Existing Systems — No Rip-and-Replace",
-    subtitle: "Standard connectors, existing data feeds, and proven implementation timeframes.",
+    kicker: "DELIVERY FEASIBILITY",
+    title: "Fast-Track Implementation Readiness",
+    subtitle: "Every priority use case connects to pre-existing enterprise data feeds with low integration complexity.",
   });
 
-  const rows = (useCases || []).slice(0, 5).map((uc, i) => [
-    truncate(uc.title, 32),
-    i % 2 === 0 ? "High" : "Medium",
-    i === 3 ? "High" : i % 2 === 0 ? "Low" : "Medium",
-    `${6 + i * 2}–${8 + i * 2} weeks`,
-    truncate(uc.difficultyWhy || "Reuses existing data feeds and security boundaries.", 55),
-  ]);
-
-  const headers = ["Use Case", "Data Readiness", "Complexity", "Time to Value", "Feasibility Note"];
-  const colW = [3.2, 1.6, 1.6, 1.8, 4.28];
-  let ty = 1.6;
-
-  // Header row
-  let hx = MARGIN;
-  headers.forEach((h, idx) => {
-    slide.addShape("rect", {
-      x: hx, y: ty, w: colW[idx], h: 0.42,
-      fill: { color: "172440" }, line: { color: palette.accent, width: 1 },
+  const headers = ["Priority Use Case", "Primary Data Feeds Required", "Integration Effort", "Time-to-Value"];
+  const colWidths = [3.8, 4.4, 2.1, 2.18];
+  
+  // Header Row
+  let curX = MARGIN;
+  headers.forEach((h, i) => {
+    slide.addShape("roundRect", {
+      x: curX, y: 1.6, w: colWidths[i], h: 0.45, rectRadius: 0.04,
+      fill: { color: "131F37" }, line: { color: palette.cardBorder, width: 1 },
     });
     slide.addText(h, {
-      x: hx + 0.1, y: ty + 0.08, w: colW[idx] - 0.2, h: 0.28,
-      fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+      x: curX + 0.1, y: 1.68, w: colWidths[i] - 0.2, h: 0.3,
+      fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontTitle,
     });
-    hx += colW[idx];
+    curX += colWidths[i] + 0.05;
   });
-  ty += 0.42;
 
-  // Data rows
-  rows.forEach((row, rIdx) => {
-    let rx = MARGIN;
-    row.forEach((cell, cIdx) => {
-      slide.addShape("rect", {
-        x: rx, y: ty, w: colW[cIdx], h: 0.85,
-        fill: { color: rIdx % 2 === 0 ? palette.card : "0B1220" },
-        line: { color: palette.cardBorder, width: 1 },
+  // Data Rows
+  (useCases || []).slice(0, 5).forEach((uc, rIdx) => {
+    const ry = 2.15 + rIdx * 0.88;
+    const title = truncate(uc.title || `Use Case ${rIdx + 1}`, 36);
+    const dataReq = Array.isArray(uc.dataRequirements) ? uc.dataRequirements.slice(0, 2).join(", ") : (uc.feasibility || "Core database feeds, real-time events, ERP records");
+    const effort = rIdx < 2 ? "Low (Standard API)" : "Moderate (Batch + Stream)";
+    const ttv = rIdx === 0 ? "4–6 Weeks" : rIdx < 3 ? "6–10 Weeks" : "10–14 Weeks";
+
+    const rowCols = [title, truncate(dataReq, 48), effort, ttv];
+    curX = MARGIN;
+    rowCols.forEach((val, cIdx) => {
+      slide.addShape("roundRect", {
+        x: curX, y: ry, w: colWidths[cIdx], h: 0.8, rectRadius: 0.04,
+        fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
       });
-      slide.addText(cell, {
-        x: rx + 0.1, y: ty + 0.12, w: colW[cIdx] - 0.2, h: 0.65,
-        fontSize: 10, color: cIdx === 0 ? palette.heading : "B8C3D4",
-        bold: cIdx === 0, fontFace: palette.fontBody, wrap: true,
+      slide.addText(val, {
+        x: curX + 0.1, y: ry + 0.15, w: colWidths[cIdx] - 0.2, h: 0.5,
+        fontSize: cIdx === 0 ? 11 : 10,
+        bold: cIdx === 0 || cIdx === 3,
+        color: cIdx === 0 ? palette.heading : cIdx === 2 ? "7DDEA0" : cIdx === 3 ? palette.accent : "B8C3D4",
+        fontFace: palette.fontBody,
+        wrap: true,
       });
-      rx += colW[cIdx];
+      curX += colWidths[cIdx] + 0.05;
     });
-    ty += 0.85;
   });
 }
 
 // Slide 13: Implementation Roadmap
-function addRoadmapSlide(slide, palette, { page }) {
+function addRoadmapSlide(slide, palette, { domain, useCases, page }) {
   applyMaster(slide, palette, { page });
   addSectionHeader(slide, palette, {
-    kicker: "IMPLEMENTATION ROADMAP",
-    title: "A Phased Path from Pilot to Enterprise Scale",
-    subtitle: "Structured milestone roadmap delivering early value in weeks 1–8.",
+    kicker: "DELIVERY ROADMAP",
+    title: "A Phased Path from Fast Pilot to Enterprise Scale",
+    subtitle: `A structured milestone plan delivering measurable value across ${domain.toLowerCase()} operations within 8 weeks.`,
   });
 
+  const topUc = (useCases || [])[0]?.title ? truncate(useCases[0].title.split(/\s+[-—–]\s+|—|–/)[0].trim(), 32) : "Priority Use Case";
+  const secondUc = (useCases || [])[1]?.title ? truncate(useCases[1].title.split(/\s+[-—–]\s+|—|–/)[0].trim(), 32) : "Secondary Use Case";
+
   const phases = [
-    { title: "Foundation", time: "Weeks 1–8", items: ["Stand up cloud platform & OneLake", "Connect core transactional feeds", "Establish security & Purview governance"] },
-    { title: "Pilot", time: "Weeks 8–16", items: ["Launch top 2 priority use cases", "Validate with key operational units", "Measure baseline KPI improvements"] },
-    { title: "Scale", time: "Months 4–9", items: ["Roll out remaining use cases", "Extend to network-wide sites", "Deploy Copilot decision assistants"] },
-    { title: "Optimize", time: "Months 9+", items: ["Continuous ML model retraining", "Automate cross-facility routing", "Enterprise performance benchmarking"] },
+    { title: "1. Setup & Foundation", time: "Weeks 1–8", items: ["Stand up secure cloud workspace", "Connect top 2 primary data feeds", "Establish user access & security rules"] },
+    { title: "2. Quick-Win Pilot", time: "Weeks 8–16", items: [`Launch live ${topUc}`, "Validate with pilot operating team", "Measure baseline time & cost savings"] },
+    { title: "3. Enterprise Rollout", time: "Months 4–9", items: [`Deploy ${secondUc} & remaining use cases`, "Roll out across all operating locations", "Enable mobile alerts & AI assistants"] },
+    { title: "4. Continuous Value", time: "Months 9+", items: ["Fine-tune prediction models", "Automate cross-department workflows", "Benchmark network-wide ROI"] },
   ];
 
   phases.forEach((ph, idx) => {
@@ -582,7 +619,7 @@ function addRoadmapSlide(slide, palette, { page }) {
     });
     slide.addText(ph.title, {
       x: x + 0.18, y: y + 0.2, w: 2.58, h: 0.35,
-      fontSize: 16, bold: true, color: palette.heading, fontFace: palette.fontTitle,
+      fontSize: 15, bold: true, color: palette.heading, fontFace: palette.fontTitle,
     });
     slide.addText(ph.time, {
       x: x + 0.18, y: y + 0.58, w: 2.58, h: 0.28,
@@ -603,19 +640,26 @@ function addRoadmapSlide(slide, palette, { page }) {
 }
 
 // Slide 14: Expected Impact & Next Steps
-function addImpactNextStepsSlide(slide, palette, { companyName, page }) {
+function addImpactNextStepsSlide(slide, palette, { companyName, domain, playbook, page }) {
   applyMaster(slide, palette, { page, wave: true });
   addSectionHeader(slide, palette, {
-    kicker: "EXPECTED IMPACT & NEXT STEPS",
-    title: "From Pilot to Measurable Network-Wide Value",
-    subtitle: "Tangible ROI outcomes and the immediate next steps to initiate discovery.",
+    kicker: "EXPECTED BUSINESS VALUE",
+    title: `Measurable ROI & Next Steps for ${companyName}`,
+    subtitle: `Projected operational outcomes tailored to ${domain} and the immediate next steps to initiate discovery.`,
   });
 
-  const kpis = [
-    { value: "18–22%", label: "Capacity & Resource Utilization", desc: "Measurable throughput lift across primary facilities." },
-    { value: "15–20%", label: "Defect / Delay Reduction", desc: "Proactive mitigation before SLA or threshold breach." },
-    { value: "20%", label: "Operating Inventory Savings", desc: "Optimized inventory carrying and stockout elimination." },
-    { value: "35%", label: "Administrative Time Saved", desc: "Direct reduction in manual reporting and review queues." },
+  const playbookKpis = (playbook.commonKpis || []).slice(0, 4);
+  const sampleValues = ["20–30%", "15–25%", "-35%", "Live"];
+  
+  const kpis = playbookKpis.length >= 4 ? playbookKpis.map((k, i) => ({
+    value: sampleValues[i] || "↑20%",
+    label: truncate(k.name, 28),
+    desc: truncate(k.why, 85),
+  })) : [
+    { value: "18–25%", label: "Operational Throughput Lift", desc: "Faster task turnaround and fewer idle bottlenecks across core units." },
+    { value: "20–30%", label: "Delay & Error Reduction", desc: "Catching exceptions early before customer SLAs or costs are breached." },
+    { value: "15–20%", label: "Operating Cost Savings", desc: "Less rework, reduced inventory carrying costs, and lower overtime." },
+    { value: "35%+", label: "Staff Time Saved", desc: "Substantial reduction in manual spreadsheet compilation and status tracking." },
   ];
 
   kpis.forEach((kpi, idx) => {
@@ -643,15 +687,15 @@ function addImpactNextStepsSlide(slide, palette, { companyName, page }) {
     x: MARGIN, y: 3.95, w: 12.48, h: 2.65, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
   });
-  slide.addText("RECOMMENDED NEXT STEPS", {
+  slide.addText("RECOMMENDED IMMEDIATE NEXT STEPS", {
     x: MARGIN + 0.3, y: 4.15, w: 11.88, h: 0.3,
     fontSize: 13, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
 
   const nextSteps = [
-    `1. Confirm pilot operational units and prioritize top 2 use cases with ${companyName} leadership.`,
-    `2. Execute a 4-week discovery and data-readiness assessment across core transactional and telemetry systems.`,
-    `3. Stand up the enterprise analytics workspace and deploy the first live operations dashboard within 8 weeks.`,
+    `1. Prioritize top 2 quick-win use cases with ${companyName} leadership and identify the pilot operating unit.`,
+    `2. Complete a streamlined 3-week discovery review of your existing data sources and security boundaries.`,
+    `3. Deploy the first live operational radar dashboard within 8 weeks to demonstrate real-world ROI.`,
   ];
   nextSteps.forEach((step, sIdx) => {
     slide.addText(step, {
@@ -704,7 +748,7 @@ export async function buildDeck({
   // Slide 2: Agenda
   {
     const slide = pres.addSlide();
-    addAgendaSlide(slide, palette, { page });
+    addAgendaSlide(slide, palette, { domain, playbook, page });
     page += 1;
   }
 
@@ -718,7 +762,7 @@ export async function buildDeck({
   // Slide 4: Solution Vision
   {
     const slide = pres.addSlide();
-    addSolutionVisionSlide(slide, palette, { companyName, platformName, page });
+    addSolutionVisionSlide(slide, palette, { companyName, domain, playbook, platformName, page });
     page += 1;
   }
 
@@ -732,7 +776,7 @@ export async function buildDeck({
   // Slide 6: Reference Architecture
   {
     const slide = pres.addSlide();
-    addReferenceArchitectureSlide(slide, palette, { platformName, page });
+    addReferenceArchitectureSlide(slide, palette, { domain, playbook, platformName, page });
     page += 1;
   }
 
@@ -753,14 +797,14 @@ export async function buildDeck({
   // Slide 13: Implementation Roadmap
   {
     const slide = pres.addSlide();
-    addRoadmapSlide(slide, palette, { page });
+    addRoadmapSlide(slide, palette, { domain, useCases: list, page });
     page += 1;
   }
 
   // Slide 14: Expected Impact & Next Steps
   {
     const slide = pres.addSlide();
-    addImpactNextStepsSlide(slide, palette, { companyName, page });
+    addImpactNextStepsSlide(slide, palette, { companyName, domain, playbook, page });
     page += 1;
   }
 
