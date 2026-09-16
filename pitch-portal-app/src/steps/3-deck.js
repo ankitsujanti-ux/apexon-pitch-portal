@@ -107,7 +107,7 @@ function applyMaster(slide, palette, { page, wave = false }) {
 }
 
 function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
-  slide.addText(truncate(kicker.toUpperCase(), 48), {
+  slide.addText(truncate(kicker.toUpperCase(), 52), {
     x: MARGIN,
     y: 0.38,
     w: 12.48,
@@ -229,16 +229,17 @@ function addAgendaSlide(slide, palette, { domain, pitchPlan, page }) {
     subtitle: `A structured executive walkthrough tailored to ${pitchPlan.primary_business_domain} and measurable business ROI.`,
   });
 
-  const domainFocus = pitchPlan.primary_business_domain || `${domain} Operations`;
-  const sections = [
-    { num: "01", title: "Operational Problem", desc: `Why delayed signals and manual triage create blind spots in ${domainFocus.toLowerCase()}` },
-    { num: "02", title: "Solution Vision", desc: `How a unified platform connects daily operational feeds into real-time action` },
-    { num: "03", title: "Data Foundation", desc: `Connecting existing ${domain.toLowerCase()} data feeds and telemetry without disruption` },
-    { num: "04", title: "Architecture Overview", desc: `A simple, secure, and governed flow powered by Microsoft Fabric` },
-    { num: "05", title: "Live Command Center", desc: `Real-time stream monitoring, risk classification, and operational gauges` },
-    { num: "06", title: "Explainable AI Decision Engine", desc: `How AI scores event risk factors transparently for frontline teams` },
-    { num: "07", title: "Investigation & Outcomes", desc: `Automated queue triage, data readiness matrix, and phased delivery roadmap` },
-  ];
+  const sections = (pitchPlan.agenda_items && pitchPlan.agenda_items.length >= 5)
+    ? pitchPlan.agenda_items
+    : [
+        { num: "01", title: "Operational Challenges", desc: `Why delayed signals and manual triage create blind spots in ${pitchPlan.primary_business_domain.toLowerCase()}` },
+        { num: "02", title: "Solution Vision", desc: `How a unified platform connects daily operational feeds into real-time action` },
+        { num: "03", title: "Data Foundation", desc: `Connecting existing ${domain.toLowerCase()} data feeds and telemetry without disruption` },
+        { num: "04", title: "Architecture Overview", desc: `A simple, secure, and governed flow powered by Microsoft Fabric` },
+        { num: "05", title: "Live Command Center", desc: `Real-time stream monitoring, risk classification, and operational gauges` },
+        { num: "06", title: "Explainable AI Decision Engine", desc: `How AI scores event risk factors transparently for frontline teams` },
+        { num: "07", title: "Investigation & Outcomes", desc: `Automated queue triage, data readiness matrix, and phased delivery roadmap` },
+      ];
 
   sections.forEach((sec, idx) => {
     const col = idx < 4 ? 0 : 1;
@@ -269,10 +270,11 @@ function addAgendaSlide(slide, palette, { domain, pitchPlan, page }) {
 // Slide 3: Operational Challenges
 function addChallengesSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const cm = pitchPlan.challenges_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "CURRENT OPERATIONAL CHALLENGES",
-    title: `Siloed Data Slows Down ${pitchPlan.primary_business_domain}`,
-    subtitle: `${companyName} generates valuable operational signals every minute, but disconnected tools force staff into reactive firefighting.`,
+    kicker: cm.kicker || "CURRENT OPERATIONAL CHALLENGES",
+    title: cm.title || `Siloed Data Slows Down ${pitchPlan.primary_business_domain}`,
+    subtitle: cm.subtitle || `${companyName} generates valuable operational signals every minute, but disconnected tools force staff into reactive firefighting.`,
   });
 
   const challenges = (pitchPlan.operational_challenges || []).slice(0, 6);
@@ -305,19 +307,22 @@ function addChallengesSlide(slide, palette, { companyName, pitchPlan, page }) {
 // Slide 4: Solution Vision
 function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platformName, page }) {
   applyMaster(slide, palette, { page });
+  const vm = pitchPlan.vision_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "THE SOLUTION VISION",
-    title: `One Unified ${pitchPlan.primary_business_domain} Operating Hub`,
-    subtitle: `${platformName} connects daily operational systems into a single, real-time operating hub for ${companyName}.`,
+    kicker: vm.kicker || "THE SOLUTION VISION",
+    title: vm.title || `One Unified ${pitchPlan.primary_business_domain} Operating Hub`,
+    subtitle: vm.subtitle || `${platformName} connects daily operational systems into a single, real-time operating hub for ${companyName}.`,
   });
 
   const domainLower = (pitchPlan.primary_business_domain || "").toLowerCase();
-  const stages = [
-    { num: "01", step: "Connect", desc: `Securely link ${domainLower} feeds, device signals, and historical records in real time (<50ms) without disrupting daily operations.`, color: "1D6EE4" },
-    { num: "02", step: "Unify", desc: `Organize all operational data into a single OneLake source of truth with governed feature stores and baseline profiles.`, color: "0E7C66" },
-    { num: "03", step: "Predict & Score", desc: `Run transparent AI models to evaluate composite risk scores (0–100) and pinpoint exact anomaly drivers instantly.`, color: "6366F1" },
-    { num: "04", step: "Empower & Act", desc: `Deliver real-time command dashboards, automated workflow triggers, and prioritized work queues directly to frontline leads.`, color: "E54A24" },
-  ];
+  const stages = (pitchPlan.vision_stages && pitchPlan.vision_stages.length === 4)
+    ? pitchPlan.vision_stages
+    : [
+        { num: "01", step: "Connect", desc: `Securely link ${domainLower} feeds, device signals, and historical records in real time (<50ms) without disrupting daily operations.`, color: "1D6EE4" },
+        { num: "02", step: "Unify", desc: `Organize all operational data into a single OneLake source of truth with governed feature stores and baseline profiles.`, color: "0E7C66" },
+        { num: "03", step: "Predict & Score", desc: `Run transparent AI models to evaluate composite risk scores (0–100) and pinpoint exact anomaly drivers instantly.`, color: "6366F1" },
+        { num: "04", step: "Empower & Act", desc: `Deliver real-time command dashboards, automated workflow triggers, and prioritized work queues directly to frontline leads.`, color: "E54A24" },
+      ];
 
   stages.forEach((st, idx) => {
     const x = MARGIN + idx * 3.16;
@@ -355,10 +360,11 @@ function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platfo
 // Slide 5: Data Foundation
 function addDataFoundationSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const fdm = pitchPlan.data_foundation_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "DATA FOUNDATION",
-    title: `${companyName} Data Foundation for ${pitchPlan.primary_business_domain}`,
-    subtitle: `Connecting the exact operational feeds, telemetry, and historical records needed to power real-time AI.`,
+    kicker: fdm.kicker || "DATA FOUNDATION",
+    title: fdm.title || `${companyName} Data Foundation for ${pitchPlan.primary_business_domain}`,
+    subtitle: fdm.subtitle || `Connecting the exact operational feeds, telemetry, and historical records needed to power real-time AI.`,
   });
 
   const feeds = (pitchPlan.data_foundation || []).slice(0, 4);
@@ -412,10 +418,11 @@ function addDataFoundationSlide(slide, palette, { companyName, pitchPlan, page }
 // Slide 6: Reference Architecture Overview
 function addArchitectureSlide(slide, palette, { companyName, pitchPlan, platformName, page }) {
   applyMaster(slide, palette, { page });
+  const am = pitchPlan.architecture_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "SOLUTION ARCHITECTURE",
-    title: `How ${platformName} Powers Real-Time ${pitchPlan.primary_business_domain}`,
-    subtitle: `An end-to-end governed pipeline from real-time event streaming to automated frontline action.`,
+    kicker: am.kicker || "SOLUTION ARCHITECTURE",
+    title: am.title || `How ${platformName} Powers Real-Time ${pitchPlan.primary_business_domain}`,
+    subtitle: am.subtitle || `An end-to-end governed pipeline from real-time event streaming to automated frontline action.`,
   });
 
   const arch = pitchPlan.fabric_architecture || {};
@@ -460,25 +467,12 @@ function addArchitectureSlide(slide, palette, { companyName, pitchPlan, platform
 // Slide 7: Live Operations Command Center
 function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const cc = pitchPlan.command_center || {};
   addSectionHeader(slide, palette, {
-    kicker: "OPERATIONAL CAPABILITY 1 OF 5  |  COMMAND RADAR",
-    title: `${companyName} Live Operations Command Center`,
-    subtitle: `Continuous sub-second evaluation of incoming operational streams with instant anomaly risk classification.`,
+    kicker: cc.kicker || "OPERATIONAL CAPABILITY 1 OF 5  |  COMMAND RADAR",
+    title: cc.title || `${companyName} Live Operations Command Center`,
+    subtitle: cc.subtitle || `Continuous sub-second evaluation of incoming operational streams with instant anomaly risk classification.`,
   });
-
-  const cc = pitchPlan.command_center || {
-    metrics: [
-      { label: "Today's Monitored Events", val: "1,200,000", note: "< 45 ms avg latency" },
-      { label: "Critical Anomalies Intercepted", val: "42 Incidents", note: "100% routed to priority leads" },
-      { label: "Operational Value Protected", val: "High Impact", note: "Zero SLA breaches" },
-      { label: "Active False Alert Rate", val: "0.85%", note: "Well below target" }
-    ],
-    headers: ["Event ID", "Entity / Unit", "Channel & Source", "Facility / Location", "Observed Metric", "Risk Score", "Decision Action"],
-    colW: [1.5, 2.0, 2.2, 2.0, 1.4, 1.3, 1.88],
-    channelName: "Live Stream Feed",
-    locDomestic: "Primary Facility",
-    locForeign: "Outlier Node"
-  };
 
   // Top metric bar (4 summary KPIs)
   (cc.metrics || []).slice(0, 4).forEach((m, idx) => {
@@ -563,31 +557,12 @@ function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page })
 // Slide 8: Explainable AI Decision Engine
 function addExplainableSlide(slide, palette, { pitchPlan, page }) {
   applyMaster(slide, palette, { page });
-  const ex = pitchPlan.explainable_example || {
-    txnId: "OPS-ALERT-101",
-    amount: "High Priority Exception",
-    channel: "Live Operating Hub",
-    timestamp: "Real-Time Event",
-    merchant: "Primary Operating Node",
-    location: "Main Production Unit",
-    baselineLocation: "Standard Baseline Flow",
-    device: "Telemetry Feed",
-    baselineDevice: "Nominal Operating Range",
-    riskScore: 89,
-    riskLevel: "CRITICAL URGENCY",
-    decision: "TRIGGER AUTOMATED WORKFLOW & NOTIFY LEAD",
-    factors: [
-      { factor: "Operational Velocity Bottleneck", weight: "+34", reason: "Cycle time is 3x higher than baseline" },
-      { factor: "Cross-System Data Discrepancy", weight: "+26", reason: "Status mismatch detected across feeds" },
-      { factor: "SLA Breach Window Approaching", weight: "+18", reason: "Less than 45 min remaining before SLA impact" },
-      { factor: "Parameter Reading Drift", weight: "+11", reason: "Sensor reading deviates from standard range" }
-    ]
-  };
+  const ex = pitchPlan.explainable_example || {};
 
   addSectionHeader(slide, palette, {
-    kicker: "OPERATIONAL CAPABILITY 2 OF 5  |  TRANSPARENT AI",
-    title: "Why Did the AI Model Flag This Incident?",
-    subtitle: "Every automated decision provides an instant, transparent breakdown of risk factors for frontline analysts.",
+    kicker: ex.kicker || "OPERATIONAL CAPABILITY 2 OF 5  |  TRANSPARENT AI",
+    title: ex.title || "Why Did the AI Model Flag This Incident?",
+    subtitle: ex.subtitle || "Every automated decision provides an instant, transparent breakdown of risk factors for frontline analysts.",
   });
 
   // Left Card: The Incident Profile
@@ -596,22 +571,22 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
     x: leftX, y: 1.6, w: 4.8, h: 4.8, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "E54A24", width: 1.5 },
   });
-  slide.addText("INSPECTED EVENT DOSSIER", {
+  slide.addText(ex.dossierTitle || "INSPECTED EVENT DOSSIER", {
     x: leftX + 0.25, y: 1.8, w: 4.3, h: 0.28,
     fontSize: 11, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
   });
-  slide.addText(`Event Ref: ${ex.txnId}`, {
+  slide.addText(`Event Ref: ${ex.txnId || "OPS-ALERT-101"}`, {
     x: leftX + 0.25, y: 2.15, w: 4.3, h: 0.38,
     fontSize: 18, bold: true, color: palette.heading, fontFace: palette.fontTitle,
   });
 
   const details = [
-    { label: "Observed Value / Impact", val: ex.amount },
+    { label: "Observed Value / Impact", val: ex.amount || "High Urgency Exception" },
     { label: "Channel & Timestamp", val: `${ex.channel || "Operational Hub"} · ${ex.timestamp || "Live"}` },
     { label: "Observed Location / Unit", val: `${ex.location || "Active Node"} (Baseline: ${ex.baselineLocation || "Nominal"})` },
     { label: "Observed Device / Feed", val: `${ex.device || "Telemetry Feed"} (Baseline: ${ex.baselineDevice || "Standard"})` },
-    { label: "Composite AI Risk Score", val: `${ex.riskScore} / 100 (${ex.riskLevel})` },
-    { label: "Recommended AI Action", val: ex.decision },
+    { label: "Composite AI Risk Score", val: `${ex.riskScore || 89} / 100 (${ex.riskLevel || "CRITICAL"})` },
+    { label: "Recommended AI Action", val: ex.decision || "TRIGGER AUTOMATED WORKFLOW" },
   ];
 
   details.forEach((d, idx) => {
@@ -636,7 +611,7 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
     x: rightX, y: 1.6, w: 7.38, h: 4.8, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
   });
-  slide.addText("TRANSPARENT RISK FACTOR DECOMPOSITION", {
+  slide.addText(ex.factorsTitle || "TRANSPARENT RISK FACTOR DECOMPOSITION", {
     x: rightX + 0.25, y: 1.8, w: 6.88, h: 0.28,
     fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
   });
@@ -665,17 +640,12 @@ function addExplainableSlide(slide, palette, { pitchPlan, page }) {
 // Slide 9: Customer Behavioral Profiling
 function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
   applyMaster(slide, palette, { page });
-  const bp = pitchPlan.behavioral_profile || {
-    entityName: "Operating Entity Profile",
-    baseline: [{ dimension: "Location", value: "Domestic Baseline", status: "Baseline" }],
-    anomaly: [{ dimension: "Location", value: "Foreign Node Deviation", status: "Anomaly" }],
-    conclusion: "Behavioral model detects significant multi-dimensional deviation from established profile."
-  };
+  const bp = pitchPlan.behavioral_profile || {};
 
   addSectionHeader(slide, palette, {
-    kicker: "OPERATIONAL CAPABILITY 3 OF 5  |  BEHAVIORAL INTELLIGENCE",
-    title: "Multi-Dimensional Baseline vs. Anomaly Radar",
-    subtitle: `Continuous machine learning compares every live event against 12 months of operational history.`,
+    kicker: bp.kicker || "OPERATIONAL CAPABILITY 3 OF 5  |  BEHAVIORAL INTELLIGENCE",
+    title: bp.title || "Multi-Dimensional Baseline vs. Anomaly Radar",
+    subtitle: bp.subtitle || `Continuous machine learning compares every live event against 12 months of operational history.`,
   });
 
   // Left Box: 12-Month Baseline Profile
@@ -684,7 +654,7 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
     x: leftX, y: 1.6, w: 5.9, h: 4.1, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
   });
-  slide.addText(`ESTABLISHED 12-MONTH BASELINE PROFILE: ${truncate(bp.entityName, 32)}`, {
+  slide.addText(bp.baselineTitle || `ESTABLISHED 12-MONTH BASELINE PROFILE: ${truncate(bp.entityName || "Operational Baseline", 32)}`, {
     x: leftX + 0.25, y: 1.8, w: 5.4, h: 0.28,
     fontSize: 11, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
@@ -711,7 +681,7 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
     x: rightX, y: 1.6, w: 6.18, h: 4.1, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "E54A24", width: 1.5 },
   });
-  slide.addText("CURRENT ANOMALOUS EVENT DEVIATION", {
+  slide.addText(bp.anomalyTitle || "CURRENT ANOMALOUS EVENT DEVIATION", {
     x: rightX + 0.25, y: 1.8, w: 5.68, h: 0.28,
     fontSize: 11, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
   });
@@ -737,7 +707,7 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
     x: MARGIN, y: 5.85, w: 12.48, h: 0.75, rectRadius: 0.08,
     fill: { color: "0B1220" }, line: { color: palette.accent, width: 1 },
   });
-  slide.addText(`AI PROFILE VERDICT:  ${bp.conclusion}`, {
+  slide.addText(`AI PROFILE VERDICT:  ${bp.conclusion || "Multi-dimensional anomaly detected"}`, {
     x: MARGIN + 0.3, y: 6.08, w: 11.88, h: 0.3,
     fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontTitle, align: "center",
   });
@@ -746,14 +716,15 @@ function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
 // Slide 10: Investigation Prioritization Queue
 function addQueueSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const qm = pitchPlan.queue_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "OPERATIONAL CAPABILITY 4 OF 5  |  INVESTIGATION QUEUE",
-    title: "AI-Prioritized Case Triage & Frontline Action Queue",
-    subtitle: `High-urgency incidents are ranked Critical/High with pre-assembled dossiers so teams act in seconds.`,
+    kicker: qm.kicker || "OPERATIONAL CAPABILITY 4 OF 5  |  INVESTIGATION QUEUE",
+    title: qm.title || "AI-Prioritized Case Triage & Frontline Action Queue",
+    subtitle: qm.subtitle || `High-urgency incidents are ranked Critical/High with pre-assembled dossiers so teams act in seconds.`,
   });
 
-  const headers = ["Priority Tier", "Case Ref", "Entity / Unit", "Observed Value", "Primary Trigger", "One-Click Operational Action"];
-  const colW = [1.8, 1.4, 1.8, 1.6, 3.4, 2.48];
+  const headers = qm.headers || ["Priority Tier", "Case Ref", "Entity / Unit", "Observed Value", "Primary Trigger", "One-Click Operational Action"];
+  const colW = qm.colW || [1.8, 1.4, 1.8, 1.6, 3.4, 2.48];
   
   const tableY = 1.6;
   slide.addShape("roundRect", {
@@ -808,10 +779,11 @@ function addQueueSlide(slide, palette, { companyName, pitchPlan, page }) {
 // Slide 11: Business Outcomes & Value Loop
 function addOutcomesSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const om = pitchPlan.outcomes_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "OPERATIONAL CAPABILITY 5 OF 5  |  BUSINESS OUTCOMES",
-    title: `Measurable Solution Performance for ${companyName}`,
-    subtitle: `Projected operational benchmarks tailored specifically to ${pitchPlan.primary_business_domain}.`,
+    kicker: om.kicker || "OPERATIONAL CAPABILITY 5 OF 5  |  BUSINESS OUTCOMES",
+    title: om.title || `Measurable Solution Performance for ${companyName}`,
+    subtitle: om.subtitle || `Projected operational benchmarks tailored specifically to ${pitchPlan.primary_business_domain}.`,
   });
 
   const kpis = (pitchPlan.solution_kpis || []).slice(0, 4);
@@ -846,7 +818,7 @@ function addOutcomesSlide(slide, palette, { companyName, pitchPlan, page }) {
     x: MARGIN, y: loopY, w: 12.48, h: 2.3, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
   });
-  slide.addText("CLOSED-LOOP CONTINUOUS LEARNING ARCHITECTURE", {
+  slide.addText(pitchPlan.closed_loop_title || "CLOSED-LOOP CONTINUOUS LEARNING ARCHITECTURE", {
     x: MARGIN + 0.3, y: loopY + 0.18, w: 11.88, h: 0.28,
     fontSize: 12, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
   });
@@ -872,10 +844,11 @@ function addOutcomesSlide(slide, palette, { companyName, pitchPlan, page }) {
 // Slide 12: Technical Data Readiness Matrix
 function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const rm = pitchPlan.readiness_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "DATA READINESS & DISCOVERY MATRIX",
-    title: "Fast-Track Integration & Feasibility Assessment",
-    subtitle: `All required data feeds connect to existing enterprise infrastructure without requiring system replacements.`,
+    kicker: rm.kicker || "DATA READINESS & DISCOVERY MATRIX",
+    title: rm.title || "Fast-Track Integration & Feasibility Assessment",
+    subtitle: rm.subtitle || `All required data feeds connect to existing enterprise infrastructure without requiring system replacements.`,
   });
 
   const headers = ["Data Domain", "Required Key Fields", "Potential Source Systems", "Ingestion Frequency", "Discovery Status"];
@@ -931,10 +904,11 @@ function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page })
 // Slide 13: Delivery Roadmap
 function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
+  const rdm = pitchPlan.roadmap_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "DELIVERY ROADMAP",
-    title: "A Phased Path from Fast Pilot to Enterprise Scale",
-    subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`,
+    kicker: rdm.kicker || "DELIVERY ROADMAP",
+    title: rdm.title || "A Phased Path from Fast Pilot to Enterprise Scale",
+    subtitle: rdm.subtitle || `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`,
   });
 
   const phases = (pitchPlan.roadmap_phases || []).slice(0, 4);
@@ -971,10 +945,11 @@ function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
 // Slide 14: Next Steps & Discovery Kick-off
 function addNextStepsSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page, wave: true });
+  const nsm = pitchPlan.next_steps_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: "NEXT STEPS & ENGAGEMENT PLAN",
-    title: `Next Steps to Initiate Discovery for ${companyName}`,
-    subtitle: `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`,
+    kicker: nsm.kicker || "NEXT STEPS & ENGAGEMENT PLAN",
+    title: nsm.title || `Next Steps to Initiate Discovery for ${companyName}`,
+    subtitle: nsm.subtitle || `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`,
   });
 
   const steps = (pitchPlan.next_steps || []).slice(0, 3);
