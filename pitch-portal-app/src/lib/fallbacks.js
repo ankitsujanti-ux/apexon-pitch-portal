@@ -47,7 +47,7 @@ function industryKey(domain, requirement) {
 
 export function fallbackResearch({ companyName, domain, requirement }) {
   const { key, playbook } = findSectorPlaybook(domain, requirement, companyName);
-  const req = sentence(requirement, "a governed Microsoft Fabric data and AI operations platform");
+  const req = sentence(requirement, "a modern real-time data and AI operations platform");
 
   const businessAreasText = (playbook.businessAreas || []).slice(0, 5).join(", ");
   const systemsText = (playbook.dataSystems || []).slice(0, 4).map(s => `${s.name} (${s.role})`).join("; ");
