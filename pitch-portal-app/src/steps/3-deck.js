@@ -889,7 +889,7 @@ function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page })
       df.fields,
       df.sourceSystems,
       df.frequency,
-      "To be validated during discovery"
+      df.readiness || "Standard Ingestion Ready"
     ];
 
     rowValues.forEach((val, cIdx) => {
