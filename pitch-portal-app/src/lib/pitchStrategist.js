@@ -168,10 +168,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "Connecting core payment switches, device telemetry, and customer histories to power real-time fraud AI."
       };
       dataFoundation = [
-        { category: "Transaction & Payment Feeds", desc: "Real-time card, UPI, IMPS, wire authorization events, and terminal telemetry.", sourceSystems: "Payment Switch (ISO 8583/20022), Core Banking Ledger, UPI Gateway", fields: "txn_id, account_id, amount, currency, merchant_id, mcc_code, timestamp, channel", frequency: "Real-Time Streaming (<50ms)", readiness: "To be validated during discovery" },
-        { category: "Device & Digital Signals", desc: "Device fingerprinting, IP address, OS/browser, mobile app version, and login session tokens.", sourceSystems: "Mobile Banking App, Web Portal, IAM / Auth Gateway", fields: "device_id, ip_address, browser_fp, os_version, session_duration, failed_attempts", frequency: "Real-Time Event (<100ms)", readiness: "To be validated during discovery" },
-        { category: "Customer & Account History", desc: "Historical baseline spending profiles, typical locations, average transaction size, and beneficiary lists.", sourceSystems: "Core Banking System, CRM, Customer 360 Lakehouse", fields: "customer_id, typical_spend_range, frequent_locations, frequent_devices, account_age", frequency: "Continuous Lakehouse Sync", readiness: "To be validated during discovery" },
-        { category: "Geographic & Terminal Telemetry", desc: "IP geolocation, terminal GPS coordinates, ATM address coordinates, and impossible travel velocity checks.", sourceSystems: "GeoIP Feeds, Terminal Master DB, ATM Controller", fields: "latitude, longitude, country_code, city, travel_velocity_kmh", frequency: "Real-Time Calculation", readiness: "To be validated during discovery" }
+        { category: "Payment & Switch Authorizations", desc: "Real-time card, UPI, IMPS, wire authorization events, and terminal telemetry.", sourceSystems: "Payment Switch (ISO 8583/20022), Core Banking Ledger, UPI Gateway", fields: "txn_id, account_id, amount, currency, merchant_id, mcc_code, timestamp, channel", frequency: "Real-Time Streaming (<50ms)", readiness: "High Feasibility (Standard ISO Stream)" },
+        { category: "Device Fingerprints & Digital Tokens", desc: "Device fingerprinting, IP address, OS/browser, mobile app version, and login session tokens.", sourceSystems: "Mobile Banking App, Web Portal, IAM / Auth Gateway", fields: "device_id, ip_address, browser_fp, os_version, session_duration, failed_attempts", frequency: "Real-Time Event (<100ms)", readiness: "SDK Telemetry Interface Ready" },
+        { category: "Customer 360 & Account Baselines", desc: "Historical baseline spending profiles, typical locations, average transaction size, and beneficiary lists.", sourceSystems: "Core Banking System, CRM, Customer 360 Lakehouse", fields: "customer_id, typical_spend_range, frequent_locations, frequent_devices, account_age", frequency: "Continuous Lakehouse Sync", readiness: "Existing Lakehouse Ingestion" },
+        { category: "Geographic Telemetry & ATM Feeds", desc: "IP geolocation, terminal GPS coordinates, ATM address coordinates, and impossible travel velocity checks.", sourceSystems: "GeoIP Feeds, Terminal Master DB, ATM Controller", fields: "latitude, longitude, country_code, city, travel_velocity_kmh", frequency: "Real-Time Calculation", readiness: "Direct Real-Time Feed Active" },
+        { category: "AML Sanctions & Watchlist DB", desc: "Global sanctions, PEP records, internal fraud blacklist, and compromised card repositories.", sourceSystems: "AML Screening Engine, Fraud Bureau Watchlist", fields: "entity_name, sanction_id, match_confidence, risk_category", frequency: "Sub-Second Query", readiness: "API Query Ready" }
       ];
       architectureMeta = {
         kicker: "SOLUTION ARCHITECTURE",
@@ -276,13 +277,13 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       ];
       closedLoopTitle = "CLOSED-LOOP FRAUD LEARNING ARCHITECTURE";
       closedLoopSteps = [
-        { title: "1. Real-Time Scoring", desc: "Live event stream evaluated against ML feature store in <60ms." },
-        { title: "2. Priority Routing", desc: "High-risk alerts instantly routed to analyst queue with explainable factors." },
-        { title: "3. Investigator Decision", desc: "Analyst confirms or dismisses case with 1-click evidence dossier." },
-        { title: "4. Automated Model Update", desc: "Outcome fed back to lakehouse to continuously reduce future false positives." }
+        { title: "1. Sub-Second Scoring", desc: "Live transaction evaluated against 12-month behavioral feature store in <60ms." },
+        { title: "2. Priority Threat Routing", desc: "High-risk alerts instantly routed to analyst queue with transparent risk factors." },
+        { title: "3. Investigator Triage", desc: "Analyst confirms fraud or clears customer with 1-click contextual evidence dossier." },
+        { title: "4. Automated Model Retraining", desc: "Confirmed resolution retrains ML models to continuously eliminate false positives." }
       ];
       readinessMeta = {
-        kicker: "DATA READINESS MATRIX",
+        kicker: "DATA READINESS & FEASIBILITY MATRIX",
         title: "Payment Systems Integration & Data Feasibility",
         subtitle: "All required fraud telemetry feeds connect to existing payment switches without disrupting production auth flows."
       };
@@ -292,10 +293,10 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live fraud protection across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Setup & Data Discovery", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", "Connect primary real-time payment eventstream", "Validate source fields and data quality", "Establish role-based governance & security"] },
-        { title: "2. Quick-Win Pilot", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} Pilot`, "Deploy explainable AI scoring model", "Test real-time investigation queue with analysts", "Measure baseline loss reduction & false positive rate"] },
-        { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale streaming to 100% of payment channels", "Integrate automated challenge/MFA webhooks", "Deploy mobile alerts & Teams bot dispatch", "Establish continuous retraining feature store"] },
-        { title: "4. Continuous Value", time: "Months 6+", items: ["Expand behavioral models across all business units", "Automate cross-channel intelligence sharing", "Benchmark enterprise-wide ROI with executive board"] }
+        { title: "1. Payment Ingestion & Tokenization Setup", time: "Weeks 1–4", items: ["Stand up secure PCI-DSS cloud lakehouse", "Connect ISO payment switch authorization streams", "Ingest mobile device fingerprint telemetry", "Establish cryptographic tokenization & masking"] },
+        { title: "2. Sub-Second AI Model Pilot", time: "Weeks 5–8", items: ["Deploy real-time fraud scoring engine in shadow mode", "Calibrate explainable risk factor weights", "Train fraud analysts on prioritized triage queue", "Measure baseline fraud catch rate & false positive ratio"] },
+        { title: "3. Full Channel Production Rollout", time: "Months 3–6", items: ["Activate real-time blocking across UPI, cards, and net banking", "Integrate automated step-up MFA challenge webhooks", "Deploy fraud investigator mobile alerts & Teams bot", "Automate closed-loop chargeback feedback retraining"] },
+        { title: "4. Cross-Border & Ring Graph Scaling", time: "Months 6+", items: ["Expand behavioral models across business banking & wealth", "Enable cross-channel fraud ring graph analytics", "Benchmark fraud loss reduction with executive board", "Deploy federated learning for emerging attack vectors"] }
       ];
       nextStepsMeta = {
         kicker: "NEXT STEPS & ENGAGEMENT PLAN",
@@ -303,9 +304,9 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "A collaborative 3-step path to validate payment stream readiness and launch the live fraud pilot."
       };
       nextSteps = [
-        { num: "01", title: "3-Week Technical Discovery & Data Audit", desc: "Collaborate with payment & security engineering teams to review authorization streams, ISO schemas, and API boundaries." },
-        { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (false positive rate, decision latency, investigation time) and confirm success targets." },
-        { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the real-time command center connected to live payment streams with active triage workflows for fraud analysts." }
+        { num: "01", title: "3-Week Payment Switch & ISO Message Audit", desc: `Collaborate with ${companyName} payment engineering to review ISO 8583 message streams, device SDK payloads, and sub-50ms latency boundaries.` },
+        { num: "02", title: "Fraud Loss & False Positive Baseline Measurement", desc: "Analyze 90 days of historical authorization logs to quantify current false positive rates, missed fraud loss, and analyst review cycle times." },
+        { num: "03", title: "8-Week Shadow Pilot & Real-Time Scoring Launch", desc: "Deploy the sub-second fraud decision engine running in parallel with existing payment switches to validate a 30%+ loss reduction." }
       ];
       break;
 
@@ -349,10 +350,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "Integrating ADT messages, ED triage feeds, and EVS housekeeping telemetry into a unified clinical lakehouse."
       };
       dataFoundation = [
-        { category: "Admission, Discharge & Transfer (ADT)", desc: "Real-time HL7/FHIR admission feeds, room assignments, transfer requests, and discharge orders.", sourceSystems: "EHR / EMR (Epic, Cerner, Meditech), ADT Interface Engine", fields: "patient_id, bed_id, unit_id, admission_ts, expected_discharge_ts, discharge_order_ts", frequency: "Real-Time Stream (<100ms)", readiness: "To be validated during discovery" },
-        { category: "Emergency Department & Triage Feeds", desc: "Live ED waiting queue, triage acuity scores (ESI 1–5), boarder counts, and bed requests.", sourceSystems: "ED Information System (EDIS), Triage Workstation", fields: "encounter_id, esi_level, door_ts, triage_ts, bed_request_ts, disposition_ts", frequency: "Real-Time Streaming", readiness: "To be validated during discovery" },
-        { category: "Diagnostic & Lab Turnaround Feeds", desc: "Live lab order timestamps, critical result releases, radiology/PACS scanning and report availability.", sourceSystems: "LIMS, Radiology PACS, Clinical Portal", fields: "order_id, test_type, order_ts, specimen_collected_ts, result_verified_ts", frequency: "Real-Time Webhooks", readiness: "To be validated during discovery" },
-        { category: "Environmental Services & Bed Turnover", desc: "Bed vacancy signals, housekeeping dispatch times, cleaning cycle progress, and nurse confirmation.", sourceSystems: "Bed Management Platform, Housekeeping Mobile App", fields: "bed_id, bed_status, dirty_ts, assigned_ts, cleaning_complete_ts, occupied_ts", frequency: "Real-Time Mobile Telemetry", readiness: "To be validated during discovery" }
+        { category: "Admission, Discharge & Transfer (ADT)", desc: "Real-time HL7/FHIR admission feeds, room assignments, transfer requests, and discharge orders.", sourceSystems: "EHR / EMR (Epic, Cerner, Meditech), ADT Interface Engine", fields: "patient_id, bed_id, unit_id, admission_ts, expected_discharge_ts, discharge_order_ts", frequency: "Real-Time Stream (<100ms)", readiness: "High Feasibility (HL7v2 / FHIR)" },
+        { category: "Emergency Department Triage Feeds", desc: "Live ED waiting queue, triage acuity scores (ESI 1–5), boarder counts, and bed requests.", sourceSystems: "ED Information System (EDIS), Triage Workstation", fields: "encounter_id, esi_level, door_ts, triage_ts, bed_request_ts, disposition_ts", frequency: "Real-Time Streaming", readiness: "Interface Engine Active" },
+        { category: "LIMS Lab & Diagnostic Turnaround", desc: "Live lab order timestamps, critical result releases, radiology/PACS scanning and report availability.", sourceSystems: "LIMS, Radiology PACS, Clinical Portal", fields: "order_id, test_type, order_ts, specimen_collected_ts, result_verified_ts", frequency: "Real-Time Webhooks", readiness: "Standard API Connector" },
+        { category: "EVS Housekeeping & Bed Turnover", desc: "Bed vacancy signals, housekeeping dispatch times, cleaning cycle progress, and nurse confirmation.", sourceSystems: "Bed Management Platform, Housekeeping Mobile App", fields: "bed_id, bed_status, dirty_ts, assigned_ts, cleaning_complete_ts, occupied_ts", frequency: "Real-Time Mobile Telemetry", readiness: "Mobile App Webhook Ready" },
+        { category: "Pharmacy Discharge Medication Dispense", desc: "Medication reconciliation status, discharge prescription order entry, and bedside delivery confirmation.", sourceSystems: "Inpatient Pharmacy Dispense System", fields: "rx_id, med_type, dispense_ts, delivery_ts", frequency: "Continuous Stream & CDC", readiness: "Direct Database Sync Active" }
       ];
       architectureMeta = {
         kicker: "CLINICAL SOLUTION ARCHITECTURE",
@@ -453,16 +455,16 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { name: "Bed Cleaning Turnaround", benchmark: "< 45 min Average TAT", desc: "Accelerates room turnover between patient discharge and admission.", type: "Operational Velocity" },
         { name: "Early Morning Discharge %", benchmark: "↑ 20–30% Lift", desc: "Increases discharges completed before 11:00 AM to unlock bed supply.", type: "Capacity Optimization" }
       ];
-      closedLoopTitle = "CLOSED-LOOP PATIENT FLOW LEARNING";
+      closedLoopTitle = "CONTINUOUS CLINICAL DISCHARGE FEEDBACK LOOP";
       closedLoopSteps = [
         { title: "1. Real-Time Bed Sensing", desc: "Live ADT discharge orders and bed state updates streamed in <50ms." },
-        { title: "2. Bottleneck Detection", desc: "AI identifies discharge delays (meds, transport, clean) before shift end." },
-        { title: "3. Coordinated Dispatch", desc: "Bed placement leads trigger automated mobile task dispatch to EVS & transport." },
-        { title: "4. Capacity Model Retraining", desc: "Actual turnaround times fed back into the lakehouse to sharpen daily unit forecasts." }
+        { title: "2. AI Barrier Detection", desc: "Predicts pending lab results, medication delivery, and transport delays hours before shift end." },
+        { title: "3. Frontline Care Orchestration", desc: "Bed placement leads trigger automated mobile task dispatch to EVS housekeeping and pharmacy." },
+        { title: "4. Inpatient Flow Calibration", desc: "Actual floor turnaround times fed back into the lakehouse to sharpen unit capacity forecasts." }
       ];
       readinessMeta = {
-        kicker: "CLINICAL DATA READINESS",
-        title: "EHR Integration & Clinical Data Feasibility",
+        kicker: "CLINICAL DATA READINESS & FEASIBILITY MATRIX",
+        title: "EHR Integration & Clinical Data Feasibility Assessment",
         subtitle: "All required patient flow streams connect via standard HL7/FHIR interfaces without touching core EHR clinical databases."
       };
       roadmapMeta = {
@@ -471,10 +473,10 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live bed capacity orchestration across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Clinical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure HIPAA-compliant cloud lakehouse", "Connect live ADT and ED tracker eventstreams", "Validate HL7 interface engine message quality", "Establish role-based clinical security"] },
-        { title: "2. Pilot Unit Deployment", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} on 2 pilot floors`, "Deploy predictive bed turnaround model", "Train bed coordinators and charge nurses on live command radar", "Measure baseline ED boarding time reduction"] },
-        { title: "3. Hospital-Wide Rollout", time: "Months 3–6", items: ["Expand to all inpatient floors, ICU units, and surgical suites", "Integrate automated housekeeping mobile dispatch", "Deploy real-time nursing executive dashboards", "Establish continuous model calibration"] },
-        { title: "4. Network Value Expansion", time: "Months 6+", items: ["Deploy cross-hospital transfer orchestration", "Optimize multi-facility patient load balancing", "Benchmark ALOS reduction with executive clinical leadership"] }
+        { title: "1. Clinical Ingestion & HIPAA Lakehouse Setup", time: "Weeks 1–4", items: ["Stand up secure HIPAA-compliant cloud lakehouse", "Connect live HL7 ADT and ED triage eventstreams", "Validate clinical message schema fidelity", "Implement role-based clinical access controls"] },
+        { title: "2. Pilot Inpatient Floor Deployment", time: "Weeks 5–8", items: ["Deploy bed flow command board on 2 pilot floors", "Calibrate discharge barrier prediction model", "Train bed placement leads & nurse coordinators", "Establish baseline ED boarding time benchmarks"] },
+        { title: "3. Hospital-Wide Floor & ICU Rollout", time: "Months 3–6", items: ["Expand live tracking to all acute & ICU units", "Integrate automated EVS housekeeping dispatch", "Deploy clinical leadership executive analytics", "Activate automated pharmacy discharge alerts"] },
+        { title: "4. Health Network Capacity Optimization", time: "Months 6+", items: ["Deploy cross-hospital transfer orchestration", "Optimize multi-facility patient load balancing", "Benchmark network-wide ALOS reduction with leadership", "Enable continuous machine learning retraining"] }
       ];
       nextStepsMeta = {
         kicker: "NEXT STEPS & ENGAGEMENT PLAN",
@@ -482,9 +484,9 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "A collaborative 3-step path to validate clinical data readiness and launch the live capacity pilot."
       };
       nextSteps = [
-        { num: "01", title: "3-Week Clinical IT & ADT Data Audit", desc: "Collaborate with hospital clinical IT teams to review HL7/FHIR message streams, EHR interfaces, and room state schemas." },
-        { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (ALOS, ED boarding hours, room turnover times) and set target improvement thresholds." },
-        { num: "03", title: "8-Week Rapid Clinical Pilot Deployment", desc: "Deploy the bed operations command center connected to live hospital ADT feeds on pilot inpatient units." }
+        { num: "01", title: "3-Week Clinical IT & HL7 Interface Audit", desc: `Collaborate with ${companyName} clinical IT and EHR teams to map ADT feeds, room clean states, and ED tracker endpoints.` },
+        { num: "02", title: "Unit Baseline Measurement & Flow Target Definition", desc: "Jointly establish current floor metrics (ALOS, ED boarding hours, room turnover times) and set target improvement thresholds with nursing leads." },
+        { num: "03", title: "8-Week Rapid Clinical Floor Deployment", desc: "Deploy the live bed operations command center connected to hospital ADT feeds across 2 pilot inpatient units to prove immediate throughput gains." }
       ];
       break;
 
@@ -528,10 +530,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "Integrating store checkout streams, e-commerce cart events, and warehouse inventory ledgers into the lakehouse."
       };
       dataFoundation = [
-        { category: "Point-of-Sale (POS) & E-Commerce Streams", desc: "Live store register sales, online cart checkouts, returns, and inventory scan events.", sourceSystems: "Store POS System, E-Commerce Platform (Shopify/SAP Commerce), Mobile App", fields: "sku_id, store_id, units_sold, unit_price, return_flag, timestamp, channel", frequency: "Real-Time Streaming (<100ms)", readiness: "To be validated during discovery" },
-        { category: "Warehouse & Inventory Ledger", desc: "On-hand inventory, in-transit purchase orders, backroom counts, and bin locations.", sourceSystems: "Warehouse Management System (WMS), ERP (SAP/Oracle)", fields: "sku_id, warehouse_id, qty_on_hand, qty_reserved, qty_in_transit, safety_stock", frequency: "Continuous Stream & CDC", readiness: "To be validated during discovery" },
-        { category: "Supplier & Purchase Orders", desc: "Inbound vendor shipments, estimated arrival dates, supplier fill rates, and lead-time logs.", sourceSystems: "Supplier EDI Portal, Supply Chain Control Tower", fields: "po_number, vendor_id, expected_delivery_ts, actual_delivery_ts, fill_rate", frequency: "Daily & Webhook Updates", readiness: "To be validated during discovery" },
-        { category: "Pricing & Promotional Calendar", desc: "Active marketing campaigns, seasonal discounts, local weather forecasts, and regional events.", sourceSystems: "Merchandising Engine, Marketing DB, Weather API", fields: "campaign_id, discount_pct, start_date, end_date, regional_temp_delta", frequency: "Daily Scheduled Sync", readiness: "To be validated during discovery" }
+        { category: "Point-of-Sale (POS) Checkout Streams", desc: "Live store register sales, online cart checkouts, returns, and inventory scan events.", sourceSystems: "Store POS System, E-Commerce Platform (Shopify/SAP Commerce), Mobile App", fields: "sku_id, store_id, units_sold, unit_price, return_flag, timestamp, channel", frequency: "Real-Time Streaming (<100ms)", readiness: "High Feasibility (Direct POS Stream)" },
+        { category: "Warehouse & DC Inventory Ledgers", desc: "On-hand inventory, in-transit purchase orders, backroom counts, and bin locations.", sourceSystems: "Warehouse Management System (WMS), ERP (SAP/Oracle)", fields: "sku_id, warehouse_id, qty_on_hand, qty_reserved, qty_in_transit, safety_stock", frequency: "Continuous Stream & CDC", readiness: "Standard ERP / WMS CDC Ready" },
+        { category: "Supplier Inbound EDI Purchase Orders", desc: "Inbound vendor shipments, estimated arrival dates, supplier fill rates, and lead-time logs.", sourceSystems: "Supplier EDI Portal (EDI 850/856), Supply Chain Tower", fields: "po_number, vendor_id, expected_delivery_ts, actual_delivery_ts, fill_rate", frequency: "Daily & Webhook Updates", readiness: "Standard EDI Translator Ready" },
+        { category: "Promotional & Regional Weather Calendars", desc: "Active marketing campaigns, seasonal discounts, local weather forecasts, and regional events.", sourceSystems: "Merchandising Engine, Marketing DB, Weather API", fields: "campaign_id, discount_pct, start_date, end_date, regional_temp_delta", frequency: "Daily Scheduled Sync", readiness: "External REST API Available" },
+        { category: "Customer Loyalty & Return Signals", desc: "Customer repeat purchases, store return rates, and omnichannel cart abandonment events.", sourceSystems: "Customer Data Platform (CDP), Loyalty Engine", fields: "customer_id, return_reason, abandoned_sku, loyalty_tier", frequency: "Hourly Event Ingestion", readiness: "CDP Connector Ready" }
       ];
       architectureMeta = {
         kicker: "SUPPLY CHAIN ARCHITECTURE",
@@ -632,15 +635,15 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { name: "Forecast Accuracy Lift", benchmark: "↑ 18–25% Accuracy", desc: "Sharpens store-level demand forecasting using real-time POS streams.", type: "Operational Velocity" },
         { name: "Replenishment Cycle Time", benchmark: "50% Faster Fulfillment", desc: "Automates reorder triggers directly to regional distribution centers.", type: "Supply Chain Velocity" }
       ];
-      closedLoopTitle = "CLOSED-LOOP DEMAND & REPLENISHMENT LEARNING";
+      closedLoopTitle = "CLOSED-LOOP DEMAND SENSING & REPLENISHMENT";
       closedLoopSteps = [
-        { title: "1. Real-Time POS Ingestion", desc: "Live register transactions and online orders ingested in real time (<100ms)." },
-        { title: "2. Demand Anomaly Detection", desc: "ML models compare hourly sales against seasonal forecasts to flag stockout risks." },
-        { title: "3. Automated Allocation", desc: "System auto-generates optimized DC transfers and supplier reorders." },
-        { title: "4. Continuous Demand Tuning", desc: "Sales lift from promotions is fed back to fine-tune future demand elasticity." }
+        { title: "1. Real-Time POS Demand Sensing", desc: "Live register transactions and online cart checkouts ingested in real time (<100ms)." },
+        { title: "2. Stockout Velocity Prediction", desc: "ML models compare hourly sales against backroom stock to flag imminent stockout risks." },
+        { title: "3. Automated DC & Store Dispatch", desc: "System auto-generates optimized DC transfers and supplier reorders before shelves empty." },
+        { title: "4. Promotional Elasticity Tuning", desc: "Actual promotional sales lift is fed back to fine-tune future seasonal demand elasticity." }
       ];
       readinessMeta = {
-        kicker: "RETAIL DATA READINESS",
+        kicker: "RETAIL DATA READINESS & FEASIBILITY MATRIX",
         title: "POS & Supply Chain Data Feasibility Assessment",
         subtitle: "All required inventory streams connect via standard POS streaming and WMS APIs without disruption."
       };
@@ -650,10 +653,10 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live replenishment automation across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Supply Chain Data Audit", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", "Connect live POS streams and WMS inventory feeds", "Validate SKU master data and barcode event schemas", "Establish inventory governance rules"] },
-        { title: "2. Pilot Cluster Rollout", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} on 50 pilot stores`, "Deploy real-time stockout risk radar", "Automate daily store replenishment recommendations", "Measure stockout reduction and on-shelf availability"] },
-        { title: "3. Enterprise Chain Scale", time: "Months 3–6", items: ["Scale streaming to 100% of retail stores and e-commerce DCs", "Integrate automated supplier purchase order webhooks", "Deploy store manager mobile inventory apps", "Enable cross-channel inventory pooling"] },
-        { title: "4. Advanced Merchandising Value", time: "Months 6+", items: ["Deploy dynamic markdown optimization models", "Automate vendor supply lead-time forecasting", "Benchmark inventory turnover lift with retail leadership"] }
+        { title: "1. POS & WMS Stream Ingestion Setup", time: "Weeks 1–4", items: ["Stand up enterprise supply chain lakehouse", "Connect live store POS register streams & online carts", "Ingest WMS on-hand inventory ledgers", "Establish unified SKU master data model"] },
+        { title: "2. 50-Store Pilot Replenishment Rollout", time: "Weeks 5–8", items: ["Launch real-time replenishment radar across 50 pilot stores", "Deploy store-level hourly demand forecasting model", "Train store managers on mobile stockout alert app", "Measure reduction in out-of-stock lost sales"] },
+        { title: "3. Chain-Wide Automated Allocation", time: "Months 3–6", items: ["Scale real-time demand sensing to 100% of retail stores", "Automate DC cross-dock and transfer order generation", "Integrate supplier purchase order EDI webhooks", "Deploy merchandiser allocation workbench"] },
+        { title: "4. Dynamic Pricing & Network Pooling", time: "Months 6+", items: ["Deploy promotional markdown optimization models", "Enable dynamic omnichannel inventory pooling", "Automate vendor supply lead-time risk scoring", "Benchmark working capital savings with leadership"] }
       ];
       nextStepsMeta = {
         kicker: "NEXT STEPS & ENGAGEMENT PLAN",
@@ -661,9 +664,9 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: "A collaborative 3-step path to validate POS data readiness and launch the live fulfillment pilot."
       };
       nextSteps = [
-        { num: "01", title: "3-Week POS & WMS Data Architecture Audit", desc: "Collaborate with retail systems engineering to review POS streams, WMS feeds, and supplier EDI gateways." },
-        { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (out-of-stock rates, inventory turnover, stockout lost sales) and confirm targets." },
-        { num: "03", title: "8-Week Rapid Retail Pilot Deployment", desc: "Deploy the real-time inventory command center connected to live POS feeds across pilot retail stores." }
+        { num: "01", title: "3-Week Store POS & WMS Data Flow Discovery", desc: `Collaborate with ${companyName} retail IT to map register POS streams, WMS inventory sync frequencies, and supplier EDI gateways.` },
+        { num: "02", title: "Out-of-Stock Baseline & Shrinkage Impact Analysis", desc: "Analyze historical POS stockouts, lost sales volume, and buffer inventory carrying costs across representative store clusters." },
+        { num: "03", title: "8-Week Pilot Cluster Replenishment Deployment", desc: "Deploy the automated inventory command center connected to live POS feeds across 50 pilot stores to demonstrate a 25%+ drop in stockouts." }
       ];
       break;
 
@@ -710,13 +713,13 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         title: `${companyName} Data Foundation for ${primaryDomain}`,
         subtitle: `Connecting the exact operational feeds, telemetry, and historical records needed to power real-time AI.`
       };
-      dataFoundation = systems.slice(0, 4).map((sys, idx) => ({
+      dataFoundation = systems.slice(0, 5).map((sys, idx) => ({
         category: sys.name,
         desc: sys.role || `Core operational feed for ${domain.toLowerCase()}`,
         sourceSystems: `Enterprise ${sys.name} System, Core DB, Streaming Gateway`,
         fields: `entity_id, event_type, status_code, metric_value, timestamp, operator_id`,
         frequency: idx < 2 ? "Real-Time Streaming (<100ms)" : "Continuous CDC & Event Sync",
-        readiness: "To be validated during discovery"
+        readiness: idx < 2 ? "High Feasibility (Live Stream)" : "Standard Enterprise API Ready"
       }));
       realTimeSignals = [
         `Sudden deviation in primary ${domain.toLowerCase()} operational parameters`,
@@ -823,15 +826,15 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         desc: k.why || "Operational performance improvement",
         type: "Business Outcome"
       }));
-      closedLoopTitle = "CLOSED-LOOP CONTINUOUS LEARNING ARCHITECTURE";
+      closedLoopTitle = "CLOSED-LOOP OPERATIONAL LEARNING ARCHITECTURE";
       closedLoopSteps = [
-        { title: "1. Real-Time Telemetry", desc: `Operational feeds ingested into the lakehouse in <100ms.` },
+        { title: "1. Real-Time Telemetry", desc: `Operational feeds ingested into the enterprise lakehouse in <100ms.` },
         { title: "2. Predictive AI Scoring", desc: "Machine learning models detect bottlenecks and score urgency in real time." },
         { title: "3. Operator Action", desc: "Frontline teams resolve incidents using 1-click contextual dossiers." },
         { title: "4. Continuous Feedback", desc: "Incident resolutions retrain models to continuously sharpen accuracy." }
       ];
       readinessMeta = {
-        kicker: "DATA READINESS MATRIX",
+        kicker: "DATA READINESS & FEASIBILITY MATRIX",
         title: "Fast-Track Integration & Feasibility Assessment",
         subtitle: `All required data feeds connect to existing enterprise infrastructure without requiring system replacements.`
       };
@@ -841,10 +844,10 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Technical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", `Connect primary ${domain.toLowerCase()} eventstreams`, "Validate source schemas and data quality", "Establish role-based governance & security"] },
-        { title: "2. Quick-Win Pilot", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} Pilot`, "Deploy explainable AI scoring models", "Validate triage workflows with frontline operating leads", "Measure baseline performance improvement"] },
-        { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale ingestion across all operating locations & lines", "Integrate automated notification & workflow dispatch", "Deploy real-time executive dashboards", "Enable continuous retraining pipelines"] },
-        { title: "4. Continuous Value", time: "Months 6+", items: ["Expand predictive models across all business units", "Automate cross-department workflow routing", "Benchmark enterprise-wide ROI with executive board"] }
+        { title: `1. ${domain} Ingestion & Lakehouse Setup`, time: "Weeks 1–4", items: ["Stand up secure enterprise cloud lakehouse", `Connect primary ${domain.toLowerCase()} eventstreams`, "Validate source schemas and data quality", "Establish role-based governance & security"] },
+        { title: `2. ${primaryDomain} Pilot Launch`, time: "Weeks 5–8", items: [`Launch live ${primaryDomain} pilot command radar`, "Deploy explainable AI scoring models", "Validate triage workflows with frontline operating leads", "Measure baseline performance improvement"] },
+        { title: "3. Enterprise Production Rollout", time: "Months 3–6", items: ["Scale ingestion across all operating locations & lines", "Integrate automated notification & workflow dispatch", "Deploy real-time executive dashboards", "Enable continuous retraining pipelines"] },
+        { title: "4. Continuous AI Optimization & Scaling", time: "Months 6+", items: ["Expand predictive models across all business units", "Automate cross-department workflow routing", "Benchmark enterprise-wide ROI with executive board", "Deploy self-tuning anomaly detection"] }
       ];
       nextStepsMeta = {
         kicker: "NEXT STEPS & ENGAGEMENT PLAN",
@@ -852,8 +855,8 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`
       };
       nextSteps = [
-        { num: "01", title: `3-Week ${domain} Data & Architecture Audit`, desc: "Collaborate with your enterprise data engineering teams to review event streams, schemas, and API boundaries." },
-        { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (cycle times, exception rates, manual hours) and confirm success targets." },
+        { num: "01", title: `3-Week ${domain} Architecture & Data Stream Audit`, desc: `Collaborate with ${companyName} enterprise data engineering teams to review event streams, schemas, and API boundaries.` },
+        { num: "02", title: "Operational Baseline & Target SLA Calibration", desc: "Jointly establish current baseline metrics (cycle times, exception rates, manual hours) and confirm success targets." },
         { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the real-time command center connected to live operational feeds with active workflows for frontline teams." }
       ];
       break;
