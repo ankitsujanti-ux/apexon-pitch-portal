@@ -1,6 +1,6 @@
 // pitchStrategist.js — The Brain & Scoping Engine for Requirement-Centric Pitches
 // Deconstructs { companyName, domain, requirement } into a structured, highly relevant Pitch Plan JSON
-// with zero hardcoded cross-sector contamination and completely distinct slides per sector and usecase.
+// with zero hardcoded vendor bias, zero cross-sector contamination, and completely distinct slides per sector/usecase.
 
 import { findSectorPlaybook } from "./knowledge/ragRetriever.js";
 
@@ -111,7 +111,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
   let dataFoundation = [];
   let realTimeSignals = [];
   let architectureMeta = {};
-  let fabricArchitecture = {};
+  let solutionArchitecture = {};
   let commandCenter = {};
   let explainableExample = {};
   let behavioralProfile = {};
@@ -133,7 +133,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { num: "01", title: "Fraud Threat Landscape", desc: "Why sub-second payment fraud bypasses legacy batch risk rules" },
         { num: "02", title: "Real-Time Solution Vision", desc: "Unifying transaction streams, devices, and histories into instant action" },
         { num: "03", title: "Payment Data Foundation", desc: "Connecting ISO payment switches, device fingerprints, and customer records" },
-        { num: "04", title: "Fabric Fraud Architecture", desc: "End-to-end governed pipeline from real-time streaming to analyst triage" },
+        { num: "04", title: "Fraud Solution Architecture", desc: "End-to-end governed pipeline from real-time streaming to analyst triage" },
         { num: "05", title: "Live Fraud Command Radar", desc: "Sub-50ms transaction stream monitoring and risk scoring" },
         { num: "06", title: "Explainable AI Decision Engine", desc: "Decomposing composite risk scores into clear factor weights" },
         { num: "07", title: "Analyst Triage & Next Steps", desc: "Priority investigation queue, data readiness matrix, and phased pilot" }
@@ -154,11 +154,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       visionMeta = {
         kicker: "FRAUD DEFENSE VISION",
         title: `One Unified Real-Time Fraud Defense Engine`,
-        subtitle: `Microsoft Fabric empowers ${companyName} to intercept fraudulent transactions before settlement without friction.`
+        subtitle: `A real-time data & AI intelligence platform empowering ${companyName} to intercept fraudulent transactions before settlement without friction.`
       };
       visionStages = [
         { num: "01", step: "Connect Streams", desc: "Securely ingest card, UPI, IMPS, and wire authorization feeds in real time (<50ms).", color: "1D6EE4" },
-        { num: "02", step: "Unify Intelligence", desc: "Assemble 12-month behavioral spending baselines and device fingerprint repositories in OneLake.", color: "0E7C66" },
+        { num: "02", step: "Unify Intelligence", desc: "Assemble 12-month behavioral spending baselines and device fingerprint repositories in the lakehouse.", color: "0E7C66" },
         { num: "03", step: "Score & Explain", desc: "Run transparent AI models to calculate composite risk scores (0–100) and identify exact fraud drivers.", color: "6366F1" },
         { num: "04", step: "Automate Action", desc: "Trigger instant Approve / Challenge / Block actions and route high-risk alerts to analyst queues.", color: "E54A24" }
       ];
@@ -174,16 +174,16 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { category: "Geographic & Terminal Telemetry", desc: "IP geolocation, terminal GPS coordinates, ATM address coordinates, and impossible travel velocity checks.", sourceSystems: "GeoIP Feeds, Terminal Master DB, ATM Controller", fields: "latitude, longitude, country_code, city, travel_velocity_kmh", frequency: "Real-Time Calculation", readiness: "To be validated during discovery" }
       ];
       architectureMeta = {
-        kicker: "FABRIC FRAUD ARCHITECTURE",
-        title: `How Microsoft Fabric Powers Sub-50ms Fraud Defense`,
+        kicker: "SOLUTION ARCHITECTURE",
+        title: `Modern Real-Time Architecture for Sub-50ms Fraud Defense`,
         subtitle: "An end-to-end governed pipeline from payment event streaming to frontline investigator action."
       };
-      fabricArchitecture = {
-        ingestion: { title: "1. Event Ingestion", subtitle: "Fabric Eventstream", items: ["Card / UPI / IMPS Switch", "Mobile & Web Telemetry", "Terminal GPS Location Feeds", "Core Ledger Change Data Capture"] },
-        storage: { title: "2. Unified Storage", subtitle: "OneLake & Delta Parquet", items: ["12-Month Behavioral History", "Customer 360 Feature Store", "Device Fingerprint Repository", "Historical Confirmed Labels"] },
-        analytics: { title: "3. Real-Time Analytics", subtitle: "KQL Real-Time Database", items: ["Sub-50ms Stream Processing", "Velocity & Amount Aggregations", "Geographic Displacement Check", "Rule Filter & Anomaly Radar"] },
-        ai_layer: { title: "4. AI Scoring Engine", subtitle: "Fabric Machine Learning", items: ["Composite Risk Score (0–100)", "Transparent Feature Weights", "Behavioral Outlier Classifier", "Action Decision Engine"] },
-        action: { title: "5. Frontline Action", subtitle: "Power BI & Automated Router", items: ["Instant Approve / Challenge / Block", "Prioritized Analyst Work Queue", "One-Click Evidence Dossier", "Teams & SMS Alert Dispatch"] }
+      solutionArchitecture = {
+        ingestion: { title: "1. Stream Ingestion", subtitle: "Real-Time Event Streams", items: ["Card / UPI / IMPS Switch", "Mobile & Web Telemetry", "Terminal GPS Location Feeds", "Core Ledger Change Data Capture"] },
+        storage: { title: "2. Unified Storage", subtitle: "Enterprise Delta Lakehouse", items: ["12-Month Behavioral History", "Customer 360 Feature Store", "Device Fingerprint Repository", "Historical Confirmed Labels"] },
+        analytics: { title: "3. Real-Time Analytics", subtitle: "Streaming Query Engine", items: ["Sub-50ms Stream Processing", "Velocity & Amount Aggregations", "Geographic Displacement Check", "Rule Filter & Anomaly Radar"] },
+        ai_layer: { title: "4. AI Scoring Engine", subtitle: "Machine Learning Layer", items: ["Composite Risk Score (0–100)", "Transparent Feature Weights", "Behavioral Outlier Classifier", "Action Decision Engine"] },
+        action: { title: "5. Frontline Action", subtitle: "Command Board & Dispatch", items: ["Instant Approve / Challenge / Block", "Prioritized Analyst Work Queue", "One-Click Evidence Dossier", "Teams & SMS Alert Dispatch"] }
       };
       commandCenter = {
         kicker: "FRAUD THREAT RADAR  |  LIVE COMMAND CENTER",
@@ -279,7 +279,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { title: "1. Real-Time Scoring", desc: "Live event stream evaluated against ML feature store in <60ms." },
         { title: "2. Priority Routing", desc: "High-risk alerts instantly routed to analyst queue with explainable factors." },
         { title: "3. Investigator Decision", desc: "Analyst confirms or dismisses case with 1-click evidence dossier." },
-        { title: "4. Automated Model Update", desc: "Outcome fed back to OneLake to continuously reduce future false positives." }
+        { title: "4. Automated Model Update", desc: "Outcome fed back to lakehouse to continuously reduce future false positives." }
       ];
       readinessMeta = {
         kicker: "DATA READINESS MATRIX",
@@ -292,7 +292,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live fraud protection across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Setup & Data Discovery", time: "Weeks 1–6", items: ["Stand up secure Fabric workspace & OneLake", "Connect primary real-time payment eventstream", "Validate source fields and data quality", "Establish role-based governance & security"] },
+        { title: "1. Setup & Data Discovery", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", "Connect primary real-time payment eventstream", "Validate source fields and data quality", "Establish role-based governance & security"] },
         { title: "2. Quick-Win Pilot", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} Pilot`, "Deploy explainable AI scoring model", "Test real-time investigation queue with analysts", "Measure baseline loss reduction & false positive rate"] },
         { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale streaming to 100% of payment channels", "Integrate automated challenge/MFA webhooks", "Deploy mobile alerts & Teams bot dispatch", "Establish continuous retraining feature store"] },
         { title: "4. Continuous Value", time: "Months 6+", items: ["Expand behavioral models across all business units", "Automate cross-channel intelligence sharing", "Benchmark enterprise-wide ROI with executive board"] }
@@ -305,7 +305,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       nextSteps = [
         { num: "01", title: "3-Week Technical Discovery & Data Audit", desc: "Collaborate with payment & security engineering teams to review authorization streams, ISO schemas, and API boundaries." },
         { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (false positive rate, decision latency, investigation time) and confirm success targets." },
-        { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the Microsoft Fabric command center connected to live payment streams with active triage workflows for fraud analysts." }
+        { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the real-time command center connected to live payment streams with active triage workflows for fraud analysts." }
       ];
       break;
 
@@ -314,7 +314,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { num: "01", title: "Inpatient Bottlenecks", desc: "Why delayed discharges and ED boarding create hospital capacity strain" },
         { num: "02", title: "Patient Flow Vision", desc: "Connecting ADT feeds, nurse stations, and EVS housekeeping into one live radar" },
         { num: "03", title: "Clinical Data Foundation", desc: "Integrating EHR orders, ED triage acuity, and room clean state without disruption" },
-        { num: "04", title: "Fabric Capacity Architecture", desc: "End-to-end governed pipeline from HL7 event streams to bed placement dispatch" },
+        { num: "04", title: "Hospital Flow Architecture", desc: "End-to-end governed pipeline from HL7 event streams to bed placement dispatch" },
         { num: "05", title: "Hospital Bed Command Board", desc: "Real-time occupancy tracking, bed turnaround timers, and acuity heatmaps" },
         { num: "06", title: "Predictive Discharge Assistant", desc: "Pinpointing discharge barriers (lab results, transport, meds) hours in advance" },
         { num: "07", title: "EVS Dispatch & Next Steps", desc: "Automated housekeeping queue, clinical readiness matrix, and pilot roadmap" }
@@ -335,11 +335,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       visionMeta = {
         kicker: "PATIENT FLOW VISION",
         title: `One Unified Real-Time Hospital Capacity Hub`,
-        subtitle: `Microsoft Fabric connects ADT feeds, nursing stations, and environmental services into an intelligent patient flow cockpit.`
+        subtitle: `A unified real-time clinical intelligence platform connecting ADT feeds, nursing stations, and environmental services into an active patient flow cockpit.`
       };
       visionStages = [
         { num: "01", step: "Connect HL7 Feeds", desc: "Ingest real-time ADT feeds, ED triage trackers, and nurse station orders in <100ms.", color: "1D6EE4" },
-        { num: "02", step: "Unify Bed State", desc: "Create a single live census and bed availability state across all hospital floors in OneLake.", color: "0E7C66" },
+        { num: "02", step: "Unify Bed State", desc: "Create a single live census and bed availability state across all hospital floors in the clinical lakehouse.", color: "0E7C66" },
         { num: "03", step: "Predict Surges", desc: "Forecast unit-level bed demand 8–12 hours ahead and identify uncompleted discharge barriers.", color: "6366F1" },
         { num: "04", step: "Orchestrate Care", desc: "Dispatch mobile cleaning tasks to housekeeping and recommend optimal room placements.", color: "E54A24" }
       ];
@@ -355,16 +355,16 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { category: "Environmental Services & Bed Turnover", desc: "Bed vacancy signals, housekeeping dispatch times, cleaning cycle progress, and nurse confirmation.", sourceSystems: "Bed Management Platform, Housekeeping Mobile App", fields: "bed_id, bed_status, dirty_ts, assigned_ts, cleaning_complete_ts, occupied_ts", frequency: "Real-Time Mobile Telemetry", readiness: "To be validated during discovery" }
       ];
       architectureMeta = {
-        kicker: "CLINICAL FABRIC ARCHITECTURE",
-        title: `How Microsoft Fabric Powers Intelligent Patient Flow`,
+        kicker: "CLINICAL SOLUTION ARCHITECTURE",
+        title: `How Real-Time Data & AI Powers Intelligent Patient Flow`,
         subtitle: "An end-to-end governed pipeline from HL7 clinical events to frontline bed coordinator dispatch."
       };
-      fabricArchitecture = {
-        ingestion: { title: "1. Clinical Ingestion", subtitle: "Fabric Eventstream", items: ["HL7 / FHIR ADT Feeds", "ED Triage & Boarding Telemetry", "LIMS Lab & PACS Imaging Feeds", "EVS Mobile Housekeeping Signals"] },
-        storage: { title: "2. Clinical Lakehouse", subtitle: "OneLake & Delta Parquet", items: ["Unit-Level Occupancy History", "Clinical Flow Feature Store", "Bed State & Turnaround Logs", "CMS Quality & ALOS Baselines"] },
-        analytics: { title: "3. Real-Time Flow Engine", subtitle: "KQL Real-Time Database", items: ["Sub-Second Unit Capacity Radar", "Discharge Barrier NLP Classifier", "Inpatient Surge Predictor", "Nurse Staffing Balance Stream"] },
-        ai_layer: { title: "4. Capacity AI Engine", subtitle: "Fabric Machine Learning", items: ["8-Hour Bed Demand Forecast", "Discharge Readiness Score", "Step-Down Routing Recommender", "ED Boarding Risk Model"] },
-        action: { title: "5. Frontline Care Action", subtitle: "Power BI & Care Dispatch", items: ["Bed Placement Command Board", "Automated EVS Cleaning Dispatch", "Discharge Meds Priority Queue", "Nurse Station Mobile Alerts"] }
+      solutionArchitecture = {
+        ingestion: { title: "1. Clinical Ingestion", subtitle: "HL7 & Telemetry Streams", items: ["HL7 / FHIR ADT Feeds", "ED Triage & Boarding Telemetry", "LIMS Lab & PACS Imaging Feeds", "EVS Mobile Housekeeping Signals"] },
+        storage: { title: "2. Clinical Lakehouse", subtitle: "Secure Delta Lakehouse", items: ["Unit-Level Occupancy History", "Clinical Flow Feature Store", "Bed State & Turnaround Logs", "CMS Quality & ALOS Baselines"] },
+        analytics: { title: "3. Real-Time Flow Engine", subtitle: "Streaming Analytics Engine", items: ["Sub-Second Unit Capacity Radar", "Discharge Barrier NLP Classifier", "Inpatient Surge Predictor", "Nurse Staffing Balance Stream"] },
+        ai_layer: { title: "4. Capacity AI Engine", subtitle: "Predictive Clinical AI", items: ["8-Hour Bed Demand Forecast", "Discharge Readiness Score", "Step-Down Routing Recommender", "ED Boarding Risk Model"] },
+        action: { title: "5. Frontline Care Action", subtitle: "Clinical Care Dispatch", items: ["Bed Placement Command Board", "Automated EVS Cleaning Dispatch", "Discharge Meds Priority Queue", "Nurse Station Mobile Alerts"] }
       };
       commandCenter = {
         kicker: "CAPACITY COMMAND  |  BED ORCHESTRATION",
@@ -458,7 +458,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { title: "1. Real-Time Bed Sensing", desc: "Live ADT discharge orders and bed state updates streamed in <50ms." },
         { title: "2. Bottleneck Detection", desc: "AI identifies discharge delays (meds, transport, clean) before shift end." },
         { title: "3. Coordinated Dispatch", desc: "Bed placement leads trigger automated mobile task dispatch to EVS & transport." },
-        { title: "4. Capacity Model Retraining", desc: "Actual turnaround times fed back into OneLake to sharpen daily unit forecasts." }
+        { title: "4. Capacity Model Retraining", desc: "Actual turnaround times fed back into the lakehouse to sharpen daily unit forecasts." }
       ];
       readinessMeta = {
         kicker: "CLINICAL DATA READINESS",
@@ -471,7 +471,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live bed capacity orchestration across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Clinical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure HIPAA-compliant Fabric workspace", "Connect live ADT and ED tracker eventstreams", "Validate HL7 interface engine message quality", "Establish role-based clinical security"] },
+        { title: "1. Clinical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure HIPAA-compliant cloud lakehouse", "Connect live ADT and ED tracker eventstreams", "Validate HL7 interface engine message quality", "Establish role-based clinical security"] },
         { title: "2. Pilot Unit Deployment", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} on 2 pilot floors`, "Deploy predictive bed turnaround model", "Train bed coordinators and charge nurses on live command radar", "Measure baseline ED boarding time reduction"] },
         { title: "3. Hospital-Wide Rollout", time: "Months 3–6", items: ["Expand to all inpatient floors, ICU units, and surgical suites", "Integrate automated housekeeping mobile dispatch", "Deploy real-time nursing executive dashboards", "Establish continuous model calibration"] },
         { title: "4. Network Value Expansion", time: "Months 6+", items: ["Deploy cross-hospital transfer orchestration", "Optimize multi-facility patient load balancing", "Benchmark ALOS reduction with executive clinical leadership"] }
@@ -484,7 +484,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       nextSteps = [
         { num: "01", title: "3-Week Clinical IT & ADT Data Audit", desc: "Collaborate with hospital clinical IT teams to review HL7/FHIR message streams, EHR interfaces, and room state schemas." },
         { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (ALOS, ED boarding hours, room turnover times) and set target improvement thresholds." },
-        { num: "03", title: "8-Week Rapid Clinical Pilot Deployment", desc: "Deploy the Microsoft Fabric bed operations command center connected to live hospital ADT feeds on pilot inpatient units." }
+        { num: "03", title: "8-Week Rapid Clinical Pilot Deployment", desc: "Deploy the bed operations command center connected to live hospital ADT feeds on pilot inpatient units." }
       ];
       break;
 
@@ -493,7 +493,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { num: "01", title: "Omnichannel Stock Friction", desc: "Why delayed POS sensing and siloed DCs trigger costly store stockouts" },
         { num: "02", title: "Demand Sensing Vision", desc: "Connecting register POS streams, online carts, and WMS ledgers in real time" },
         { num: "03", title: "Retail Data Foundation", desc: "Integrating store inventory, DC buffer stocks, and vendor purchase orders" },
-        { num: "04", title: "Fabric Supply Chain Pipeline", desc: "End-to-end governed flow from store barcode scans to automated PO generation" },
+        { num: "04", title: "Supply Chain Architecture", desc: "End-to-end governed flow from store barcode scans to automated PO generation" },
         { num: "05", title: "Inventory Fulfillment Tower", desc: "Real-time SKU velocity tracking, stockout risk heatmaps, and fill rates" },
         { num: "06", title: "Dynamic Demand Forecaster", desc: "Explaining hourly sell-through surges and weather/promotional lift drivers" },
         { num: "07", title: "Store Reorder Triage & Pilot", desc: "Automated replenishment queue, supply readiness matrix, and rollout roadmap" }
@@ -514,18 +514,18 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       visionMeta = {
         kicker: "DEMAND SENSING VISION",
         title: `One Unified Omnichannel Inventory Control Tower`,
-        subtitle: `Microsoft Fabric unifies store POS feeds, e-commerce orders, and warehouse inventory into an automated replenishment hub.`
+        subtitle: `A unified real-time data & AI platform connecting store POS feeds, e-commerce orders, and warehouse inventory into an automated replenishment hub.`
       };
       visionStages = [
-        { num: "01", step: "Ingest POS Streams", desc: "Stream live register sales, online carts, and barcode scans into OneLake in <100ms.", color: "1D6EE4" },
-        { num: "02", step: "Unify Stock Ledger", desc: "Maintain a single source of inventory truth across all stores and DCs in OneLake.", color: "0E7C66" },
+        { num: "01", step: "Ingest POS Streams", desc: "Stream live register sales, online carts, and barcode scans in real time (<100ms).", color: "1D6EE4" },
+        { num: "02", step: "Unify Stock Ledger", desc: "Maintain a single source of inventory truth across all stores and DCs in the omnichannel lakehouse.", color: "0E7C66" },
         { num: "03", step: "Forecast Demand", desc: "Predict store-level SKU demand taking into account local weather, promotions, and seasonality.", color: "6366F1" },
         { num: "04", step: "Automate Reorder", desc: "Generate automated DC transfer orders and supplier purchase orders before shelves empty.", color: "E54A24" }
       ];
       dataFoundationMeta = {
         kicker: "RETAIL DATA FOUNDATION",
         title: `${companyName} POS & Supply Chain Data Foundation`,
-        subtitle: "Integrating store checkout streams, e-commerce cart events, and warehouse inventory ledgers into OneLake."
+        subtitle: "Integrating store checkout streams, e-commerce cart events, and warehouse inventory ledgers into the lakehouse."
       };
       dataFoundation = [
         { category: "Point-of-Sale (POS) & E-Commerce Streams", desc: "Live store register sales, online cart checkouts, returns, and inventory scan events.", sourceSystems: "Store POS System, E-Commerce Platform (Shopify/SAP Commerce), Mobile App", fields: "sku_id, store_id, units_sold, unit_price, return_flag, timestamp, channel", frequency: "Real-Time Streaming (<100ms)", readiness: "To be validated during discovery" },
@@ -534,16 +534,16 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { category: "Pricing & Promotional Calendar", desc: "Active marketing campaigns, seasonal discounts, local weather forecasts, and regional events.", sourceSystems: "Merchandising Engine, Marketing DB, Weather API", fields: "campaign_id, discount_pct, start_date, end_date, regional_temp_delta", frequency: "Daily Scheduled Sync", readiness: "To be validated during discovery" }
       ];
       architectureMeta = {
-        kicker: "RETAIL FABRIC ARCHITECTURE",
-        title: `How Microsoft Fabric Powers Real-Time Demand Fulfillment`,
+        kicker: "SUPPLY CHAIN ARCHITECTURE",
+        title: `How Real-Time Data & AI Powers Demand Fulfillment`,
         subtitle: "An end-to-end governed pipeline from store register scans to automated supplier purchase orders."
       };
-      fabricArchitecture = {
-        ingestion: { title: "1. Retail Stream Ingestion", subtitle: "Fabric Eventstream", items: ["Store POS & Register Feeds", "E-Commerce Cart Checkouts", "WMS Inventory Barcode Scans", "Supplier Inbound EDI Feeds"] },
-        storage: { title: "2. Omnichannel Lakehouse", subtitle: "OneLake & Delta Parquet", items: ["Unified Store & DC Stock Ledger", "SKU Demand History & Seasonality", "Supplier Performance Feature Store", "Promotional Elasticity Logs"] },
-        analytics: { title: "3. Real-Time Demand Engine", subtitle: "KQL Real-Time Database", items: ["Hourly SKU Sell-Through Velocity", "Stockout Risk Anomaly Detector", "Cross-Store Transfer Matcher", "Promotional Lift Calculator"] },
-        ai_layer: { title: "4. Dynamic AI Allocator", subtitle: "Fabric Machine Learning", items: ["Multi-Echelon Demand Forecaster", "Automated Reorder Quantity Model", "Markdown Optimization Engine", "Vendor Lead-Time Risk Model"] },
-        action: { title: "5. Frontline Retail Action", subtitle: "Power BI & Automated Orders", items: ["Live Store Inventory Command Board", "Automated Supplier PO Trigger", "Store-to-Store Transfer Dispatch", "Merchandiser Alert Workbench"] }
+      solutionArchitecture = {
+        ingestion: { title: "1. Retail Stream Ingestion", subtitle: "POS & Event Streams", items: ["Store POS & Register Feeds", "E-Commerce Cart Checkouts", "WMS Inventory Barcode Scans", "Supplier Inbound EDI Feeds"] },
+        storage: { title: "2. Omnichannel Lakehouse", subtitle: "Unified Delta Lakehouse", items: ["Unified Store & DC Stock Ledger", "SKU Demand History & Seasonality", "Supplier Performance Feature Store", "Promotional Elasticity Logs"] },
+        analytics: { title: "3. Real-Time Demand Engine", subtitle: "Real-Time Query Engine", items: ["Hourly SKU Sell-Through Velocity", "Stockout Risk Anomaly Detector", "Cross-Store Transfer Matcher", "Promotional Lift Calculator"] },
+        ai_layer: { title: "4. Dynamic AI Allocator", subtitle: "Predictive Demand AI", items: ["Multi-Echelon Demand Forecaster", "Automated Reorder Quantity Model", "Markdown Optimization Engine", "Vendor Lead-Time Risk Model"] },
+        action: { title: "5. Frontline Retail Action", subtitle: "Store & Merchandiser Action", items: ["Live Store Inventory Command Board", "Automated Supplier PO Trigger", "Store-to-Store Transfer Dispatch", "Merchandiser Alert Workbench"] }
       };
       commandCenter = {
         kicker: "FULFILLMENT TOWER  |  OMNICHANNEL INVENTORY",
@@ -634,7 +634,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       ];
       closedLoopTitle = "CLOSED-LOOP DEMAND & REPLENISHMENT LEARNING";
       closedLoopSteps = [
-        { title: "1. Real-Time POS Ingestion", desc: "Live register transactions and online orders ingested to OneLake in <100ms." },
+        { title: "1. Real-Time POS Ingestion", desc: "Live register transactions and online orders ingested in real time (<100ms)." },
         { title: "2. Demand Anomaly Detection", desc: "ML models compare hourly sales against seasonal forecasts to flag stockout risks." },
         { title: "3. Automated Allocation", desc: "System auto-generates optimized DC transfers and supplier reorders." },
         { title: "4. Continuous Demand Tuning", desc: "Sales lift from promotions is fed back to fine-tune future demand elasticity." }
@@ -650,7 +650,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live replenishment automation across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Supply Chain Data Audit", time: "Weeks 1–6", items: ["Stand up secure Fabric workspace & OneLake", "Connect live POS streams and WMS inventory feeds", "Validate SKU master data and barcode event schemas", "Establish inventory governance rules"] },
+        { title: "1. Supply Chain Data Audit", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", "Connect live POS streams and WMS inventory feeds", "Validate SKU master data and barcode event schemas", "Establish inventory governance rules"] },
         { title: "2. Pilot Cluster Rollout", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} on 50 pilot stores`, "Deploy real-time stockout risk radar", "Automate daily store replenishment recommendations", "Measure stockout reduction and on-shelf availability"] },
         { title: "3. Enterprise Chain Scale", time: "Months 3–6", items: ["Scale streaming to 100% of retail stores and e-commerce DCs", "Integrate automated supplier purchase order webhooks", "Deploy store manager mobile inventory apps", "Enable cross-channel inventory pooling"] },
         { title: "4. Advanced Merchandising Value", time: "Months 6+", items: ["Deploy dynamic markdown optimization models", "Automate vendor supply lead-time forecasting", "Benchmark inventory turnover lift with retail leadership"] }
@@ -663,7 +663,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       nextSteps = [
         { num: "01", title: "3-Week POS & WMS Data Architecture Audit", desc: "Collaborate with retail systems engineering to review POS streams, WMS feeds, and supplier EDI gateways." },
         { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (out-of-stock rates, inventory turnover, stockout lost sales) and confirm targets." },
-        { num: "03", title: "8-Week Rapid Retail Pilot Deployment", desc: "Deploy the Microsoft Fabric inventory command center connected to live POS feeds across pilot retail stores." }
+        { num: "03", title: "8-Week Rapid Retail Pilot Deployment", desc: "Deploy the real-time inventory command center connected to live POS feeds across pilot retail stores." }
       ];
       break;
 
@@ -676,7 +676,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         { num: "01", title: `Operational Challenges`, desc: `Why latency and blind spots slow down ${primaryDomain.toLowerCase()}` },
         { num: "02", title: `Solution Vision`, desc: `Connecting daily ${domain.toLowerCase()} telemetry into a single real-time platform` },
         { num: "03", title: `Data Foundation`, desc: `Integrating existing enterprise systems without replacing what works` },
-        { num: "04", title: `Fabric Solution Architecture`, desc: `A secure, end-to-end governed pipeline for enterprise AI operations` },
+        { num: "04", title: `Solution Architecture`, desc: `A secure, end-to-end governed pipeline for enterprise AI operations` },
         { num: "05", title: `Live Operations Command Radar`, desc: `Real-time stream monitoring, anomaly classification, and active gauges` },
         { num: "06", title: `Explainable AI Engine`, desc: `Transparent risk scoring and root-cause breakdown for operators` },
         { num: "07", title: `Prioritization & Delivery Plan`, desc: `Action queue triage, data readiness matrix, and phased pilot roadmap` }
@@ -697,11 +697,11 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       visionMeta = {
         kicker: "THE SOLUTION VISION",
         title: `One Unified ${primaryDomain} Operating Hub`,
-        subtitle: `Microsoft Fabric connects daily operational systems into a single, real-time operating hub for ${companyName}.`
+        subtitle: `A unified real-time data & AI platform connecting daily operational systems into a single operating hub for ${companyName}.`
       };
       visionStages = [
         { num: "01", step: `Connect ${domain} Feeds`, desc: `Securely link core enterprise records and streaming telemetry in real time (<100ms).`, color: "1D6EE4" },
-        { num: "02", step: `Unify in OneLake`, desc: `Organize all ${domain.toLowerCase()} data into a single source of truth with governed feature stores.`, color: "0E7C66" },
+        { num: "02", step: `Unify in Lakehouse`, desc: `Organize all ${domain.toLowerCase()} data into a single source of truth with governed feature stores.`, color: "0E7C66" },
         { num: "03", step: "Predict & Classify", desc: `Apply transparent machine learning models to detect bottlenecks and anomalies hours in advance.`, color: "6366F1" },
         { num: "04", step: "Empower Frontline", desc: `Deliver real-time operational command boards and automated task dispatch directly to operating leads.`, color: "E54A24" }
       ];
@@ -726,15 +726,15 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       ];
       architectureMeta = {
         kicker: "SOLUTION ARCHITECTURE",
-        title: `How Microsoft Fabric Powers Real-Time ${primaryDomain}`,
+        title: `Modern Data & AI Reference Architecture for ${companyName}`,
         subtitle: `An end-to-end governed pipeline from real-time event streaming to automated frontline action.`
       };
-      fabricArchitecture = {
-        ingestion: { title: "1. Event Ingestion", subtitle: "Fabric Eventstream", items: systems.slice(0, 4).map(s => `${s.name} Feed`) },
-        storage: { title: "2. Governed Lakehouse", subtitle: "OneLake & Delta Parquet", items: [`12-Month ${domain} History`, "Operational Feature Store", "Entity State Repository", "Compliance & SLA Logs"] },
-        analytics: { title: "3. Real-Time Stream Engine", subtitle: "KQL Real-Time Database", items: ["Sub-Second Stream Processing", "Cross-Feed Correlation", "Threshold & Anomaly Classifier", "Real-Time Alert Router"] },
-        ai_layer: { title: "4. AI Scoring Engine", subtitle: "Fabric Machine Learning", items: ["Operational Urgency Score (0–100)", "Transparent Risk Factor Weights", "Predictive Bottleneck Classifier", "Recommended Action Engine"] },
-        action: { title: "5. Frontline Action", subtitle: "Power BI & Work Dispatch", items: [`Live ${domain} Command Board`, "Automated Task Dispatch", "One-Click Evidence Dossier", "Teams & Mobile Alerts"] }
+      solutionArchitecture = {
+        ingestion: { title: "1. Event Ingestion", subtitle: "Streaming Event Bus", items: systems.slice(0, 4).map(s => `${s.name} Feed`) },
+        storage: { title: "2. Governed Lakehouse", subtitle: "Enterprise Delta Lakehouse", items: [`12-Month ${domain} History`, "Operational Feature Store", "Entity State Repository", "Compliance & SLA Logs"] },
+        analytics: { title: "3. Real-Time Stream Engine", subtitle: "Streaming Query Engine", items: ["Sub-Second Stream Processing", "Cross-Feed Correlation", "Threshold & Anomaly Classifier", "Real-Time Alert Router"] },
+        ai_layer: { title: "4. AI Scoring Engine", subtitle: "Machine Learning Layer", items: ["Operational Urgency Score (0–100)", "Transparent Risk Factor Weights", "Predictive Bottleneck Classifier", "Recommended Action Engine"] },
+        action: { title: "5. Frontline Action", subtitle: "Operational Dispatch", items: [`Live ${domain} Command Board`, "Automated Task Dispatch", "One-Click Evidence Dossier", "Teams & Mobile Alerts"] }
       };
       commandCenter = {
         kicker: `OPERATIONS COMMAND  |  ${domain.toUpperCase()}`,
@@ -825,7 +825,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       }));
       closedLoopTitle = "CLOSED-LOOP CONTINUOUS LEARNING ARCHITECTURE";
       closedLoopSteps = [
-        { title: "1. Real-Time Telemetry", desc: `Operational feeds ingested into OneLake Delta Lakehouse in <100ms.` },
+        { title: "1. Real-Time Telemetry", desc: `Operational feeds ingested into the lakehouse in <100ms.` },
         { title: "2. Predictive AI Scoring", desc: "Machine learning models detect bottlenecks and score urgency in real time." },
         { title: "3. Operator Action", desc: "Frontline teams resolve incidents using 1-click contextual dossiers." },
         { title: "4. Continuous Feedback", desc: "Incident resolutions retrain models to continuously sharpen accuracy." }
@@ -841,9 +841,9 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
         subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`
       };
       roadmapPhases = [
-        { title: "1. Technical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure Fabric workspace & OneLake", `Connect primary ${domain.toLowerCase()} eventstreams`, "Validate source schemas and data quality", "Establish role-based governance & security"] },
+        { title: "1. Technical Data Discovery", time: "Weeks 1–6", items: ["Stand up secure cloud workspace & lakehouse", `Connect primary ${domain.toLowerCase()} eventstreams`, "Validate source schemas and data quality", "Establish role-based governance & security"] },
         { title: "2. Quick-Win Pilot", time: "Weeks 6–12", items: [`Launch live ${primaryDomain} Pilot`, "Deploy explainable AI scoring models", "Validate triage workflows with frontline operating leads", "Measure baseline performance improvement"] },
-        { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale ingestion across all operating locations & lines", "Integrate automated notification & workflow dispatch", "Deploy real-time executive Power BI dashboards", "Enable continuous retraining pipelines"] },
+        { title: "3. Enterprise Scale", time: "Months 3–6", items: ["Scale ingestion across all operating locations & lines", "Integrate automated notification & workflow dispatch", "Deploy real-time executive dashboards", "Enable continuous retraining pipelines"] },
         { title: "4. Continuous Value", time: "Months 6+", items: ["Expand predictive models across all business units", "Automate cross-department workflow routing", "Benchmark enterprise-wide ROI with executive board"] }
       ];
       nextStepsMeta = {
@@ -854,7 +854,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       nextSteps = [
         { num: "01", title: `3-Week ${domain} Data & Architecture Audit`, desc: "Collaborate with your enterprise data engineering teams to review event streams, schemas, and API boundaries." },
         { num: "02", title: "Baseline Measurement & KPI Definition", desc: "Jointly establish current baseline metrics (cycle times, exception rates, manual hours) and confirm success targets." },
-        { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the Microsoft Fabric command center connected to live operational feeds with active workflows for frontline teams." }
+        { num: "03", title: "8-Week Rapid Production Pilot Deployment", desc: "Deploy the real-time command center connected to live operational feeds with active workflows for frontline teams." }
       ];
       break;
   }
@@ -873,7 +873,8 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
     data_foundation: dataFoundation,
     real_time_signals: realTimeSignals,
     architecture_meta: architectureMeta,
-    fabric_architecture: fabricArchitecture,
+    solution_architecture: solutionArchitecture,
+    fabric_architecture: solutionArchitecture, // backwards compatibility
     command_center: commandCenter,
     explainable_example: explainableExample,
     behavioral_profile: behavioralProfile,
