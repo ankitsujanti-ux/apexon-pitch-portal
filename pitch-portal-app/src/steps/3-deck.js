@@ -1,8 +1,8 @@
 // 3-deck.js — 14-Slide 100% Dynamic Domain & Use-Case-Centric Executive Deck on Apexon Brand Chrome
-// Structure: Title → Agenda → Challenges → Solution Vision → Data Foundation → Fabric Architecture →
+// Structure: Title → Agenda → Challenges → Solution Vision → Data Foundation → Architecture →
 // Command Center → Explainable AI Breakdown → Behavioral Profiling → Investigation Queue → Business Outcomes →
 // Data Readiness Matrix → Delivery Roadmap → Next Steps.
-// Zero hardcoded domain strings — all content is dynamically tailored to the exact sector and requirement.
+// Zero hardcoded domain strings and zero forced vendor branding — tailored to the client, sector, and requirement.
 
 import fs from "fs";
 import path from "path";
@@ -141,7 +141,7 @@ function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
 }
 
 // Slide 1: Cover / Title
-function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platformName, page }) {
+function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platformName, requirement, page }) {
   applyMaster(slide, palette, { page, wave: true });
 
   const logoH = 0.52;
@@ -161,7 +161,12 @@ function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platfor
     });
   }
 
-  slide.addText(`${pptSafe(companyName).toUpperCase()}  ×  ${pptSafe(platformName).toUpperCase()}`, {
+  const reqLower = (requirement || "").toLowerCase();
+  const titleKicker = (platformName && platformName !== "Operating platform" && platformName !== "Enterprise Data Platform" && platformName !== "Microsoft Fabric" && reqLower.includes(platformName.toLowerCase()))
+    ? `APEXON  ×  ${pptSafe(companyName).toUpperCase()}  |  ${pptSafe(platformName).toUpperCase()}`
+    : `APEXON  ×  ${pptSafe(companyName).toUpperCase()}  |  STRATEGIC PROPOSAL`;
+
+  slide.addText(titleKicker, {
     x: MARGIN,
     y: 1.85,
     w: 12.0,
@@ -235,7 +240,7 @@ function addAgendaSlide(slide, palette, { domain, pitchPlan, page }) {
         { num: "01", title: "Operational Challenges", desc: `Why delayed signals and manual triage create blind spots in ${pitchPlan.primary_business_domain.toLowerCase()}` },
         { num: "02", title: "Solution Vision", desc: `How a unified platform connects daily operational feeds into real-time action` },
         { num: "03", title: "Data Foundation", desc: `Connecting existing ${domain.toLowerCase()} data feeds and telemetry without disruption` },
-        { num: "04", title: "Architecture Overview", desc: `A simple, secure, and governed flow powered by Microsoft Fabric` },
+        { num: "04", title: "Architecture Overview", desc: `A simple, secure, and governed flow powered by modern Cloud Data & AI` },
         { num: "05", title: "Live Command Center", desc: `Real-time stream monitoring, risk classification, and operational gauges` },
         { num: "06", title: "Explainable AI Decision Engine", desc: `How AI scores event risk factors transparently for frontline teams` },
         { num: "07", title: "Investigation & Outcomes", desc: `Automated queue triage, data readiness matrix, and phased delivery roadmap` },
@@ -305,13 +310,13 @@ function addChallengesSlide(slide, palette, { companyName, pitchPlan, page }) {
 }
 
 // Slide 4: Solution Vision
-function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platformName, page }) {
+function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const vm = pitchPlan.vision_meta || {};
   addSectionHeader(slide, palette, {
     kicker: vm.kicker || "THE SOLUTION VISION",
     title: vm.title || `One Unified ${pitchPlan.primary_business_domain} Operating Hub`,
-    subtitle: vm.subtitle || `${platformName} connects daily operational systems into a single, real-time operating hub for ${companyName}.`,
+    subtitle: vm.subtitle || `A unified real-time data and AI platform connecting daily operational systems into a single operating hub for ${companyName}.`,
   });
 
   const domainLower = (pitchPlan.primary_business_domain || "").toLowerCase();
@@ -319,7 +324,7 @@ function addSolutionVisionSlide(slide, palette, { companyName, pitchPlan, platfo
     ? pitchPlan.vision_stages
     : [
         { num: "01", step: "Connect", desc: `Securely link ${domainLower} feeds, device signals, and historical records in real time (<50ms) without disrupting daily operations.`, color: "1D6EE4" },
-        { num: "02", step: "Unify", desc: `Organize all operational data into a single OneLake source of truth with governed feature stores and baseline profiles.`, color: "0E7C66" },
+        { num: "02", step: "Unify", desc: `Organize all operational data into a single lakehouse source of truth with governed feature stores and baseline profiles.`, color: "0E7C66" },
         { num: "03", step: "Predict & Score", desc: `Run transparent AI models to evaluate composite risk scores (0–100) and pinpoint exact anomaly drivers instantly.`, color: "6366F1" },
         { num: "04", step: "Empower & Act", desc: `Deliver real-time command dashboards, automated workflow triggers, and prioritized work queues directly to frontline leads.`, color: "E54A24" },
       ];
@@ -416,22 +421,22 @@ function addDataFoundationSlide(slide, palette, { companyName, pitchPlan, page }
 }
 
 // Slide 6: Reference Architecture Overview
-function addArchitectureSlide(slide, palette, { companyName, pitchPlan, platformName, page }) {
+function addArchitectureSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const am = pitchPlan.architecture_meta || {};
   addSectionHeader(slide, palette, {
     kicker: am.kicker || "SOLUTION ARCHITECTURE",
-    title: am.title || `How ${platformName} Powers Real-Time ${pitchPlan.primary_business_domain}`,
+    title: am.title || `Modern Data & AI Reference Architecture for ${companyName}`,
     subtitle: am.subtitle || `An end-to-end governed pipeline from real-time event streaming to automated frontline action.`,
   });
 
-  const arch = pitchPlan.fabric_architecture || {};
+  const arch = pitchPlan.solution_architecture || pitchPlan.fabric_architecture || {};
   const tiers = [
-    arch.ingestion || { title: "1. Ingestion", subtitle: "Fabric Eventstream", items: ["Core System Feeds", "Live Telemetry", "Event Streams", "Change Data Capture"] },
-    arch.storage || { title: "2. Storage", subtitle: "OneLake & Delta Parquet", items: ["12-Month Operational History", "Entity Feature Store", "State Repository", "Governance Logs"] },
-    arch.analytics || { title: "3. Analytics", subtitle: "KQL Real-Time Database", items: ["Sub-50ms Stream Processing", "Real-Time Aggregations", "State Transition Radar", "Anomaly Classifier"] },
-    arch.ai_layer || { title: "4. AI Layer", subtitle: "Fabric Machine Learning", items: ["Composite Risk Score (0–100)", "Transparent Risk Factor Weights", "Predictive Outlier Classifier", "Action Decision Engine"] },
-    arch.action || { title: "5. Frontline Action", subtitle: "Power BI & Work Dispatch", items: ["Live Command Board", "Prioritized Work Queue", "One-Click Evidence Dossier", "Automated Task Dispatch"] },
+    arch.ingestion || { title: "1. Stream Ingestion", subtitle: "Real-Time Event Streams", items: ["Core System Feeds", "Live Telemetry", "Event Streams", "Change Data Capture"] },
+    arch.storage || { title: "2. Unified Storage", subtitle: "Enterprise Delta Lakehouse", items: ["12-Month Operational History", "Entity Feature Store", "State Repository", "Governance Logs"] },
+    arch.analytics || { title: "3. Real-Time Engine", subtitle: "Streaming Query Engine", items: ["Sub-50ms Stream Processing", "Real-Time Aggregations", "State Transition Radar", "Anomaly Classifier"] },
+    arch.ai_layer || { title: "4. AI Layer", subtitle: "Predictive AI & ML Engine", items: ["Composite Risk Score (0–100)", "Transparent Risk Factor Weights", "Predictive Outlier Classifier", "Action Decision Engine"] },
+    arch.action || { title: "5. Frontline Action", subtitle: "Command Board & Dispatch", items: ["Live Command Board", "Prioritized Work Queue", "One-Click Evidence Dossier", "Automated Task Dispatch"] },
   ];
 
   tiers.forEach((tier, idx) => {
@@ -1003,7 +1008,7 @@ export async function buildDeck({
   fs.mkdirSync(path.dirname(finalPath), { recursive: true });
 
   const platform = platformFromRequirement(requirement, domain);
-  const platformName = platform.name === "Operating platform" ? "Microsoft Fabric" : platform.name;
+  const platformName = platform.name === "Operating platform" ? "Enterprise Data Platform" : platform.name;
   
   // Build or use provided pitchPlan
   const plan = pitchPlan || buildPitchPlan({ companyName, domain, requirement });
@@ -1019,7 +1024,7 @@ export async function buildDeck({
   // Slide 1: Cover
   {
     const slide = pres.addSlide();
-    addTitleSlide(slide, palette, { companyName, domain, pitchPlan: plan, platformName, page });
+    addTitleSlide(slide, palette, { companyName, domain, pitchPlan: plan, platformName, requirement, page });
     page += 1;
   }
 
@@ -1040,7 +1045,7 @@ export async function buildDeck({
   // Slide 4: Solution Vision
   {
     const slide = pres.addSlide();
-    addSolutionVisionSlide(slide, palette, { companyName, pitchPlan: plan, platformName, page });
+    addSolutionVisionSlide(slide, palette, { companyName, pitchPlan: plan, page });
     page += 1;
   }
 
@@ -1054,7 +1059,7 @@ export async function buildDeck({
   // Slide 6: Architecture Overview
   {
     const slide = pres.addSlide();
-    addArchitectureSlide(slide, palette, { companyName, pitchPlan: plan, platformName, page });
+    addArchitectureSlide(slide, palette, { companyName, pitchPlan: plan, page });
     page += 1;
   }
 
