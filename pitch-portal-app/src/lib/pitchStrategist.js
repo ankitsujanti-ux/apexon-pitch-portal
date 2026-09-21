@@ -1098,27 +1098,88 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       };
     }
 
-    // Dynamic Action Queue (Slide 10) from Claude's use cases
-    const priorities = ["CRITICAL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
-    plan.investigation_queue = ucs.slice(0, 5).map((uc, i) => ({
-      priority: priorities[i] || "MEDIUM",
-      caseId: `#INC-${Math.floor(80000 + i * 1111)}`,
-      entity: uc.title ? uc.title.slice(0, 26) : `Case #${i + 1}`,
-      amount: uc.proofPoint ? uc.proofPoint.slice(0, 18) : "High Urgency",
-      trigger: uc.insight ? uc.insight.slice(0, 60) : uc.businessProblem ? uc.businessProblem.slice(0, 60) : "Operational threshold breach",
-      action: uc.decision ? uc.decision.slice(0, 45) : uc.action ? uc.action.slice(0, 45) : "Dispatch Immediate Action",
-      riskScore: 90 - i * 12
+    // Dynamic 5 Dedicated Use Cases (Slides 7-11)
+    plan.use_cases = ucs.slice(0, 5).map((uc, i) => {
+      const title = uc.title ? uc.title.replace(/[:\u2014\u2013|]/, " — ") : `Operational Capability ${i + 1}`;
+      const subtitle = uc.subtitle || uc.tagline || (uc.proofPoint ? `Delivering ${uc.proofPoint}` : "Real-time stream intelligence & automated action");
+      const challenge = uc.challenge || uc.businessProblem || `Operational friction and delayed telemetry in ${domain} create settlement and service bottlenecks.`;
+      const solutionFit = uc.solutionFit || uc.benefit || uc.insight || (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length ? uc.solutionMoves.map(m => m.detail || m.lead).join(". ") : `Real-time stream intelligence unifies telemetry feeds into automated frontline action.`);
+      const worksWith = (Array.isArray(uc.worksWith) && uc.worksWith.length) ? uc.worksWith : (candidateSystems.slice(0, 3).map(s => s.name));
+      const techComponents = (Array.isArray(uc.techComponents) && uc.techComponents.length) ? uc.techComponents : ["Eventstream", "Delta Lakehouse", "Predictive AI Models", "Real-Time Dashboards", "Frontline Action"];
+      
+      let impactStats = [];
+      if (Array.isArray(uc.impactStats) && uc.impactStats.length >= 3) {
+        impactStats = uc.impactStats;
+      } else if (Array.isArray(uc.kpis) && uc.kpis.length >= 2) {
+        impactStats = [
+          { value: uc.kpis[0].value || uc.proofPoint || "<500ms", label: uc.kpis[0].name || "Target KPI benchmark" },
+          { value: uc.kpis[1]?.value || "-35%", label: uc.kpis[1]?.name || "Operational bottleneck reduction" },
+          { value: uc.kpis[2]?.value || "Live", label: uc.kpis[2]?.name || "Continuous automated scoring" }
+        ];
+      } else {
+        const defaultValues = ["<500ms", "-40%", "Live", "18–22%", "-30%", "2.5x", "-50%", "+40%"];
+        impactStats = [
+          { value: uc.proofPoint || defaultValues[i % defaultValues.length], label: uc.kpis?.[0]?.name || "Primary KPI improvement" },
+          { value: defaultValues[(i + 1) % defaultValues.length], label: "Operational efficiency lift" },
+          { value: "Live", label: "100% real-time scoring across streams" }
+        ];
+      }
+
+      const readinessOptions = ["High", "Medium", "High", "Medium", "High"];
+      const complexityOptions = ["Low", "Medium", "Low", "High", "Low"];
+      const ttvOptions = ["6–8 weeks", "8–10 weeks", "6–8 weeks", "12–16 weeks", "6–8 weeks"];
+
+      const dataReadiness = uc.dataPointer?.availability === "existing" ? "High" : uc.dataPointer?.availability === "new" ? "Medium" : readinessOptions[i % readinessOptions.length];
+      const complexity = uc.difficulty === "harder" ? "High" : uc.difficulty === "moderate" ? "Medium" : uc.difficulty === "easier" ? "Low" : complexityOptions[i % complexityOptions.length];
+      const timeToValue = ttvOptions[i % ttvOptions.length];
+      const feasibilityNote = uc.difficultyWhy || (i === 0 ? `Reuses existing ${worksWith[0] || 'core'} stream & event telemetry` : i === 1 ? `Standard connector and baseline modeling` : `Integrates with existing ${worksWith[0] || 'enterprise'} systems without rip-and-replace`);
+
+      return {
+        title,
+        subtitle,
+        challenge,
+        solutionFit,
+        worksWith,
+        techComponents,
+        impactStats,
+        dataReadiness,
+        complexity,
+        timeToValue,
+        feasibilityNote
+      };
+    });
+
+    // Populate Slide 12 Feasibility Matrix
+    plan.feasibility_matrix = plan.use_cases.map(uc => ({
+      title: uc.title,
+      dataReadiness: uc.dataReadiness,
+      complexity: uc.complexity,
+      timeToValue: uc.timeToValue,
+      feasibilityNote: uc.feasibilityNote
     }));
 
-    // Dynamic Solution KPIs & Closed Loop (Slide 11) from Claude
-    if (useCases.hub && Array.isArray(useCases.hub.kpis) && useCases.hub.kpis.length >= 2) {
-      plan.solution_kpis = useCases.hub.kpis.slice(0, 4).map((k) => ({
-        benchmark: k.value || "25–35% Improvement",
+    // Dynamic Solution KPIs & Overall Impact (Slide 14) from Claude
+    if (useCases.hub && Array.isArray(useCases.hub.kpis) && useCases.hub.kpis.length >= 4) {
+      plan.overall_impact_kpis = useCases.hub.kpis.slice(0, 4).map((k) => ({
+        value: k.value || "25–35%",
         name: k.name || "Target Operational KPI",
-        desc: k.why || "Quantified business outcome",
-        type: "Business Outcome"
+        why: k.why || "Quantified business outcome"
       }));
+    } else {
+      plan.overall_impact_kpis = [
+        { value: plan.use_cases[0]?.impactStats[0]?.value || "35–45%", name: plan.use_cases[0]?.impactStats[0]?.label || "Improvement in Primary Operations" },
+        { value: plan.use_cases[1]?.impactStats[0]?.value || "-30%", name: plan.use_cases[1]?.impactStats[0]?.label || "Bottleneck & Latency Reduction" },
+        { value: "20–30%", name: "Lower Operational Overhead & Cost" },
+        { value: "50%", name: "Faster Frontline Incident & Triage Time" }
+      ];
     }
+
+    plan.solution_kpis = plan.overall_impact_kpis.map(k => ({
+      benchmark: k.value,
+      name: k.name,
+      desc: k.why || "Quantified business outcome",
+      type: "Business Outcome"
+    }));
 
     plan.closed_loop_steps = [
       { title: "1. Real-Time Ingestion", desc: `Live events from ${candidateSystems[0]?.name || 'core systems'} ingested into Lakehouse in <50ms.` },
@@ -1127,84 +1188,87 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       { title: "4. Continuous Retraining", desc: "Resolved case outcomes continuously retrain AI models to prevent false alerts." }
     ];
 
-    // Dynamic Data Readiness Matrix (Slide 12)
+    // Dynamic Technical Feasibility Matrix (Slide 12)
     plan.readiness_meta = {
-      kicker: "DATA READINESS & DISCOVERY MATRIX",
-      title: `${companyName} Integration & Feasibility Assessment`,
-      subtitle: `All required data feeds connect into the enterprise lakehouse without requiring core system replacements or downtime.`
+      kicker: "TECHNICAL FEASIBILITY",
+      title: "Feasible on Existing Systems — No Rip-and-Replace",
+      subtitle: `Each use case connects to ${companyName}'s current systems through standard connectors and layers real-time AI on top.`
     };
 
     // Dynamic Phased Delivery Roadmap (Slide 13)
-    const uc2Title = ucs[1]?.title ? ucs[1].title.split(/[:\u2014\u2013|]/)[0].trim() : "Operational Capabilities";
+    const uc1Short = plan.use_cases[0]?.title?.slice(0, 24) || "Core Operations";
+    const uc2Short = plan.use_cases[1]?.title?.slice(0, 24) || "Predictive AI";
+    const uc3Short = plan.use_cases[2]?.title?.slice(0, 24) || "Advanced Modules";
+
     plan.roadmap_meta = {
-      kicker: "DELIVERY ROADMAP",
-      title: `A Phased Path from Fast Pilot to Enterprise Scale for ${companyName}`,
+      kicker: "IMPLEMENTATION ROADMAP",
+      title: `A Phased Path from Pilot to Network-Wide Scale for ${companyName}`,
       subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`
     };
     plan.roadmap_phases = [
       {
-        title: `1. ${domain} Data Ingestion & Lakehouse Setup`,
-        time: "Weeks 1–4",
+        title: "Foundation",
+        time: "Weeks 1–8",
         items: [
-          "Deploy secure Delta Lakehouse environment",
-          `Connect live ${candidateSystems[0]?.name || 'operational'} streams & telemetry`,
-          "Ingest 90-day historical logs to calibrate ML baselines",
+          "Stand up secure enterprise cloud lakehouse environment",
+          `Connect ${candidateSystems[0]?.name || 'core'} streams and telemetry feeds`,
+          "Ingest historical records & baseline profiles",
           "Establish enterprise role-based access & governance"
         ]
       },
       {
-        title: `2. ${shortTitle} Pilot Launch`,
-        time: "Weeks 5–8",
+        title: "Pilot",
+        time: "Weeks 8–16",
         items: [
-          "Deploy real-time AI scoring engine in shadow mode",
-          `Launch live frontline command radar for ${shortTitle}`,
-          "Calibrate explainable risk factor weights with domain leads",
-          "Measure baseline SLA reduction and operational lift"
+          `Launch live ${uc1Short} & ${uc2Short} use cases`,
+          "Validate AI scoring with operating leads in shadow mode",
+          "Calibrate explainable risk factor weights & false positives",
+          "Measure baseline SLA and operational lift"
         ]
       },
       {
-        title: `3. Enterprise-Wide Scaling`,
-        time: "Months 3–6",
+        title: "Scale",
+        time: "Months 4–9",
         items: [
-          "Scale ingestion across all operating facilities & units",
+          `Roll out ${uc3Short} across all units & facilities`,
           `Integrate automated 1-click dispatch into ${candidateSystems[1]?.name || 'core systems'}`,
           "Deploy real-time executive cockpit & KPI dashboards",
-          "Activate continuous feedback retraining pipelines"
+          "Introduce AI Copilot for frontline operating leads"
         ]
       },
       {
-        title: `4. Advanced AI Expansion & Optimization`,
-        time: "Months 6+",
+        title: "Optimize",
+        time: "Months 9+",
         items: [
-          `Deploy predictive intelligence for ${uc2Title}`,
-          "Enable cross-department operational graph correlation",
+          "Activate continuous model feedback retraining loops",
+          "Expand predictive intelligence across additional business units",
           "Benchmark multi-year ROI with executive board",
-          "Implement self-tuning adaptive anomaly thresholds"
+          "Deploy self-tuning adaptive anomaly thresholds"
         ]
       }
     ];
 
     // Dynamic Immediate Next Steps (Slide 14)
     plan.next_steps_meta = {
-      kicker: "NEXT STEPS & ENGAGEMENT PLAN",
-      title: `Next Steps to Initiate Discovery for ${companyName}`,
-      subtitle: `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`
+      kicker: "EXPECTED IMPACT & NEXT STEPS",
+      title: `From Pilot to Measurable Network-Wide Value for ${companyName}`,
+      subtitle: `A collaborative 3-step engagement plan to validate data readiness and launch the live operational pilot.`
     };
     plan.next_steps = [
       {
         num: "01",
-        title: `3-Week ${domain} Architecture & Stream Audit`,
-        desc: `Collaborate with ${companyName} enterprise engineering teams to review ${candidateSystems[0]?.name || 'core system'} schemas, API endpoints, and latency requirements.`
+        title: "Confirm Priority Scope & Channels",
+        desc: `Confirm priority facilities, units, and transaction segments for the initial pilot (${uc1Short} recommended first).`
       },
       {
         num: "02",
-        title: "Operational Baseline Calibration & Target ROI",
-        desc: `Analyze 90 days of historical operational logs to quantify current ${shortTitle.toLowerCase()} bottlenecks, manual review cycle times, and establish pilot success targets.`
+        title: `4-Week ${domain} Discovery & Data Readiness Audit`,
+        desc: `Run a 4-week collaborative technical assessment across ${candidateSystems[0]?.name || 'core system'} schemas, API endpoints, and latency boundaries.`
       },
       {
         num: "03",
-        title: "8-Week Rapid Production Pilot Deployment",
-        desc: `Deploy the real-time command center connected to live ${domain.toLowerCase()} feeds with active 1-click triage queues for frontline operating teams.`
+        title: "Stand Up Platform & Launch Live Pilot in 8–10 Weeks",
+        desc: `Deploy the real-time command platform and launch the first live operational use case with active frontline triage workflows within 8–10 weeks.`
       }
     ];
   }
