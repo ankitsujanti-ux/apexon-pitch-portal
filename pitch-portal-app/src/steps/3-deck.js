@@ -1010,8 +1010,8 @@ export async function buildDeck({
   const platform = platformFromRequirement(requirement, domain);
   const platformName = platform.name === "Operating platform" ? "Enterprise Data Platform" : platform.name;
   
-  // Build or use provided pitchPlan
-  const plan = pitchPlan || buildPitchPlan({ companyName, domain, requirement });
+  // Build or use provided pitchPlan with dynamic AI enrichment
+  const plan = pitchPlan || buildPitchPlan({ companyName, domain, requirement, useCases, research, researchStructured });
 
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE";
