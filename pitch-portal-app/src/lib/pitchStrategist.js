@@ -4,6 +4,11 @@
 
 import { findSectorPlaybook } from "./knowledge/ragRetriever.js";
 
+function truncate(str, max = 32) {
+  if (!str) return "";
+  return str.length > max ? str.slice(0, max) + "..." : str;
+}
+
 /**
  * Calculates a requirement relevance score (0-100) for a candidate concept or sub-domain.
  * Filters out out-of-scope domain topics (e.g. liquidity, treasury for fraud detection).
@@ -909,9 +914,9 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         { num: "02", title: "Strategic Solution Vision", desc: `Unifying real-time telemetry into automated frontline action` },
         { num: "03", title: "Enterprise Data Foundation", desc: `Connecting existing operational systems and streaming gateways` },
         { num: "04", title: "Solution Architecture", desc: `Governed real-time pipeline from source ingestion to action dispatch` },
-        { num: "05", title: ucs[0]?.title ? ucs[0].title.split(/[:\u2014-]/)[0].trim() : "Live Operational Radar", desc: ucs[0]?.subtitle || ucs[0]?.benefit || "Real-time decision tracking" },
-        { num: "06", title: ucs[1]?.title ? ucs[1].title.split(/[:\u2014-]/)[0].trim() : "Predictive AI Decision Engine", desc: ucs[1]?.subtitle || ucs[1]?.benefit || "Factor-level risk scoring and root cause" },
-        { num: "07", title: ucs[2]?.title ? ucs[2].title.split(/[:\u2014-]/)[0].trim() : "Action Queue & Roadmap", desc: ucs[2]?.subtitle || ucs[2]?.benefit || "Prioritized work queue and phased delivery" }
+        { num: "05", title: ucs[0]?.title ? ucs[0].title.split(/[:\u2014\u2013|]/)[0].trim() : "Live Operational Radar", desc: ucs[0]?.subtitle || ucs[0]?.benefit || "Real-time decision tracking" },
+        { num: "06", title: ucs[1]?.title ? ucs[1].title.split(/[:\u2014\u2013|]/)[0].trim() : "Predictive AI Decision Engine", desc: ucs[1]?.subtitle || ucs[1]?.benefit || "Factor-level risk scoring and root cause" },
+        { num: "07", title: ucs[2]?.title ? ucs[2].title.split(/[:\u2014\u2013|]/)[0].trim() : "Action Queue & Roadmap", desc: ucs[2]?.subtitle || ucs[2]?.benefit || "Prioritized work queue and phased delivery" }
       ];
     }
 
@@ -921,7 +926,7 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       if (uc.challenge || uc.businessProblem) {
         dynamicChallenges.push({
           num: String(dynamicChallenges.length + 1).padStart(2, "0"),
-          title: uc.title ? uc.title.split(/[:\u2014-]/)[0].trim() : `Operational Bottleneck ${idx + 1}`,
+          title: uc.title ? uc.title.split(/[:\u2014\u2013|]/)[0].trim() : `Operational Bottleneck ${idx + 1}`,
           desc: uc.businessProblem || uc.challenge
         });
       }
@@ -941,19 +946,58 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       plan.operational_challenges = dynamicChallenges.slice(0, 6);
     }
 
-    // Dynamic Data Foundation from Claude research systems
-    if (researchStructured && Array.isArray(researchStructured.systems) && researchStructured.systems.length >= 3) {
-      plan.data_foundation = researchStructured.systems.slice(0, 5).map((sys, idx) => ({
-        category: sys.name,
-        desc: sys.role || `Operational telemetry for ${domain}`,
-        sourceSystems: `${sys.name} (${sys.confidence || "industry-typical"})`,
-        fields: `entity_id, status_code, timestamp, latency_ms, metric_value, event_payload`,
-        frequency: idx < 2 ? "Real-Time Streaming (<100ms)" : "Continuous CDC & Event Sync",
-        readiness: idx === 0 ? "High Feasibility (Live Stream Ready)" : idx === 1 ? "Standard API Gateway Ready" : "CDC Sync Active"
-      }));
+    // Dynamic Data Foundation (Slide 5) from Claude research systems and use cases
+    const candidateSystems = [];
+    if (researchStructured && Array.isArray(researchStructured.systems)) {
+      researchStructured.systems.forEach(s => {
+        if (s && s.name) candidateSystems.push({ name: s.name, role: s.role || `Core ${domain} data feed`, confidence: s.confidence });
+      });
+    }
+    ucs.forEach(uc => {
+      if (Array.isArray(uc.worksWith)) {
+        uc.worksWith.forEach(w => {
+          if (w && !candidateSystems.some(cs => cs.name.toLowerCase() === w.toLowerCase())) {
+            candidateSystems.push({ name: w, role: `Operational feed for ${uc.title ? uc.title.slice(0, 30) : domain}`, confidence: "integrated" });
+          }
+        });
+      }
+    });
+
+    if (candidateSystems.length >= 2) {
+      plan.data_foundation_meta = {
+        kicker: `${domain.toUpperCase()} DATA FOUNDATION`,
+        title: `${companyName} Data Foundation for ${plan.primary_business_domain}`,
+        subtitle: `Connecting core operational telemetry, live system feeds, and historical records to power real-time AI.`
+      };
+
+      plan.data_foundation = candidateSystems.slice(0, 5).map((sys, idx) => {
+        const isRealTime = idx < 2;
+        const feedTypes = [
+          "event_id, status_code, timestamp_utc, latency_ms, payload_json, operator_id",
+          "entity_id, transaction_ref, state_flag, threshold_value, queue_depth",
+          "patient_mrn, unit_code, bed_state, order_ts, dispatch_priority",
+          "telemetry_stream, anomaly_score, velocity_rate, device_fingerprint, error_code",
+          "historical_profile_id, 90d_baseline_mean, deviation_sigma, audit_hash"
+        ];
+        const readinessBadges = [
+          "High Feasibility (Live Stream Ready)",
+          "Interface Engine Active",
+          "Real-Time CDC Delta Lakehouse Sync",
+          "REST API Webhook Ready",
+          "Batch Lakehouse Ingestion"
+        ];
+        return {
+          category: sys.name,
+          desc: sys.role || `Core operational feed for ${domain.toLowerCase()}`,
+          sourceSystems: `${sys.name} (${sys.confidence || "Enterprise Gateway"})`,
+          fields: feedTypes[idx % feedTypes.length],
+          frequency: isRealTime ? "Real-Time Streaming (<50ms)" : "Continuous CDC & Event Sync",
+          readiness: readinessBadges[idx % readinessBadges.length]
+        };
+      });
     }
 
-    // Dynamic Solution Architecture from Claude
+    // Dynamic Solution Architecture (Slide 6) from Claude
     if (useCases.architecture && Array.isArray(useCases.architecture.stages) && useCases.architecture.stages.length >= 3) {
       const arch = useCases.architecture;
       const sourcesList = (arch.sources || []).map(s => (typeof s === "string" ? s : s.name)).filter(Boolean).slice(0, 4);
@@ -965,12 +1009,12 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         ingestion: {
           title: "1. Stream Ingestion",
           subtitle: "Real-Time Feeds",
-          items: sourcesList.length ? sourcesList : ["Operational Event Streams", "Enterprise Telemetry", "CDC Data Gateways", "System API Feeds"]
+          items: sourcesList.length ? sourcesList : candidateSystems.slice(0, 4).map(s => `${s.name} Stream`)
         },
         storage: {
           title: "2. Unified Storage",
           subtitle: "Enterprise Delta Lakehouse",
-          items: ["12-Month Operating Baselines", "Real-Time Feature Store", "Unified Master Entity Model", "Audit & Lineage Logs"]
+          items: [`12-Month ${domain} Baselines`, "Real-Time Feature Store", "Unified Master Entity Model", "Audit & Lineage Logs"]
         },
         analytics: {
           title: "3. Streaming Engine",
@@ -991,15 +1035,22 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       plan.fabric_architecture = plan.solution_architecture;
     }
 
-    // Dynamic Explainable AI from Claude's top use case
+    // Dynamic Explainable AI (Slide 8) from Claude's top use case
     const topUc = ucs[0];
+    const shortTitle = topUc ? (topUc.title?.split(/[:\u2014\u2013|]/)[0]?.trim() || "Operational Anomaly") : "Operational Anomaly";
+    
     if (topUc) {
-      const shortTitle = topUc.title?.split(/[:\u2014-]/)[0]?.trim() || "Incident";
+      const factor1 = topUc.insight ? topUc.insight.slice(0, 36) : "Primary Anomaly Threshold Breach";
+      const factor2 = topUc.challenge ? topUc.challenge.slice(0, 36) : "Operational Bottleneck Detected";
+      const factor3 = topUc.solutionMoves?.[0]?.lead ? topUc.solutionMoves[0].lead.slice(0, 36) : "Latency & Capacity Constraint";
+      const factor4 = topUc.worksWith?.[0] ? `${topUc.worksWith[0]} State Discrepancy` : "Cross-System Dependency Lag";
+
       plan.explainable_example = {
         kicker: "OPERATIONAL CAPABILITY 2 OF 5  |  TRANSPARENT AI",
         title: `Why Did the AI Model Flag This ${shortTitle}?`,
         subtitle: topUc.subtitle || "Every automated decision provides an instant, transparent breakdown of risk factors for frontline teams.",
         dossierTitle: `INSPECTED ${shortTitle.toUpperCase()} DOSSIER`,
+        factorsTitle: "TRANSPARENT RISK FACTOR DECOMPOSITION",
         txnId: `INC-${Math.floor(10000 + Math.random() * 90000)}`,
         amount: topUc.proofPoint || "High Severity Outlier",
         channel: topUc.worksWith?.[0] || "Operational Stream",
@@ -1012,15 +1063,42 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         riskLevel: "CRITICAL ACTION REQUIRED",
         decision: topUc.decision ? topUc.decision.slice(0, 60).toUpperCase() : "TRIGGER 1-CLICK OPERATIONAL DISPATCH",
         factors: [
-          { score: "+35", factor: topUc.insight ? topUc.insight.slice(0, 36) : "Primary Anomaly Threshold Breach", desc: topUc.businessProblem?.slice(0, 80) || "Observed deviation from normal historical threshold" },
-          { score: "+28", factor: topUc.challenge ? topUc.challenge.slice(0, 36) : "Operational Bottleneck Detected", desc: topUc.whyItMatters?.slice(0, 80) || "Immediate risk of downstream SLA failure" },
-          { score: "+15", factor: topUc.solutionMoves?.[0]?.lead || "Latency & Capacity Constraint", desc: topUc.solutionMoves?.[0]?.detail?.slice(0, 80) || "Queue backlog exceeds target threshold" },
-          { score: "+10", factor: "Cross-System Dependency Lag", desc: "Downstream handoff pending verification" }
+          { weight: "+35", score: "+35", factor: factor1, reason: topUc.businessProblem?.slice(0, 80) || "Observed deviation from normal historical threshold", desc: topUc.businessProblem?.slice(0, 80) || "Observed deviation from normal historical threshold" },
+          { weight: "+28", score: "+28", factor: factor2, reason: topUc.whyItMatters?.slice(0, 80) || "Immediate risk of downstream SLA failure", desc: topUc.whyItMatters?.slice(0, 80) || "Immediate risk of downstream SLA failure" },
+          { weight: "+15", score: "+15", factor: factor3, reason: topUc.solutionMoves?.[0]?.detail?.slice(0, 80) || "Queue backlog exceeds target threshold", desc: topUc.solutionMoves?.[0]?.detail?.slice(0, 80) || "Queue backlog exceeds target threshold" },
+          { weight: "+10", score: "+10", factor: factor4, reason: `Telemetry mismatch detected across ${topUc.worksWith?.[0] || 'upstream'} and downstream feeds`, desc: `Telemetry mismatch detected across ${topUc.worksWith?.[0] || 'upstream'} and downstream feeds` }
         ]
       };
     }
 
-    // Dynamic Action Queue from Claude's use cases
+    // Dynamic Multi-Dimensional Baseline vs. Outlier Radar (Slide 9)
+    if (topUc) {
+      plan.behavioral_profile = {
+        kicker: "OPERATIONAL CAPABILITY 3 OF 5  |  BEHAVIORAL RADAR",
+        title: `Multi-Dimensional Baseline vs. Anomaly Radar: ${shortTitle}`,
+        subtitle: `Continuous machine learning compares every live event against 12 months of ${companyName} operational history.`,
+        baselineTitle: `ESTABLISHED 12-MONTH BASELINE: ${truncate(companyName + " " + shortTitle, 32)}`,
+        anomalyTitle: "CURRENT LIVE ANOMALOUS DEVIATION",
+        entityName: `${companyName} ${shortTitle} (#${Math.floor(10000 + Math.random() * 90000)})`,
+        baseline: [
+          { dimension: "Nominal Cycle Latency", value: "Standard turn-around within verified SLA target", status: "Baseline" },
+          { dimension: "Shift Throughput Band", value: "Operating within ±8% nominal volume variance", status: "Baseline" },
+          { dimension: "Primary Feeds Interface", value: `Verified 2-way handshake via ${topUc.worksWith?.[0] || 'Core Gateway'}`, status: "Baseline" },
+          { dimension: "Exception Failure Rate", value: "< 1.5% historical exception frequency", status: "Baseline" },
+          { dimension: "State Synchronization", value: "Zero unreconciled discrepancies across nodes", status: "Baseline" }
+        ],
+        anomaly: [
+          { dimension: "Current Latency / SLA", value: topUc.challenge ? topUc.challenge.slice(0, 52) : "SLA breach threshold exceeded", status: "Deviation (+35)" },
+          { dimension: "Current Queue Load", value: topUc.insight ? topUc.insight.slice(0, 52) : "Queue backlog exceeds maximum target", status: "Urgent (+28)" },
+          { dimension: "Observed Feeds Status", value: `${topUc.worksWith?.[0] || 'Upstream System'} response latency elevated`, status: "Bottleneck (+15)" },
+          { dimension: "SLA Impact Risk", value: "High risk of SLA breach without automated dispatch", status: "High Risk (+10)" },
+          { dimension: "Action Status", value: topUc.decision ? topUc.decision.slice(0, 52) : "1-Click automated triage dispatch required", status: "Action Flagged" }
+        ],
+        conclusion: topUc.insight ? `${topUc.insight.slice(0, 110)} — 1-Click Operational Dispatch triggered.` : `Multi-dimensional anomaly detected across core ${domain} systems. Fast-track remediation initiated.`
+      };
+    }
+
+    // Dynamic Action Queue (Slide 10) from Claude's use cases
     const priorities = ["CRITICAL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
     plan.investigation_queue = ucs.slice(0, 5).map((uc, i) => ({
       priority: priorities[i] || "MEDIUM",
@@ -1032,7 +1110,7 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       riskScore: 90 - i * 12
     }));
 
-    // Dynamic Solution KPIs from Claude
+    // Dynamic Solution KPIs & Closed Loop (Slide 11) from Claude
     if (useCases.hub && Array.isArray(useCases.hub.kpis) && useCases.hub.kpis.length >= 2) {
       plan.solution_kpis = useCases.hub.kpis.slice(0, 4).map((k) => ({
         benchmark: k.value || "25–35% Improvement",
@@ -1041,6 +1119,94 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         type: "Business Outcome"
       }));
     }
+
+    plan.closed_loop_steps = [
+      { title: "1. Real-Time Ingestion", desc: `Live events from ${candidateSystems[0]?.name || 'core systems'} ingested into Lakehouse in <50ms.` },
+      { title: "2. Predictive AI Scoring", desc: `Machine learning models score ${shortTitle} risk and isolate root-cause factors.` },
+      { title: "3. Frontline Triage", desc: "Operating teams resolve incidents via prioritized queue and 1-click dossiers." },
+      { title: "4. Continuous Retraining", desc: "Resolved case outcomes continuously retrain AI models to prevent false alerts." }
+    ];
+
+    // Dynamic Data Readiness Matrix (Slide 12)
+    plan.readiness_meta = {
+      kicker: "DATA READINESS & DISCOVERY MATRIX",
+      title: `${companyName} Integration & Feasibility Assessment`,
+      subtitle: `All required data feeds connect into the enterprise lakehouse without requiring core system replacements or downtime.`
+    };
+
+    // Dynamic Phased Delivery Roadmap (Slide 13)
+    const uc2Title = ucs[1]?.title ? ucs[1].title.split(/[:\u2014\u2013|]/)[0].trim() : "Operational Capabilities";
+    plan.roadmap_meta = {
+      kicker: "DELIVERY ROADMAP",
+      title: `A Phased Path from Fast Pilot to Enterprise Scale for ${companyName}`,
+      subtitle: `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`
+    };
+    plan.roadmap_phases = [
+      {
+        title: `1. ${domain} Data Ingestion & Lakehouse Setup`,
+        time: "Weeks 1–4",
+        items: [
+          "Deploy secure Delta Lakehouse environment",
+          `Connect live ${candidateSystems[0]?.name || 'operational'} streams & telemetry`,
+          "Ingest 90-day historical logs to calibrate ML baselines",
+          "Establish enterprise role-based access & governance"
+        ]
+      },
+      {
+        title: `2. ${shortTitle} Pilot Launch`,
+        time: "Weeks 5–8",
+        items: [
+          "Deploy real-time AI scoring engine in shadow mode",
+          `Launch live frontline command radar for ${shortTitle}`,
+          "Calibrate explainable risk factor weights with domain leads",
+          "Measure baseline SLA reduction and operational lift"
+        ]
+      },
+      {
+        title: `3. Enterprise-Wide Scaling`,
+        time: "Months 3–6",
+        items: [
+          "Scale ingestion across all operating facilities & units",
+          `Integrate automated 1-click dispatch into ${candidateSystems[1]?.name || 'core systems'}`,
+          "Deploy real-time executive cockpit & KPI dashboards",
+          "Activate continuous feedback retraining pipelines"
+        ]
+      },
+      {
+        title: `4. Advanced AI Expansion & Optimization`,
+        time: "Months 6+",
+        items: [
+          `Deploy predictive intelligence for ${uc2Title}`,
+          "Enable cross-department operational graph correlation",
+          "Benchmark multi-year ROI with executive board",
+          "Implement self-tuning adaptive anomaly thresholds"
+        ]
+      }
+    ];
+
+    // Dynamic Immediate Next Steps (Slide 14)
+    plan.next_steps_meta = {
+      kicker: "NEXT STEPS & ENGAGEMENT PLAN",
+      title: `Next Steps to Initiate Discovery for ${companyName}`,
+      subtitle: `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`
+    };
+    plan.next_steps = [
+      {
+        num: "01",
+        title: `3-Week ${domain} Architecture & Stream Audit`,
+        desc: `Collaborate with ${companyName} enterprise engineering teams to review ${candidateSystems[0]?.name || 'core system'} schemas, API endpoints, and latency requirements.`
+      },
+      {
+        num: "02",
+        title: "Operational Baseline Calibration & Target ROI",
+        desc: `Analyze 90 days of historical operational logs to quantify current ${shortTitle.toLowerCase()} bottlenecks, manual review cycle times, and establish pilot success targets.`
+      },
+      {
+        num: "03",
+        title: "8-Week Rapid Production Pilot Deployment",
+        desc: `Deploy the real-time command center connected to live ${domain.toLowerCase()} feeds with active 1-click triage queues for frontline operating teams.`
+      }
+    ];
   }
 
   return plan;
