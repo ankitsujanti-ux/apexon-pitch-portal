@@ -49,7 +49,7 @@ export function scoreRelevance(candidateText, requirement, domain) {
 /**
  * Builds the complete structured Pitch Plan JSON tailored strictly to the client requirement and sector.
  */
-export function buildPitchPlan({ companyName, domain, requirement }) {
+export function buildPitchPlan({ companyName, domain, requirement, useCases, research, researchStructured }) {
   const { playbook } = findSectorPlaybook(domain, requirement, companyName);
   const reqText = requirement || `Transforming ${domain} operations through unified real-time data and AI intelligence.`;
   const reqLower = reqText.toLowerCase();
@@ -862,7 +862,7 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
       break;
   }
 
-  return {
+  const plan = {
     client: companyName,
     sector: domain,
     primary_business_domain: primaryDomain,
@@ -893,4 +893,155 @@ export function buildPitchPlan({ companyName, domain, requirement }) {
     next_steps_meta: nextStepsMeta,
     next_steps: nextSteps
   };
+
+  // If dynamic AI generated use cases exist from Claude, enrich the presentation with this client's exact data
+  if (useCases && Array.isArray(useCases.useCases) && useCases.useCases.length > 0) {
+    const ucs = useCases.useCases;
+    
+    if (useCases.deckTitle && useCases.deckTitle.length > 5) {
+      plan.primary_business_domain = useCases.deckTitle;
+    }
+
+    // Dynamic Agenda mapping Claude's use cases
+    if (ucs.length >= 3) {
+      plan.agenda_items = [
+        { num: "01", title: "Operational Landscape", desc: `Core bottlenecks and operational friction across ${companyName}` },
+        { num: "02", title: "Strategic Solution Vision", desc: `Unifying real-time telemetry into automated frontline action` },
+        { num: "03", title: "Enterprise Data Foundation", desc: `Connecting existing operational systems and streaming gateways` },
+        { num: "04", title: "Solution Architecture", desc: `Governed real-time pipeline from source ingestion to action dispatch` },
+        { num: "05", title: ucs[0]?.title ? ucs[0].title.split(/[:\u2014-]/)[0].trim() : "Live Operational Radar", desc: ucs[0]?.subtitle || ucs[0]?.benefit || "Real-time decision tracking" },
+        { num: "06", title: ucs[1]?.title ? ucs[1].title.split(/[:\u2014-]/)[0].trim() : "Predictive AI Decision Engine", desc: ucs[1]?.subtitle || ucs[1]?.benefit || "Factor-level risk scoring and root cause" },
+        { num: "07", title: ucs[2]?.title ? ucs[2].title.split(/[:\u2014-]/)[0].trim() : "Action Queue & Roadmap", desc: ucs[2]?.subtitle || ucs[2]?.benefit || "Prioritized work queue and phased delivery" }
+      ];
+    }
+
+    // Dynamic Operational Challenges from Claude
+    const dynamicChallenges = [];
+    ucs.forEach((uc, idx) => {
+      if (uc.challenge || uc.businessProblem) {
+        dynamicChallenges.push({
+          num: String(dynamicChallenges.length + 1).padStart(2, "0"),
+          title: uc.title ? uc.title.split(/[:\u2014-]/)[0].trim() : `Operational Bottleneck ${idx + 1}`,
+          desc: uc.businessProblem || uc.challenge
+        });
+      }
+    });
+    if (researchStructured && Array.isArray(researchStructured.implications)) {
+      researchStructured.implications.forEach((imp, idx) => {
+        if (dynamicChallenges.length < 6 && (imp.finding || imp.whyItMatters)) {
+          dynamicChallenges.push({
+            num: String(dynamicChallenges.length + 1).padStart(2, "0"),
+            title: imp.finding ? imp.finding.slice(0, 32) : `Process Delay ${idx + 1}`,
+            desc: imp.whyItMatters || imp.finding
+          });
+        }
+      });
+    }
+    if (dynamicChallenges.length >= 4) {
+      plan.operational_challenges = dynamicChallenges.slice(0, 6);
+    }
+
+    // Dynamic Data Foundation from Claude research systems
+    if (researchStructured && Array.isArray(researchStructured.systems) && researchStructured.systems.length >= 3) {
+      plan.data_foundation = researchStructured.systems.slice(0, 5).map((sys, idx) => ({
+        category: sys.name,
+        desc: sys.role || `Operational telemetry for ${domain}`,
+        sourceSystems: `${sys.name} (${sys.confidence || "industry-typical"})`,
+        fields: `entity_id, status_code, timestamp, latency_ms, metric_value, event_payload`,
+        frequency: idx < 2 ? "Real-Time Streaming (<100ms)" : "Continuous CDC & Event Sync",
+        readiness: idx === 0 ? "High Feasibility (Live Stream Ready)" : idx === 1 ? "Standard API Gateway Ready" : "CDC Sync Active"
+      }));
+    }
+
+    // Dynamic Solution Architecture from Claude
+    if (useCases.architecture && Array.isArray(useCases.architecture.stages) && useCases.architecture.stages.length >= 3) {
+      const arch = useCases.architecture;
+      const sourcesList = (arch.sources || []).map(s => (typeof s === "string" ? s : s.name)).filter(Boolean).slice(0, 4);
+      plan.solution_architecture = {
+        meta: {
+          title: arch.title || "SOLVING WITH REAL-TIME DATA & AI",
+          subtitle: arch.subtitle || `An end-to-end governed pipeline from operational streams to frontline action.`
+        },
+        ingestion: {
+          title: "1. Stream Ingestion",
+          subtitle: "Real-Time Feeds",
+          items: sourcesList.length ? sourcesList : ["Operational Event Streams", "Enterprise Telemetry", "CDC Data Gateways", "System API Feeds"]
+        },
+        storage: {
+          title: "2. Unified Storage",
+          subtitle: "Enterprise Delta Lakehouse",
+          items: ["12-Month Operating Baselines", "Real-Time Feature Store", "Unified Master Entity Model", "Audit & Lineage Logs"]
+        },
+        analytics: {
+          title: "3. Streaming Engine",
+          subtitle: "Real-Time Event Processing",
+          items: arch.stages[1]?.steps?.slice(0, 4) || ["Sub-Second Anomaly Radar", "Sliding Window Aggregations", "Threshold Evaluation Engine", "Cross-Channel Graph Sync"]
+        },
+        ai_layer: {
+          title: "4. Predictive AI Engine",
+          subtitle: "Transparent Machine Learning",
+          items: arch.stages[2]?.steps?.slice(0, 4) || ["Composite Urgency Scoring", "Root-Cause Explainability Model", "Predictive Bottleneck Forecaster", "Automated Action Recommender"]
+        },
+        action: {
+          title: "5. Frontline Action",
+          subtitle: "Operational Dispatch",
+          items: [ucs[0]?.title?.slice(0, 32) || "Live Incident Command Board", ucs[1]?.title?.slice(0, 32) || "Prioritized Analyst Queue", "1-Click Operational Dispatch", "Automated Mobile Alerts"]
+        }
+      };
+      plan.fabric_architecture = plan.solution_architecture;
+    }
+
+    // Dynamic Explainable AI from Claude's top use case
+    const topUc = ucs[0];
+    if (topUc) {
+      const shortTitle = topUc.title?.split(/[:\u2014-]/)[0]?.trim() || "Incident";
+      plan.explainable_example = {
+        kicker: "OPERATIONAL CAPABILITY 2 OF 5  |  TRANSPARENT AI",
+        title: `Why Did the AI Model Flag This ${shortTitle}?`,
+        subtitle: topUc.subtitle || "Every automated decision provides an instant, transparent breakdown of risk factors for frontline teams.",
+        dossierTitle: `INSPECTED ${shortTitle.toUpperCase()} DOSSIER`,
+        txnId: `INC-${Math.floor(10000 + Math.random() * 90000)}`,
+        amount: topUc.proofPoint || "High Severity Outlier",
+        channel: topUc.worksWith?.[0] || "Operational Stream",
+        timestamp: "Live Telemetry Feed (Peak Window)",
+        location: topUc.worksWith?.[1] || "Primary Operating Center",
+        baselineLocation: "Standard Operating Profile",
+        device: topUc.worksWith?.[2] || "Enterprise System Feed",
+        baselineDevice: "Nominal Operating Baseline",
+        riskScore: 88,
+        riskLevel: "CRITICAL ACTION REQUIRED",
+        decision: topUc.decision ? topUc.decision.slice(0, 60).toUpperCase() : "TRIGGER 1-CLICK OPERATIONAL DISPATCH",
+        factors: [
+          { score: "+35", factor: topUc.insight ? topUc.insight.slice(0, 36) : "Primary Anomaly Threshold Breach", desc: topUc.businessProblem?.slice(0, 80) || "Observed deviation from normal historical threshold" },
+          { score: "+28", factor: topUc.challenge ? topUc.challenge.slice(0, 36) : "Operational Bottleneck Detected", desc: topUc.whyItMatters?.slice(0, 80) || "Immediate risk of downstream SLA failure" },
+          { score: "+15", factor: topUc.solutionMoves?.[0]?.lead || "Latency & Capacity Constraint", desc: topUc.solutionMoves?.[0]?.detail?.slice(0, 80) || "Queue backlog exceeds target threshold" },
+          { score: "+10", factor: "Cross-System Dependency Lag", desc: "Downstream handoff pending verification" }
+        ]
+      };
+    }
+
+    // Dynamic Action Queue from Claude's use cases
+    const priorities = ["CRITICAL", "CRITICAL", "HIGH", "MEDIUM", "LOW"];
+    plan.investigation_queue = ucs.slice(0, 5).map((uc, i) => ({
+      priority: priorities[i] || "MEDIUM",
+      caseId: `#INC-${Math.floor(80000 + i * 1111)}`,
+      entity: uc.title ? uc.title.slice(0, 26) : `Case #${i + 1}`,
+      amount: uc.proofPoint ? uc.proofPoint.slice(0, 18) : "High Urgency",
+      trigger: uc.insight ? uc.insight.slice(0, 60) : uc.businessProblem ? uc.businessProblem.slice(0, 60) : "Operational threshold breach",
+      action: uc.decision ? uc.decision.slice(0, 45) : uc.action ? uc.action.slice(0, 45) : "Dispatch Immediate Action",
+      riskScore: 90 - i * 12
+    }));
+
+    // Dynamic Solution KPIs from Claude
+    if (useCases.hub && Array.isArray(useCases.hub.kpis) && useCases.hub.kpis.length >= 2) {
+      plan.solution_kpis = useCases.hub.kpis.slice(0, 4).map((k) => ({
+        benchmark: k.value || "25–35% Improvement",
+        name: k.name || "Target Operational KPI",
+        desc: k.why || "Quantified business outcome",
+        type: "Business Outcome"
+      }));
+    }
+  }
+
+  return plan;
 }
