@@ -469,395 +469,140 @@ function addArchitectureSlide(slide, palette, { companyName, pitchPlan, page }) 
   });
 }
 
-// Slide 7: Live Operations Command Center
-function addCommandCenterSlide(slide, palette, { companyName, pitchPlan, page }) {
+// Slides 7–11: 5 Dedicated Use Case Deep-Dive Slides
+function addUseCaseDeepDiveSlide(slide, palette, { companyName, pitchPlan, useCase, index, page }) {
   applyMaster(slide, palette, { page });
-  const cc = pitchPlan.command_center || {};
-  addSectionHeader(slide, palette, {
-    kicker: cc.kicker || "OPERATIONAL CAPABILITY 1 OF 5  |  COMMAND RADAR",
-    title: cc.title || `${companyName} Live Operations Command Center`,
-    subtitle: cc.subtitle || `Continuous sub-second evaluation of incoming operational streams with instant anomaly risk classification.`,
-  });
+  
+  const uc = useCase || {};
+  const ucNum = index + 1;
+  const kicker = `USE CASE ${ucNum} OF 5`;
+  const title = uc.title || `Operational Use Case ${ucNum}`;
+  const subtitle = uc.subtitle || uc.tagline || "High-impact real-time operational intelligence.";
 
-  // Top metric bar (4 summary KPIs)
-  (cc.metrics || []).slice(0, 4).forEach((m, idx) => {
-    const mx = MARGIN + idx * 3.16;
-    slide.addShape("roundRect", {
-      x: mx, y: 1.6, w: 2.94, h: 1.25, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: idx === 1 ? palette.accent : palette.cardBorder, width: 1 },
-    });
-    slide.addText(m.val, {
-      x: mx + 0.18, y: 1.72, w: 2.58, h: 0.42,
-      fontSize: 22, bold: true, color: idx === 1 ? palette.accent : palette.heading, fontFace: palette.fontTitle,
-    });
-    slide.addText(m.label, {
-      x: mx + 0.18, y: 2.16, w: 2.58, h: 0.28,
-      fontSize: 11, bold: true, color: "CBD5E1", fontFace: palette.fontTitle,
-    });
-    slide.addText(m.note, {
-      x: mx + 0.18, y: 2.45, w: 2.58, h: 0.25,
-      fontSize: 9, color: "7DDEA0", fontFace: palette.fontBody,
-    });
-  });
+  addSectionHeader(slide, palette, { kicker, title, subtitle });
 
-  // Live Stream Table
-  const tableY = 3.05;
+  // Left Column: Main Problem & Solution Card
+  const leftX = MARGIN;
+  const leftW = 7.8;
+  const mainH = 3.75;
   slide.addShape("roundRect", {
-    x: MARGIN, y: tableY, w: 12.48, h: 3.4, rectRadius: 0.08,
+    x: leftX, y: 1.6, w: leftW, h: mainH, rectRadius: 0.08,
     fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
   });
-  slide.addText("LIVE EVALUATION STREAM (LAST 60 SECONDS)", {
-    x: MARGIN + 0.25, y: tableY + 0.15, w: 11.98, h: 0.25,
+
+  // Problem Section
+  slide.addText("THE PROBLEM", {
+    x: leftX + 0.25, y: 1.8, w: leftW - 0.5, h: 0.26,
+    fontSize: 10, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+  });
+  const problemText = uc.challenge || uc.businessProblem || "Operational friction and delayed visibility limit proactive decisions.";
+  slide.addText(truncate(problemText, 240), {
+    x: leftX + 0.25, y: 2.1, w: leftW - 0.5, h: 1.15,
+    fontSize: 11, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
+  });
+
+  // Solution Section
+  slide.addText("THE SOLUTION & AI APPROACH", {
+    x: leftX + 0.25, y: 3.35, w: leftW - 0.5, h: 0.26,
+    fontSize: 10, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
+  });
+  const solutionText = uc.solutionFit || uc.benefit || uc.insight || (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length ? uc.solutionMoves.map(m => m.detail || m.lead).join(". ") : "Real-time stream intelligence unifies data feeds into automated frontline action.");
+  slide.addText(truncate(solutionText, 280), {
+    x: leftX + 0.25, y: 3.65, w: leftW - 0.5, h: 1.55,
+    fontSize: 11, color: palette.heading, fontFace: palette.fontBody, wrap: true,
+  });
+
+  // Left Bottom Box 1: Data Sources
+  const boxW = 3.78;
+  const boxH = 1.35;
+  const boxY = 5.5;
+  slide.addShape("roundRect", {
+    x: leftX, y: boxY, w: boxW, h: boxH, rectRadius: 0.06,
+    fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
+  });
+  slide.addText("DATA SOURCES", {
+    x: leftX + 0.2, y: boxY + 0.12, w: boxW - 0.4, h: 0.22,
+    fontSize: 9, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+  });
+  const sourcesText = Array.isArray(uc.worksWith) && uc.worksWith.length ? uc.worksWith.join(", ") : "Core enterprise records, event streams, real-time telemetry";
+  slide.addText(truncate(sourcesText, 110), {
+    x: leftX + 0.2, y: boxY + 0.36, w: boxW - 0.4, h: 0.85,
+    fontSize: 10, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
+  });
+
+  // Left Bottom Box 2: Platform & AI Components
+  const box2X = leftX + boxW + 0.24;
+  slide.addShape("roundRect", {
+    x: box2X, y: boxY, w: boxW, h: boxH, rectRadius: 0.06,
+    fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
+  });
+  slide.addText("AI & PLATFORM COMPONENTS", {
+    x: box2X + 0.2, y: boxY + 0.12, w: boxW - 0.4, h: 0.22,
+    fontSize: 9, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
+  });
+  const techText = Array.isArray(uc.techComponents) && uc.techComponents.length ? uc.techComponents.join(" • ") : "Eventstream • Delta Lakehouse • Machine Learning Models • Real-Time Dashboards • Action Trigger";
+  slide.addText(truncate(techText, 110), {
+    x: box2X + 0.2, y: boxY + 0.36, w: boxW - 0.4, h: 0.85,
+    fontSize: 10, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
+  });
+
+  // Right Column: Expected Impact (3 Stacked Stat Cards)
+  const rightX = leftX + leftW + 0.28;
+  const rightW = 4.4;
+  slide.addShape("roundRect", {
+    x: rightX, y: 1.6, w: rightW, h: 5.25, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
+  });
+  slide.addText("EXPECTED IMPACT", {
+    x: rightX + 0.25, y: 1.8, w: rightW - 0.5, h: 0.28,
     fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
   });
 
-  const headers = cc.headers || ["Event ID", "Entity / Unit", "Channel & Source", "Facility / Location", "Observed Metric", "Risk Score", "Decision Action"];
-  const colW = cc.colW || [1.5, 2.0, 2.2, 2.0, 1.4, 1.3, 1.88];
-  
-  // Headers
-  let cx = MARGIN + 0.2;
-  headers.forEach((h, i) => {
-    slide.addText(h, {
-      x: cx, y: tableY + 0.45, w: colW[i], h: 0.25,
-      fontSize: 9, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
-    });
-    cx += colW[i];
-  });
+  // 3 Stats
+  const stats = (Array.isArray(uc.impactStats) && uc.impactStats.length >= 3)
+    ? uc.impactStats
+    : (Array.isArray(uc.kpis) && uc.kpis.length >= 2)
+      ? [
+          { value: uc.kpis[0].value || uc.proofPoint || "25–35%", label: uc.kpis[0].name || "Target KPI improvement" },
+          { value: uc.kpis[1]?.value || "-30%", label: uc.kpis[1]?.name || "Operational bottleneck reduction" },
+          { value: uc.kpis[2]?.value || "Live", label: uc.kpis[2]?.name || "Continuous automated scoring" }
+        ]
+      : [
+          { value: uc.proofPoint || "25–35%", label: "Target operational benchmark lift" },
+          { value: "-40%", label: "Cycle time & friction reduction" },
+          { value: "Live", label: "100% real-time evaluation across feeds" }
+        ];
 
-  const sampleRows = (pitchPlan.investigation_queue || []).slice(0, 4);
-  sampleRows.forEach((r, rIdx) => {
-    const ry = tableY + 0.78 + rIdx * 0.6;
-    slide.addShape("rect", {
-      x: MARGIN + 0.15, y: ry - 0.05, w: 12.18, h: 0.52,
-      fill: { color: r.priority === "CRITICAL" ? "1A162B" : "0B1220" },
-      line: { color: r.priority === "CRITICAL" ? "E54A24" : "2D3F63", width: 1 },
-    });
-    cx = MARGIN + 0.2;
-    
-    const channel = cc.channelName || "Operational Telemetry Feed";
-    const location = r.priority === "CRITICAL" ? (cc.locForeign || "Priority Anomaly Node") : (cc.locDomestic || "Standard Operating Node");
-
-    const rowValues = [
-      r.caseId,
-      r.entity,
-      channel,
-      location,
-      r.amount,
-      `${r.riskScore}/100`,
-      r.action,
-    ];
-    rowValues.forEach((val, cIdx) => {
-      slide.addText(val, {
-        x: cx, y: ry + 0.08, w: colW[cIdx], h: 0.35,
-        fontSize: 10,
-        bold: cIdx === 0 || cIdx === 5 || cIdx === 6,
-        color: cIdx === 5 && r.priority === "CRITICAL" ? "FF7A59" : cIdx === 6 ? "7DDEA0" : palette.textLight,
-        fontFace: palette.fontBody,
-      });
-      cx += colW[cIdx];
-    });
-  });
-}
-
-// Slide 8: Explainable AI Decision Engine
-function addExplainableSlide(slide, palette, { pitchPlan, page }) {
-  applyMaster(slide, palette, { page });
-  const ex = pitchPlan.explainable_example || {};
-
-  addSectionHeader(slide, palette, {
-    kicker: ex.kicker || "OPERATIONAL CAPABILITY 2 OF 5  |  TRANSPARENT AI",
-    title: ex.title || "Why Did the AI Model Flag This Incident?",
-    subtitle: ex.subtitle || "Every automated decision provides an instant, transparent breakdown of risk factors for frontline analysts.",
-  });
-
-  // Left Card: The Incident Profile
-  const leftX = MARGIN;
-  slide.addShape("roundRect", {
-    x: leftX, y: 1.6, w: 4.8, h: 4.8, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "E54A24", width: 1.5 },
-  });
-  slide.addText(ex.dossierTitle || "INSPECTED EVENT DOSSIER", {
-    x: leftX + 0.25, y: 1.8, w: 4.3, h: 0.28,
-    fontSize: 11, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
-  });
-  slide.addText(`Event Ref: ${ex.txnId || "OPS-ALERT-101"}`, {
-    x: leftX + 0.25, y: 2.15, w: 4.3, h: 0.38,
-    fontSize: 18, bold: true, color: palette.heading, fontFace: palette.fontTitle,
-  });
-
-  const details = [
-    { label: "Observed Value / Impact", val: ex.amount || "High Urgency Exception" },
-    { label: "Channel & Timestamp", val: `${ex.channel || "Operational Hub"} · ${ex.timestamp || "Live"}` },
-    { label: "Observed Location / Unit", val: `${ex.location || "Active Node"} (Baseline: ${ex.baselineLocation || "Nominal"})` },
-    { label: "Observed Device / Feed", val: `${ex.device || "Telemetry Feed"} (Baseline: ${ex.baselineDevice || "Standard"})` },
-    { label: "Composite AI Risk Score", val: `${ex.riskScore || 89} / 100 (${ex.riskLevel || "CRITICAL"})` },
-    { label: "Recommended AI Action", val: ex.decision || "TRIGGER AUTOMATED WORKFLOW" },
-  ];
-
-  details.forEach((d, idx) => {
-    const dy = 2.65 + idx * 0.6;
-    slide.addText(d.label, {
-      x: leftX + 0.25, y: dy, w: 4.3, h: 0.2,
-      fontSize: 9, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
-    });
-    slide.addText(d.val, {
-      x: leftX + 0.25, y: dy + 0.18, w: 4.3, h: 0.35,
-      fontSize: idx >= 4 ? 12 : 11,
-      bold: idx >= 4,
-      color: idx === 4 ? "FF7A59" : idx === 5 ? "7DDEA0" : palette.textLight,
-      fontFace: palette.fontBody,
-      wrap: true,
-    });
-  });
-
-  // Right Side: 4 Risk Factor Breakdown Cards
-  const rightX = MARGIN + 5.1;
-  slide.addShape("roundRect", {
-    x: rightX, y: 1.6, w: 7.38, h: 4.8, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
-  });
-  slide.addText(ex.factorsTitle || "TRANSPARENT RISK FACTOR DECOMPOSITION", {
-    x: rightX + 0.25, y: 1.8, w: 6.88, h: 0.28,
-    fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
-  });
-
-  (ex.factors || []).slice(0, 4).forEach((f, fIdx) => {
-    const fy = 2.18 + fIdx * 1.05;
+  const colors = [palette.accent, "7DDEA0", "FACC15"];
+  stats.slice(0, 3).forEach((st, sIdx) => {
+    const sy = 2.2 + sIdx * 1.5;
     slide.addShape("roundRect", {
-      x: rightX + 0.25, y: fy, w: 6.88, h: 0.92, rectRadius: 0.06,
+      x: rightX + 0.2, y: sy, w: rightW - 0.4, h: 1.35, rectRadius: 0.06,
       fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
     });
-    slide.addText(f.weight, {
-      x: rightX + 0.4, y: fy + 0.18, w: 0.8, h: 0.35,
-      fontSize: 18, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
+    slide.addText(st.value || "20–30%", {
+      x: rightX + 0.35, y: sy + 0.12, w: rightW - 0.7, h: 0.52,
+      fontSize: 26, bold: true, color: colors[sIdx % colors.length], fontFace: palette.fontTitle,
     });
-    slide.addText(f.factor, {
-      x: rightX + 1.25, y: fy + 0.14, w: 5.6, h: 0.28,
-      fontSize: 12, bold: true, color: palette.heading, fontFace: palette.fontTitle,
-    });
-    slide.addText(f.reason, {
-      x: rightX + 1.25, y: fy + 0.42, w: 5.6, h: 0.42,
-      fontSize: 10, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
+    slide.addText(st.label || "Key operational improvement", {
+      x: rightX + 0.35, y: sy + 0.68, w: rightW - 0.7, h: 0.55,
+      fontSize: 11, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
     });
   });
 }
 
-// Slide 9: Customer Behavioral Profiling
-function addBehavioralSlide(slide, palette, { pitchPlan, page }) {
-  applyMaster(slide, palette, { page });
-  const bp = pitchPlan.behavioral_profile || {};
-
-  addSectionHeader(slide, palette, {
-    kicker: bp.kicker || "OPERATIONAL CAPABILITY 3 OF 5  |  BEHAVIORAL INTELLIGENCE",
-    title: bp.title || "Multi-Dimensional Baseline vs. Anomaly Radar",
-    subtitle: bp.subtitle || `Continuous machine learning compares every live event against 12 months of operational history.`,
-  });
-
-  // Left Box: 12-Month Baseline Profile
-  const leftX = MARGIN;
-  slide.addShape("roundRect", {
-    x: leftX, y: 1.6, w: 5.9, h: 4.1, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
-  });
-  slide.addText(bp.baselineTitle || `ESTABLISHED 12-MONTH BASELINE PROFILE: ${truncate(bp.entityName || "Operational Baseline", 32)}`, {
-    x: leftX + 0.25, y: 1.8, w: 5.4, h: 0.28,
-    fontSize: 11, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
-  });
-
-  (bp.baseline || []).slice(0, 5).forEach((b, idx) => {
-    const by = 2.18 + idx * 0.72;
-    slide.addShape("roundRect", {
-      x: leftX + 0.25, y: by, w: 5.4, h: 0.62, rectRadius: 0.04,
-      fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
-    });
-    slide.addText(b.dimension, {
-      x: leftX + 0.4, y: by + 0.08, w: 2.2, h: 0.22,
-      fontSize: 9, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
-    });
-    slide.addText(b.value, {
-      x: leftX + 0.4, y: by + 0.28, w: 5.1, h: 0.28,
-      fontSize: 11, bold: true, color: palette.textLight, fontFace: palette.fontBody,
-    });
-  });
-
-  // Right Box: Current Outlier Event
-  const rightX = MARGIN + 6.3;
-  slide.addShape("roundRect", {
-    x: rightX, y: 1.6, w: 6.18, h: 4.1, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "E54A24", width: 1.5 },
-  });
-  slide.addText(bp.anomalyTitle || "CURRENT ANOMALOUS EVENT DEVIATION", {
-    x: rightX + 0.25, y: 1.8, w: 5.68, h: 0.28,
-    fontSize: 11, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
-  });
-
-  (bp.anomaly || []).slice(0, 5).forEach((a, idx) => {
-    const ay = 2.18 + idx * 0.72;
-    slide.addShape("roundRect", {
-      x: rightX + 0.25, y: ay, w: 5.68, h: 0.62, rectRadius: 0.04,
-      fill: { color: "1A162B" }, line: { color: "E54A24", width: 1 },
-    });
-    slide.addText(`${a.dimension} (${a.status})`, {
-      x: rightX + 0.4, y: ay + 0.08, w: 3.5, h: 0.22,
-      fontSize: 9, bold: true, color: "FF7A59", fontFace: palette.fontTitle,
-    });
-    slide.addText(a.value, {
-      x: rightX + 0.4, y: ay + 0.28, w: 5.3, h: 0.28,
-      fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontBody,
-    });
-  });
-
-  // Bottom Conclusion Bar
-  slide.addShape("roundRect", {
-    x: MARGIN, y: 5.85, w: 12.48, h: 0.75, rectRadius: 0.08,
-    fill: { color: "0B1220" }, line: { color: palette.accent, width: 1 },
-  });
-  slide.addText(`AI PROFILE VERDICT:  ${bp.conclusion || "Multi-dimensional anomaly detected"}`, {
-    x: MARGIN + 0.3, y: 6.08, w: 11.88, h: 0.3,
-    fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontTitle, align: "center",
-  });
-}
-
-// Slide 10: Investigation Prioritization Queue
-function addQueueSlide(slide, palette, { companyName, pitchPlan, page }) {
-  applyMaster(slide, palette, { page });
-  const qm = pitchPlan.queue_meta || {};
-  addSectionHeader(slide, palette, {
-    kicker: qm.kicker || "OPERATIONAL CAPABILITY 4 OF 5  |  INVESTIGATION QUEUE",
-    title: qm.title || "AI-Prioritized Case Triage & Frontline Action Queue",
-    subtitle: qm.subtitle || `High-urgency incidents are ranked Critical/High with pre-assembled dossiers so teams act in seconds.`,
-  });
-
-  const headers = qm.headers || ["Priority Tier", "Case Ref", "Entity / Unit", "Observed Value", "Primary Trigger", "One-Click Operational Action"];
-  const colW = qm.colW || [1.8, 1.4, 1.8, 1.6, 3.4, 2.48];
-  
-  const tableY = 1.6;
-  slide.addShape("roundRect", {
-    x: MARGIN, y: tableY, w: 12.48, h: 4.8, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
-  });
-
-  let cx = MARGIN + 0.2;
-  headers.forEach((h, i) => {
-    slide.addText(h, {
-      x: cx, y: tableY + 0.2, w: colW[i], h: 0.28,
-      fontSize: 10, bold: true, color: "9AA6B8", fontFace: palette.fontTitle,
-    });
-    cx += colW[i];
-  });
-
-  const cases = (pitchPlan.investigation_queue || []).slice(0, 5);
-  cases.forEach((c, idx) => {
-    const ry = tableY + 0.6 + idx * 0.8;
-    const isCrit = c.priority === "CRITICAL";
-    const isHigh = c.priority === "HIGH";
-    
-    slide.addShape("roundRect", {
-      x: MARGIN + 0.15, y: ry, w: 12.18, h: 0.68, rectRadius: 0.04,
-      fill: { color: isCrit ? "1E1424" : "0B1220" },
-      line: { color: isCrit ? "E54A24" : isHigh ? "EAB308" : "2D3F63", width: 1 },
-    });
-
-    cx = MARGIN + 0.2;
-    const rowValues = [
-      c.priority,
-      c.caseId,
-      c.entity,
-      c.amount,
-      c.trigger,
-      c.action
-    ];
-
-    rowValues.forEach((val, cIdx) => {
-      slide.addText(val, {
-        x: cx, y: ry + 0.16, w: colW[cIdx], h: 0.4,
-        fontSize: cIdx === 0 || cIdx === 5 ? 11 : 10,
-        bold: cIdx === 0 || cIdx === 5,
-        color: cIdx === 0 && isCrit ? "FF7A59" : cIdx === 0 && isHigh ? "FACC15" : cIdx === 5 ? "7DDEA0" : palette.textLight,
-        fontFace: palette.fontBody,
-      });
-      cx += colW[cIdx];
-    });
-  });
-}
-
-// Slide 11: Business Outcomes & Value Loop
-function addOutcomesSlide(slide, palette, { companyName, pitchPlan, page }) {
-  applyMaster(slide, palette, { page });
-  const om = pitchPlan.outcomes_meta || {};
-  addSectionHeader(slide, palette, {
-    kicker: om.kicker || "OPERATIONAL CAPABILITY 5 OF 5  |  BUSINESS OUTCOMES",
-    title: om.title || `Measurable Solution Performance for ${companyName}`,
-    subtitle: om.subtitle || `Projected operational benchmarks tailored specifically to ${pitchPlan.primary_business_domain}.`,
-  });
-
-  const kpis = (pitchPlan.solution_kpis || []).slice(0, 4);
-  kpis.forEach((k, idx) => {
-    const x = MARGIN + idx * 3.16;
-    const y = 1.6;
-    slide.addShape("roundRect", {
-      x, y, w: 2.94, h: 2.4, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: palette.accent, width: 1.5 },
-    });
-    slide.addText(k.benchmark, {
-      x: x + 0.18, y: y + 0.2, w: 2.58, h: 0.48,
-      fontSize: 24, bold: true, color: palette.accent, fontFace: palette.fontTitle,
-    });
-    slide.addText(k.name, {
-      x: x + 0.18, y: y + 0.72, w: 2.58, h: 0.4,
-      fontSize: 13, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true,
-    });
-    slide.addText(k.desc, {
-      x: x + 0.18, y: y + 1.18, w: 2.58, h: 0.9,
-      fontSize: 10, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
-    });
-    slide.addText(`Type: ${k.type}`, {
-      x: x + 0.18, y: y + 2.05, w: 2.58, h: 0.25,
-      fontSize: 9, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
-    });
-  });
-
-  // Bottom Loop Box: Closed-Loop Architecture
-  const loopY = 4.25;
-  slide.addShape("roundRect", {
-    x: MARGIN, y: loopY, w: 12.48, h: 2.3, rectRadius: 0.08,
-    fill: { color: palette.card }, line: { color: "0E7C66", width: 1.5 },
-  });
-  slide.addText(pitchPlan.closed_loop_title || "CLOSED-LOOP CONTINUOUS LEARNING ARCHITECTURE", {
-    x: MARGIN + 0.3, y: loopY + 0.18, w: 11.88, h: 0.28,
-    fontSize: 12, bold: true, color: "7DDEA0", fontFace: palette.fontTitle,
-  });
-
-  const loopSteps = (pitchPlan.closed_loop_steps || []).slice(0, 4);
-  loopSteps.forEach((s, idx) => {
-    const sx = MARGIN + 0.25 + idx * 3.02;
-    slide.addShape("roundRect", {
-      x: sx, y: loopY + 0.58, w: 2.88, h: 1.45, rectRadius: 0.06,
-      fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
-    });
-    slide.addText(s.title, {
-      x: sx + 0.15, y: loopY + 0.7, w: 2.58, h: 0.3,
-      fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontTitle,
-    });
-    slide.addText(s.desc, {
-      x: sx + 0.15, y: loopY + 1.05, w: 2.58, h: 0.85,
-      fontSize: 10, color: "B8C3D4", fontFace: palette.fontBody, wrap: true,
-    });
-  });
-}
-
-// Slide 12: Technical Data Readiness Matrix
+// Slide 12: Technical Feasibility Matrix
 function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const rm = pitchPlan.readiness_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: rm.kicker || "DATA READINESS & DISCOVERY MATRIX",
-    title: rm.title || "Fast-Track Integration & Feasibility Assessment",
-    subtitle: rm.subtitle || `All required data feeds connect to existing enterprise infrastructure without requiring system replacements.`,
+    kicker: rm.kicker || "TECHNICAL FEASIBILITY",
+    title: rm.title || "Feasible on Existing Systems — No Rip-and-Replace",
+    subtitle: rm.subtitle || `Each use case connects to ${companyName}'s current systems through standard connectors and layers real-time AI on top.`,
   });
 
-  const headers = ["Data Domain", "Required Key Fields", "Potential Source Systems", "Ingestion Frequency", "Discovery Status"];
-  const colW = [2.4, 3.8, 3.2, 1.6, 1.48];
+  const headers = ["Use Case", "Data Readiness", "Technical Complexity", "Time to Value", "Feasibility Note"];
+  const colW = [3.2, 1.8, 1.8, 1.6, 3.68];
   
   const tableY = 1.6;
   slide.addShape("roundRect", {
@@ -875,8 +620,8 @@ function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page })
     cx += colW[i];
   });
 
-  const dataFeeds = (pitchPlan.data_foundation || []).slice(0, 5);
-  dataFeeds.forEach((df, idx) => {
+  const rows = (pitchPlan.feasibility_matrix || pitchPlan.use_cases || []).slice(0, 5);
+  rows.forEach((r, idx) => {
     const ry = tableY + 0.58 + idx * 0.8;
     slide.addShape("roundRect", {
       x: MARGIN + 0.15, y: ry, w: 12.18, h: 0.72, rectRadius: 0.04,
@@ -885,19 +630,19 @@ function addDataReadinessSlide(slide, palette, { companyName, pitchPlan, page })
 
     cx = MARGIN + 0.2;
     const rowValues = [
-      df.category,
-      df.fields,
-      df.sourceSystems,
-      df.frequency,
-      df.readiness || "Standard Ingestion Ready"
+      r.title || `Use Case ${idx + 1}`,
+      r.dataReadiness || r.readiness || "High",
+      r.complexity || (r.difficulty === "harder" ? "High" : r.difficulty === "moderate" ? "Medium" : "Low") || "Medium",
+      r.timeToValue || (idx === 0 ? "6–8 weeks" : idx === 1 ? "8–10 weeks" : idx === 2 ? "10–12 weeks" : "12–16 weeks"),
+      r.feasibilityNote || `Connects via standard APIs and event stream connector without system replacement.`
     ];
 
     rowValues.forEach((val, cIdx) => {
       slide.addText(val, {
         x: cx, y: ry + 0.14, w: colW[cIdx], h: 0.45,
         fontSize: cIdx === 0 ? 11 : 9,
-        bold: cIdx === 0 || cIdx === 4,
-        color: cIdx === 0 ? palette.heading : cIdx === 4 ? "FACC15" : "CBD5E1",
+        bold: cIdx === 0 || cIdx === 1 || cIdx === 2,
+        color: cIdx === 0 ? palette.heading : cIdx === 1 ? "7DDEA0" : cIdx === 2 ? "FACC15" : "CBD5E1",
         fontFace: palette.fontBody,
         wrap: true,
       });
@@ -911,8 +656,8 @@ function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page });
   const rdm = pitchPlan.roadmap_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: rdm.kicker || "DELIVERY ROADMAP",
-    title: rdm.title || "A Phased Path from Fast Pilot to Enterprise Scale",
+    kicker: rdm.kicker || "IMPLEMENTATION ROADMAP",
+    title: rdm.title || `A Phased Path from Pilot to Network-Wide Scale for ${companyName}`,
     subtitle: rdm.subtitle || `A structured milestone plan delivering live operational value across ${companyName} within 8 weeks.`,
   });
 
@@ -947,43 +692,70 @@ function addRoadmapSlide(slide, palette, { companyName, pitchPlan, page }) {
   });
 }
 
-// Slide 14: Next Steps & Discovery Kick-off
+// Slide 14: Expected Impact & Next Steps
 function addNextStepsSlide(slide, palette, { companyName, pitchPlan, page }) {
   applyMaster(slide, palette, { page, wave: true });
   const nsm = pitchPlan.next_steps_meta || {};
   addSectionHeader(slide, palette, {
-    kicker: nsm.kicker || "NEXT STEPS & ENGAGEMENT PLAN",
-    title: nsm.title || `Next Steps to Initiate Discovery for ${companyName}`,
-    subtitle: nsm.subtitle || `A collaborative 3-step path to validate data readiness and launch the live operational pilot.`,
+    kicker: nsm.kicker || "EXPECTED IMPACT & NEXT STEPS",
+    title: nsm.title || `From Pilot to Measurable Network-Wide Value for ${companyName}`,
+    subtitle: nsm.subtitle || `A collaborative 3-step engagement plan to validate data readiness and launch the live operational pilot.`,
+  });
+
+  // Top 4 Stat Cards
+  const kpis = (pitchPlan.overall_impact_kpis || pitchPlan.solution_kpis || []).slice(0, 4);
+  kpis.forEach((k, idx) => {
+    const x = MARGIN + idx * 3.16;
+    const y = 1.6;
+    slide.addShape("roundRect", {
+      x, y, w: 2.94, h: 1.85, rectRadius: 0.08,
+      fill: { color: palette.card }, line: { color: idx === 0 ? palette.accent : palette.cardBorder, width: 1 },
+    });
+    slide.addText(k.value || k.benchmark || "25–35%", {
+      x: x + 0.18, y: y + 0.15, w: 2.58, h: 0.48,
+      fontSize: 24, bold: true, color: idx === 0 ? palette.accent : "7DDEA0", fontFace: palette.fontTitle,
+    });
+    slide.addText(k.name || k.label || "Operational KPI", {
+      x: x + 0.18, y: y + 0.68, w: 2.58, h: 0.95,
+      fontSize: 11, bold: true, color: palette.heading, fontFace: palette.fontTitle, wrap: true,
+    });
+  });
+
+  // Bottom Next Steps Card
+  const boxY = 3.65;
+  slide.addShape("roundRect", {
+    x: MARGIN, y: boxY, w: 12.48, h: 2.65, rectRadius: 0.08,
+    fill: { color: palette.card }, line: { color: palette.cardBorder, width: 1 },
+  });
+  slide.addText("STRATEGIC NEXT STEPS", {
+    x: MARGIN + 0.25, y: boxY + 0.18, w: 11.98, h: 0.25,
+    fontSize: 11, bold: true, color: palette.accent, fontFace: palette.fontTitle,
   });
 
   const steps = (pitchPlan.next_steps || []).slice(0, 3);
   steps.forEach((st, idx) => {
-    const y = 1.6 + idx * 1.55;
+    const sy = boxY + 0.5 + idx * 0.68;
     slide.addShape("roundRect", {
-      x: MARGIN, y, w: 12.48, h: 1.35, rectRadius: 0.08,
-      fill: { color: palette.card }, line: { color: idx === 0 ? palette.accent : palette.cardBorder, width: 1.5 },
+      x: MARGIN + 0.2, y: sy, w: 12.08, h: 0.58, rectRadius: 0.04,
+      fill: { color: "0B1220" }, line: { color: "2D3F63", width: 1 },
     });
-    slide.addText(st.num, {
-      x: MARGIN + 0.25, y: y + 0.25, w: 0.8, h: 0.5,
-      fontSize: 24, bold: true, color: palette.accent, fontFace: palette.fontTitle,
+    slide.addText(st.num || `0${idx + 1}`, {
+      x: MARGIN + 0.35, y: sy + 0.1, w: 0.5, h: 0.35,
+      fontSize: 14, bold: true, color: palette.accent, fontFace: palette.fontTitle,
     });
-    slide.addText(st.title, {
-      x: MARGIN + 1.1, y: y + 0.25, w: 10.8, h: 0.35,
-      fontSize: 16, bold: true, color: palette.heading, fontFace: palette.fontTitle,
-    });
-    slide.addText(st.desc, {
-      x: MARGIN + 1.1, y: y + 0.62, w: 10.8, h: 0.6,
-      fontSize: 11, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
+    slide.addText(st.title ? `${st.title} — ${st.desc}` : st.desc, {
+      x: MARGIN + 0.95, y: sy + 0.1, w: 11.1, h: 0.4,
+      fontSize: 10, color: "CBD5E1", fontFace: palette.fontBody, wrap: true,
     });
   });
 
+  // Ready banner
   slide.addShape("roundRect", {
-    x: MARGIN, y: 6.15, w: 12.48, h: 0.65, rectRadius: 0.06,
+    x: MARGIN, y: 6.45, w: 12.48, h: 0.55, rectRadius: 0.06,
     fill: { color: "0B1220" }, line: { color: "0E7C66", width: 1.5 },
   });
   slide.addText(`READY TO BEGIN:  Apexon Solution Architecture Team  ·  Contact: solutions@apexon.com`, {
-    x: MARGIN + 0.2, y: 6.32, w: 12.08, h: 0.3,
+    x: MARGIN + 0.2, y: 6.55, w: 12.08, h: 0.3,
     fontSize: 11, bold: true, color: "7DDEA0", fontFace: palette.fontTitle, align: "center",
   });
 }
@@ -1063,42 +835,20 @@ export async function buildDeck({
     page += 1;
   }
 
-  // Slide 7: Live Operations Command Center
-  {
-    const slide = pres.addSlide();
-    addCommandCenterSlide(slide, palette, { companyName, pitchPlan: plan, page });
-    page += 1;
-  }
+  // Slides 7–11: 5 Dedicated Use Case Deep-Dive Slides
+  const useCasesList = (plan.use_cases && plan.use_cases.length >= 5)
+    ? plan.use_cases.slice(0, 5)
+    : (useCases && Array.isArray(useCases.useCases) && useCases.useCases.length >= 1)
+      ? useCases.useCases.slice(0, 5)
+      : (plan.use_cases || []);
 
-  // Slide 8: Explainable AI Decision Engine
-  {
+  useCasesList.forEach((uc, idx) => {
     const slide = pres.addSlide();
-    addExplainableSlide(slide, palette, { pitchPlan: plan, page });
+    addUseCaseDeepDiveSlide(slide, palette, { companyName, pitchPlan: plan, useCase: uc, index: idx, page });
     page += 1;
-  }
+  });
 
-  // Slide 9: Customer Behavioral Profiling
-  {
-    const slide = pres.addSlide();
-    addBehavioralSlide(slide, palette, { pitchPlan: plan, page });
-    page += 1;
-  }
-
-  // Slide 10: Investigation Prioritization Queue
-  {
-    const slide = pres.addSlide();
-    addQueueSlide(slide, palette, { companyName, pitchPlan: plan, page });
-    page += 1;
-  }
-
-  // Slide 11: Business Outcomes & Value Loop
-  {
-    const slide = pres.addSlide();
-    addOutcomesSlide(slide, palette, { companyName, pitchPlan: plan, page });
-    page += 1;
-  }
-
-  // Slide 12: Technical Data Readiness Matrix
+  // Slide 12: Technical Feasibility Matrix
   {
     const slide = pres.addSlide();
     addDataReadinessSlide(slide, palette, { companyName, pitchPlan: plan, page });
@@ -1112,7 +862,7 @@ export async function buildDeck({
     page += 1;
   }
 
-  // Slide 14: Next Steps & Immediate Engagement Plan
+  // Slide 14: Expected Impact & Next Steps
   {
     const slide = pres.addSlide();
     addNextStepsSlide(slide, palette, { companyName, pitchPlan: plan, page });
