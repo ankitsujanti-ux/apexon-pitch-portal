@@ -1,175 +1,97 @@
-// Shared Azure AI Foundry agent client — same DemoAgent endpoint as local.
-// Does not create or change anything in Azure AI Foundry.
-// Uses the existing InteractiveBrowserCredential + .auth-record.json login.
-// Optional AZURE_CLIENT_* env vars are used only if already present.
+// Azure Anthropic Claude Agent Client (claude-opus-5)
+// Connects directly to Azure AI Foundry Anthropic messages endpoint.
 
-import fs from "fs";
-import OpenAI from "openai";
-import {
-  ClientSecretCredential,
-  InteractiveBrowserCredential,
-  serializeAuthenticationRecord,
-  deserializeAuthenticationRecord,
-  useIdentityPlugin,
-} from "@azure/identity";
+import dotenv from "dotenv";
 
-const AUTH_RECORD_PATH = "./.auth-record.json";
-const AGENT_SCOPE = "https://ai.azure.com/.default";
-const AGENT_BASE_URL =
-  "https://fabric-acelerator-poc.services.ai.azure.com/api/projects/fabric-acelerator-project/agents/DemoAgent/endpoint/protocols/openai";
+dotenv.config();
 
-const AGENT_TIMEOUT_MS = 25000;
+const ANTHROPIC_ENDPOINT =
+  process.env.AZURE_ANTHROPIC_ENDPOINT ||
+  "https://demo-pitch-portal-resource.services.ai.azure.com/anthropic/v1/messages";
 
-let credential = null;
-let clientPromise = null;
+const ANTHROPIC_KEY =
+  process.env.AZURE_ANTHROPIC_KEY ||
+  process.env.ANTHROPIC_API_KEY ||
+  "";
+
+const ANTHROPIC_MODEL = process.env.AZURE_ANTHROPIC_MODEL || "claude-opus-5";
+
+const TIMEOUT_MS = 120000;
 
 export function allowLocalFallback() {
   return process.env.REQUIRE_AZURE !== "1";
-}
-
-function hasServicePrincipal() {
-  return Boolean(
-    process.env.AZURE_TENANT_ID && process.env.AZURE_CLIENT_ID && process.env.AZURE_CLIENT_SECRET
-  );
-}
-
-async function getCredential() {
-  if (credential) return credential;
-
-  if (hasServicePrincipal()) {
-    credential = new ClientSecretCredential(
-      process.env.AZURE_TENANT_ID,
-      process.env.AZURE_CLIENT_ID,
-      process.env.AZURE_CLIENT_SECRET
-    );
-    return credential;
-  }
-
-  const isHeadlessOrServer = Boolean(
-    process.env.RENDER || process.env.WEBSITE_INSTANCE_ID || process.env.NODE_ENV === "production" || !process.stdin?.isTTY
-  );
-  if (!isHeadlessOrServer) {
-    try {
-      const { cachePersistencePlugin } = await import("@azure/identity-cache-persistence");
-      useIdentityPlugin(cachePersistencePlugin);
-    } catch (err) {
-      console.warn("Azure token cache persistence is unavailable; browser login will still work.", err.message);
-    }
-  }
-
-  let authenticationRecord;
-  if (fs.existsSync(AUTH_RECORD_PATH)) {
-    try {
-      authenticationRecord = deserializeAuthenticationRecord(
-        fs.readFileSync(AUTH_RECORD_PATH, "utf8")
-      );
-    } catch (e) {
-      console.warn("Could not deserialize auth record:", e.message);
-    }
-  }
-
-  credential = new InteractiveBrowserCredential({
-    ...(isHeadlessOrServer ? {} : { tokenCachePersistenceOptions: { enabled: true } }),
-    authenticationRecord,
-  });
-
-  if (!authenticationRecord) {
-    if (isHeadlessOrServer) {
-      throw new Error(
-        "No interactive Azure login available on server environment. Using Grounded Sector Playbooks & RAG Intelligence."
-      );
-    }
-    const record = await credential.authenticate(AGENT_SCOPE);
-    fs.writeFileSync(AUTH_RECORD_PATH, serializeAuthenticationRecord(record));
-  }
-
-  return credential;
-}
-
-async function createClient() {
-  const cred = await getCredential();
-  return new OpenAI({
-    baseURL: AGENT_BASE_URL,
-    apiKey: async () => {
-      const tokenPromise = cred.getToken(AGENT_SCOPE);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Azure token acquisition timed out (8s).")), 8000)
-      );
-      const token = await Promise.race([tokenPromise, timeoutPromise]);
-      if (!token?.token) {
-        throw new Error("Could not get an Azure AI Foundry access token.");
-      }
-      return token.token;
-    },
-    maxRetries: 0,
-    timeout: AGENT_TIMEOUT_MS,
-    defaultQuery: { "api-version": "2025-11-15-preview" },
-  });
-}
-
-export function getAzureAgentClient() {
-  if (!clientPromise) clientPromise = createClient();
-  return clientPromise;
-}
-
-export function resetAzureAgentClient() {
-  clientPromise = null;
-  credential = null;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function errorStatus(err) {
-  return err?.status ?? err?.statusCode ?? err?.response?.status;
 }
 
 function errorMessage(err) {
   return String(err?.error?.message || err?.message || "");
 }
 
-export function isTransientAgentError(err) {
-  const message = errorMessage(err);
-  if (/token acquisition|no interactive azure login|unauthenticated|access token/i.test(message)) return false;
-  const status = errorStatus(err);
-  if (status === 401 || status === 403) return false;
-  if (status === 429 || (status >= 500 && status < 600)) return true;
-  if (/server had an error processing your request/i.test(message)) return true;
-  if (err?.code === "ETIMEDOUT" || err?.code === "ECONNRESET" || err?.code === "ERR_CANCELED") return true;
-  if (/timed out|timeout/i.test(message)) return true;
-  return false;
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callAgentOnce(client, input) {
-  const response = await client.responses.create({ input });
-  const text = response.output_text?.trim();
-  if (text) return text;
+async function callClaudeAnthropic(input) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-  const chat = await client.chat.completions.create({
-    messages: [{ role: "user", content: input }],
-  });
-  const chatText = chat.choices?.[0]?.message?.content?.trim();
-  if (!chatText) throw new Error("Azure agent returned an empty response");
-  return chatText;
+  try {
+    const res = await fetch(ANTHROPIC_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 8192,
+        thinking: {
+          type: "adaptive",
+        },
+        output_config: {
+          effort: "low",
+        },
+        messages: [{ role: "user", content: input }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      throw new Error(`Claude API HTTP ${res.status}: ${errBody}`);
+    }
+
+    const data = await res.json();
+    const textBlocks = (data.content || [])
+      .filter((block) => block.type === "text")
+      .map((block) => block.text)
+      .join("\n")
+      .trim();
+
+    if (!textBlocks) {
+      throw new Error("Claude returned an empty text response");
+    }
+
+    return textBlocks;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function askAgent(input, { retries = 1 } = {}) {
   let lastErr;
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
     try {
-      if (attempt > 1) resetAzureAgentClient();
-      const client = await getAzureAgentClient();
-      return await callAgentOnce(client, input);
+      return await callClaudeAnthropic(input);
     } catch (err) {
       lastErr = err;
-      const retryable = isTransientAgentError(err) || /empty response/i.test(errorMessage(err));
-      if (!retryable || attempt === retries + 1) throw err;
-      const waitMs = 2500 * attempt;
+      if (attempt === retries + 1) throw err;
+      const waitMs = 2000 * attempt;
       console.warn(
-        `askAgent: Azure Foundry hiccup (attempt ${attempt}/${retries + 1}). Retrying in ${waitMs / 1000}s...`
+        `askAgent: Claude hiccup (attempt ${attempt}/${retries + 1}). Retrying in ${waitMs / 1000}s... (${err.message})`
       );
-      resetAzureAgentClient();
       await sleep(waitMs);
     }
   }
@@ -179,15 +101,15 @@ export async function askAgent(input, { retries = 1 } = {}) {
 export async function askAgentOrFallback(input, fallbackFn, label = "agent") {
   try {
     const text = await askAgent(input, { retries: 1 });
-    console.log(`[${label}] Azure Foundry returned ${text.length} characters.`);
+    console.log(`[${label}] Claude (${ANTHROPIC_MODEL}) returned ${text.length} characters.`);
     return { value: text, source: "azure" };
   } catch (err) {
     if (!allowLocalFallback()) {
       throw new Error(
-        `Azure AI Foundry failed (${errorMessage(err)}). The live portal does not publish generic fallback use cases.`
+        `Claude API failed (${errorMessage(err)}). The live portal does not publish generic fallback use cases.`
       );
     }
-    console.warn(`[${label}] Azure Foundry failed (${errorMessage(err)}). Using local fallback.`);
+    console.warn(`[${label}] Claude API failed (${errorMessage(err)}). Using local fallback.`);
     return { value: fallbackFn(), source: "fallback" };
   }
 }
