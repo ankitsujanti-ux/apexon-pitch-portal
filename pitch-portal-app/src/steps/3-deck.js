@@ -566,119 +566,171 @@ function addUseCaseDeepDiveSlide(slide, palette, { companyName, domain, pitchPla
   
   const uc = useCase || {};
   const ucNum = index + 1;
-  const kicker = `USE CASE ${ucNum} OF 5`;
-  const title = uc.title || `Operational Use Case ${ucNum}`;
-  const subtitle = uc.subtitle || uc.tagline || "High-impact real-time operational intelligence.";
+  const kicker = `PRIORITY USE CASE ${ucNum} OF 5 · STRATEGIC CAPABILITY`;
+  const title = uc.title || `Operational Capability ${ucNum}`;
+  const subtitle = uc.subtitle || uc.tagline || "Real-time stream intelligence & automated frontline decision action.";
 
   addSectionHeader(slide, palette, { kicker, title, subtitle });
 
-  // Left Column: Main Problem & Solution Card
-  const leftX = MARGIN;
-  const leftW = 7.7;
-  const mainH = 3.65;
+  const colW = 5.98;
+  const leftX = MARGIN; // 0.5
+  const rightX = MARGIN + colW + 0.37; // 6.85
+  const startY = 1.65;
+
+  // ==========================================
+  // LEFT COLUMN: OPERATIONAL PROBLEM & SOLUTION ARCHITECTURE
+  // ==========================================
+  
+  // Left Container Top: The Business Challenge (Height 2.32)
   slide.addShape("roundRect", {
-    x: leftX, y: 1.65, w: leftW, h: mainH, rectRadius: 0.08,
+    x: leftX, y: startY, w: colW, h: 2.32, rectRadius: 0.08,
+    fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
+  });
+  
+  slide.addText("CURRENT OPERATIONAL CHALLENGE", {
+    x: leftX + 0.25, y: startY + 0.18, w: colW - 0.5, h: 0.26,
+    fontSize: 10.5, bold: true, color: THEME.accentOrange, fontFace: THEME.fontTitle,
+  });
+  
+  const problemText = uc.challenge || uc.businessProblem || "Operational latency and disconnected telemetry across legacy systems cause manual bottlenecks, emergency delays, and uncoordinated escalations.";
+  slide.addText(truncate(problemText, 320), {
+    x: leftX + 0.25, y: startY + 0.48, w: colW - 0.5, h: 1.65,
+    fontSize: 10.5, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
+  });
+
+  // Left Container Bottom: The Data & AI Solution Workflow (Height 2.65, y = startY + 2.47)
+  const solY = startY + 2.47;
+  slide.addShape("roundRect", {
+    x: leftX, y: solY, w: colW, h: 2.65, rectRadius: 0.08,
     fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
   });
 
-  // Problem Section
-  slide.addText("THE PROBLEM", {
-    x: leftX + 0.25, y: 1.8, w: leftW - 0.5, h: 0.26,
-    fontSize: 10, bold: true, color: THEME.accentOrange, fontFace: THEME.fontTitle,
-  });
-  const problemText = uc.challenge || uc.businessProblem || "Operational friction and delayed visibility limit proactive decisions.";
-  slide.addText(truncate(problemText, 250), {
-    x: leftX + 0.25, y: 2.08, w: leftW - 0.5, h: 1.1,
-    fontSize: 11, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
+  slide.addText("THE AI & DATA SOLUTION ARCHITECTURE", {
+    x: leftX + 0.25, y: solY + 0.18, w: colW - 0.5, h: 0.26,
+    fontSize: 10.5, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
   });
 
-  // Solution Section — Clean AI & Data Approach
-  slide.addText("THE AI & DATA APPROACH", {
-    x: leftX + 0.25, y: 3.25, w: leftW - 0.5, h: 0.26,
-    fontSize: 10, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
-  });
-  const solutionText = uc.solutionFit || uc.benefit || uc.insight || (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length ? uc.solutionMoves.map(m => m.detail || m.lead).join(". ") : "Real-time stream intelligence unifies data feeds into automated frontline action.");
-  slide.addText(truncate(solutionText, 280), {
-    x: leftX + 0.25, y: 3.52, w: leftW - 0.5, h: 1.65,
-    fontSize: 11, color: THEME.textPrimary, fontFace: THEME.fontBody, wrap: true,
+  const solutionSummary = uc.solutionFit || uc.benefit || uc.insight || "Ingests real-time system event streams into predictive ML models to orchestrate automated frontline triage and decision support.";
+  slide.addText(truncate(solutionSummary, 180), {
+    x: leftX + 0.25, y: solY + 0.46, w: colW - 0.5, h: 0.65,
+    fontSize: 10.5, bold: true, color: THEME.textPrimary, fontFace: THEME.fontTitle, wrap: true,
   });
 
-  // Left Bottom Box 1: Data Sources
-  const boxW = 3.72;
-  const boxH = 1.35;
-  const boxY = 5.42;
-  slide.addShape("roundRect", {
-    x: leftX, y: boxY, w: boxW, h: boxH, rectRadius: 0.06,
-    fill: { color: THEME.cardInner }, line: { color: THEME.cardBorderSubtle, width: 1 },
-  });
-  slide.addText("DATA SOURCES", {
-    x: leftX + 0.2, y: boxY + 0.12, w: boxW - 0.4, h: 0.22,
-    fontSize: 9, bold: true, color: THEME.accent, fontFace: THEME.fontTitle,
-  });
-  const sourcesText = Array.isArray(uc.worksWith) && uc.worksWith.length ? uc.worksWith.join(", ") : "Core enterprise records, event streams, real-time telemetry";
-  slide.addText(truncate(sourcesText, 110), {
-    x: leftX + 0.2, y: boxY + 0.36, w: boxW - 0.4, h: 0.85,
-    fontSize: 10, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
-  });
+  // 3 Execution Steps inside solution
+  const workflowSteps = (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length >= 2)
+    ? uc.solutionMoves.slice(0, 3)
+    : [
+        { lead: "Live Stream Ingestion", detail: "Captures and correlates live system telemetry without batch latency." },
+        { lead: "Intelligent ML Scoring", detail: "Continuously evaluates capacity, risk, and anomaly patterns." },
+        { lead: "Frontline Orchestration", detail: "Dispatches prioritized 1-click queues and automated alerts to staff." }
+      ];
 
-  // Left Bottom Box 2: AI & Platform Capabilities
-  const box2X = leftX + boxW + 0.26;
-  slide.addShape("roundRect", {
-    x: box2X, y: boxY, w: boxW, h: boxH, rectRadius: 0.06,
-    fill: { color: THEME.cardInner }, line: { color: THEME.cardBorderSubtle, width: 1 },
-  });
-  slide.addText("AI & PLATFORM CAPABILITIES", {
-    x: box2X + 0.2, y: boxY + 0.12, w: boxW - 0.4, h: 0.22,
-    fontSize: 9, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
-  });
-  const techText = Array.isArray(uc.techComponents) && uc.techComponents.length ? uc.techComponents.join(" • ") : "Event Streaming • Delta Lakehouse • ML Anomaly Models • Executive Dashboards";
-  slide.addText(truncate(techText, 110), {
-    x: box2X + 0.2, y: boxY + 0.36, w: boxW - 0.4, h: 0.85,
-    fontSize: 10, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
-  });
-
-  // Right Column: Expected Impact (3 Stacked Stat Cards)
-  const rightX = leftX + leftW + 0.28;
-  const rightW = 4.35;
-  slide.addShape("roundRect", {
-    x: rightX, y: 1.65, w: rightW, h: 5.12, rectRadius: 0.08,
-    fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
-  });
-  slide.addText("EXPECTED IMPACT", {
-    x: rightX + 0.25, y: 1.8, w: rightW - 0.5, h: 0.28,
-    fontSize: 11, bold: true, color: THEME.accent, fontFace: THEME.fontTitle,
-  });
-
-  // 3 Stats
-  const stats = (Array.isArray(uc.impactStats) && uc.impactStats.length >= 3)
-    ? uc.impactStats
-    : (Array.isArray(uc.kpis) && uc.kpis.length >= 2)
-      ? [
-          { value: uc.kpis[0].value || uc.proofPoint || "+18–25%", label: uc.kpis[0].name || "Target KPI improvement" },
-          { value: uc.kpis[1]?.value || "-30%", label: uc.kpis[1]?.name || "Operational bottleneck reduction" },
-          { value: uc.kpis[2]?.value || "Live", label: uc.kpis[2]?.name || "Continuous automated scoring" }
-        ]
-      : [
-          { value: uc.proofPoint || "+20–30%", label: "Target operational benchmark lift" },
-          { value: "-35%", label: "Cycle time & friction reduction" },
-          { value: "Live", label: "100% real-time evaluation across feeds" }
-        ];
-
-  const colors = [THEME.accent, THEME.accentGreen, THEME.accentAmber];
-  stats.slice(0, 3).forEach((st, sIdx) => {
-    const sy = 2.18 + sIdx * 1.48;
+  workflowSteps.forEach((step, sIdx) => {
+    const stepY = solY + 1.18 + sIdx * 0.45;
     slide.addShape("roundRect", {
-      x: rightX + 0.2, y: sy, w: rightW - 0.4, h: 1.32, rectRadius: 0.06,
+      x: leftX + 0.22, y: stepY, w: 0.28, h: 0.28, rectRadius: 0.04,
+      fill: { color: THEME.cardInner }, line: { color: THEME.accentGreen, width: 1 },
+    });
+    slide.addText(`${sIdx + 1}`, {
+      x: leftX + 0.22, y: stepY + 0.02, w: 0.28, h: 0.24,
+      fontSize: 8.5, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle, align: "center",
+    });
+    const stepText = typeof step === "string" ? step : `${step.lead || "Execution Move"}: ${step.detail || ""}`;
+    slide.addText(truncate(stepText, 100), {
+      x: leftX + 0.58, y: stepY + 0.02, w: colW - 0.85, h: 0.38,
+      fontSize: 9.5, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
+    });
+  });
+
+  // ==========================================
+  // RIGHT COLUMN: STRATEGIC BUSINESS VALUE & INTEGRATION
+  // ==========================================
+
+  // Right Container Top: Strategic Business Value Outcomes (Height 3.32)
+  slide.addShape("roundRect", {
+    x: rightX, y: startY, w: colW, h: 3.32, rectRadius: 0.08,
+    fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
+  });
+
+  slide.addText("STRATEGIC BUSINESS VALUE & IMPACT", {
+    x: rightX + 0.25, y: startY + 0.18, w: colW - 0.5, h: 0.26,
+    fontSize: 10.5, bold: true, color: THEME.accent, fontFace: THEME.fontTitle,
+  });
+
+  // 3 Professional Business Value Cards
+  const valCards = [
+    {
+      label: "OPERATIONAL THROUGHPUT & EFFICIENCY",
+      color: THEME.accent,
+      text: Array.isArray(uc.businessValue) && uc.businessValue[0]
+        ? uc.businessValue[0]
+        : "Eliminates operational blind spots, accelerates turnaround cycle times, and maximizes resource utilization across departments."
+    },
+    {
+      label: "FINANCIAL IMPACT & RISK MITIGATION",
+      color: THEME.accentGreen,
+      text: Array.isArray(uc.businessValue) && uc.businessValue[1]
+        ? uc.businessValue[1]
+        : "Prevents revenue leakage, reduces false escalations, and ensures strict regulatory compliance across all live transactions."
+    },
+    {
+      label: "FRONTLINE EMPOWERMENT & DECISION SPEED",
+      color: THEME.accentAmber,
+      text: Array.isArray(uc.businessValue) && uc.businessValue[2]
+        ? uc.businessValue[2]
+        : "Equips coordinators and domain specialists with prioritized 1-click work queues and proactive exception warnings."
+    }
+  ];
+
+  valCards.forEach((vc, vIdx) => {
+    const vy = startY + 0.50 + vIdx * 0.90;
+    slide.addShape("roundRect", {
+      x: rightX + 0.22, y: vy, w: colW - 0.44, h: 0.80, rectRadius: 0.06,
       fill: { color: THEME.cardInner }, line: { color: THEME.cardBorderSubtle, width: 1 },
     });
-    slide.addText(st.value || "+20–30%", {
-      x: rightX + 0.35, y: sy + 0.12, w: rightW - 0.7, h: 0.52,
-      fontSize: 26, bold: true, color: colors[sIdx % colors.length], fontFace: THEME.fontTitle,
+    slide.addText(vc.label, {
+      x: rightX + 0.35, y: vy + 0.08, w: colW - 0.7, h: 0.20,
+      fontSize: 9, bold: true, color: vc.color, fontFace: THEME.fontTitle,
     });
-    slide.addText(st.label || "Key operational improvement", {
-      x: rightX + 0.35, y: sy + 0.66, w: rightW - 0.7, h: 0.55,
-      fontSize: 10.5, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
+    slide.addText(truncate(vc.text, 140), {
+      x: rightX + 0.35, y: vy + 0.30, w: colW - 0.7, h: 0.45,
+      fontSize: 9.5, color: THEME.textPrimary, fontFace: THEME.fontBody, wrap: true,
     });
+  });
+
+  // Right Container Bottom: 2 Integration Sub-Boxes (Height 1.65, y = startY + 3.47)
+  const intY = startY + 3.47;
+  const subW = (colW - 0.20) / 2; // 2.89
+
+  // Sub-Box 1: Data Sources
+  slide.addShape("roundRect", {
+    x: rightX, y: intY, w: subW, h: 1.65, rectRadius: 0.06,
+    fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
+  });
+  slide.addText("DATA SOURCES & TELEMETRY", {
+    x: rightX + 0.18, y: intY + 0.14, w: subW - 0.36, h: 0.22,
+    fontSize: 9, bold: true, color: THEME.accent, fontFace: THEME.fontTitle,
+  });
+  const sourcesText = Array.isArray(uc.worksWith) && uc.worksWith.length ? uc.worksWith.join(" • ") : "Core enterprise records • Real-time event streams • Operational telemetry";
+  slide.addText(truncate(sourcesText, 120), {
+    x: rightX + 0.18, y: intY + 0.40, w: subW - 0.36, h: 1.10,
+    fontSize: 9.5, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
+  });
+
+  // Sub-Box 2: Platform Capabilities
+  const sub2X = rightX + subW + 0.20;
+  slide.addShape("roundRect", {
+    x: sub2X, y: intY, w: subW, h: 1.65, rectRadius: 0.06,
+    fill: { color: THEME.card }, line: { color: THEME.cardBorder, width: 1 },
+  });
+  slide.addText("AI & PLATFORM CAPABILITIES", {
+    x: sub2X + 0.18, y: intY + 0.14, w: subW - 0.36, h: 0.22,
+    fontSize: 9, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
+  });
+  const techText = Array.isArray(uc.techComponents) && uc.techComponents.length ? uc.techComponents.join(" • ") : "Real-Time Event Streaming • Delta Lakehouse • Predictive ML • Action Triggers";
+  slide.addText(truncate(techText, 120), {
+    x: sub2X + 0.18, y: intY + 0.40, w: subW - 0.36, h: 1.10,
+    fontSize: 9.5, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
   });
 }
 
