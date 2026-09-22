@@ -3,6 +3,7 @@
 // with zero hardcoded vendor bias, zero cross-sector contamination, and completely distinct slides per sector/usecase.
 
 import { findSectorPlaybook } from "./knowledge/ragRetriever.js";
+import { fallbackUseCases } from "./fallbacks.js";
 
 function truncate(str, max = 32) {
   if (!str) return "";
@@ -901,10 +902,23 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
 
   // If dynamic AI generated use cases exist from Claude, enrich the presentation with this client's exact data
   if (useCases && Array.isArray(useCases.useCases) && useCases.useCases.length > 0) {
-    const ucs = useCases.useCases;
-    
+    let ucs = [...useCases.useCases];
+    if (ucs.length < 5) {
+      const fallbackPack = fallbackUseCases({ companyName, domain, requirement, numUseCases: 5 });
+      (fallbackPack.useCases || []).forEach(fUc => {
+        if (ucs.length < 5 && !ucs.some(u => (u.title || "").toLowerCase().includes((fUc.title || "").toLowerCase().slice(0, 12)))) {
+          ucs.push(fUc);
+        }
+      });
+    }
+
     if (useCases.deckTitle && useCases.deckTitle.length > 5) {
-      plan.primary_business_domain = useCases.deckTitle;
+      let cleanTitle = useCases.deckTitle;
+      const compRegex = new RegExp(`^${companyName}['s]*\\s*`, 'i');
+      cleanTitle = cleanTitle.replace(compRegex, "").trim();
+      if (cleanTitle && cleanTitle.length > 3) {
+        plan.primary_business_domain = cleanTitle;
+      }
     }
 
     // Dynamic Agenda mapping Claude's use cases
@@ -942,7 +956,7 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         }
       });
     }
-    if (dynamicChallenges.length >= 4) {
+    if (dynamicChallenges.length >= 3) {
       plan.operational_challenges = dynamicChallenges.slice(0, 6);
     }
 
@@ -970,27 +984,48 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
         subtitle: `Connecting core operational telemetry, live system feeds, and historical records to power real-time AI.`
       };
 
+      const isHealth = /health|hospital|clinic|patient|bed|clinical/i.test(`${domain} ${reqText}`);
+      const isBank = /bank|payment|card|fraud|finance|lending/i.test(`${domain} ${reqText}`);
+
+      const domainFeedTypes = isHealth
+        ? [
+            "patient_mrn, encounter_id, unit_code, bed_state, timestamp_utc",
+            "adt_event_type, admission_order_ts, attending_physician, acuity_score",
+            "order_id, discharge_status, evs_task_id, room_turnaround_min",
+            "device_telemetry, vital_signs, o2_saturation, heart_rate, alert_flag",
+            "historical_patient_id, 30d_readmit_risk, baseline_los, audit_hash"
+          ]
+        : isBank
+        ? [
+            "pan_token, auth_amount, currency, merchant_mcc, timestamp_utc, terminal_id",
+            "ip_asn, device_hash, emulator_flag, sim_swap_status, typing_biometric_score",
+            "sender_account, beneficiary_account, transfer_type, velocity_1h_count",
+            "historical_profile_id, 90d_spend_mean, geo_distance_km, composite_risk_score",
+            "case_id, investigator_id, disposition_code, sar_filing_status, audit_hash"
+          ]
+        : [
+            "event_id, entity_id, timestamp_utc, transaction_type, status_code",
+            "telemetry_stream, sensor_reading, operating_band, latency_ms",
+            "order_id, resource_id, queue_depth, dispatch_priority",
+            "historical_profile_id, baseline_mean, deviation_sigma, audit_hash",
+            "audit_log_id, user_role, permission_boundary, change_event_hash"
+          ];
+
+      const readinessBadges = [
+        "High Feasibility (Live Stream Ready)",
+        "Interface Engine Active",
+        "Real-Time CDC Delta Lakehouse Sync",
+        "REST API Webhook Ready",
+        "Batch Lakehouse Ingestion"
+      ];
+
       plan.data_foundation = candidateSystems.slice(0, 5).map((sys, idx) => {
         const isRealTime = idx < 2;
-        const feedTypes = [
-          "event_id, status_code, timestamp_utc, latency_ms, payload_json, operator_id",
-          "entity_id, transaction_ref, state_flag, threshold_value, queue_depth",
-          "patient_mrn, unit_code, bed_state, order_ts, dispatch_priority",
-          "telemetry_stream, anomaly_score, velocity_rate, device_fingerprint, error_code",
-          "historical_profile_id, 90d_baseline_mean, deviation_sigma, audit_hash"
-        ];
-        const readinessBadges = [
-          "High Feasibility (Live Stream Ready)",
-          "Interface Engine Active",
-          "Real-Time CDC Delta Lakehouse Sync",
-          "REST API Webhook Ready",
-          "Batch Lakehouse Ingestion"
-        ];
         return {
           category: sys.name,
           desc: sys.role || `Core operational feed for ${domain.toLowerCase()}`,
           sourceSystems: `${sys.name} (${sys.confidence || "Enterprise Gateway"})`,
-          fields: feedTypes[idx % feedTypes.length],
+          fields: domainFeedTypes[idx % domainFeedTypes.length],
           frequency: isRealTime ? "Real-Time Streaming (<50ms)" : "Continuous CDC & Event Sync",
           readiness: readinessBadges[idx % readinessBadges.length]
         };
