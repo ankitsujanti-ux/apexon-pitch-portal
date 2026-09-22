@@ -1,13 +1,13 @@
 // 3-deck.js — 14-Slide Executive Boardroom Pitch Deck with Apexon Logo on Every Slide
-// Clean, modern, consulting-grade layout without rigid template artifacts.
+// Clean, modern, consulting-grade layout without rigid template artifacts or vendor bias.
 // Structure:
 // 01. Cover Slide (Executive Briefing & Strategic Title)
 // 02. Agenda (What We'll Cover — 7 Structured Sections)
 // 03. The Challenge (Fragmented Data Is Slowing Operations — 3 Strategic Pain Cards)
 // 04. The Solution (One Unified Data & AI Operations Platform — 4-Stage Pipeline + Outcomes)
 // 05. Data Landscape (Data Domains, One Governed Lakehouse — Domain Cards + Governance)
-// 06. Technical Architecture (Microsoft Fabric Reference Architecture — 5-Layer End-to-End Diagram)
-// 07–11. Priority Use Cases 1 to 5 (Problem, Solution Approach, Data Sources, Fabric Tech, 3 Stat Cards)
+// 06. Technical Architecture (Enterprise Data & AI Reference Architecture — 5-Layer End-to-End Diagram)
+// 07–11. Priority Use Cases 1 to 5 (Problem, Solution Approach, Data Sources, Platform Tech, 3 Stat Cards)
 // 12. Technical Feasibility Matrix (5-Row Table: Readiness, Complexity, Time-to-Value, Feasibility Notes)
 // 13. Implementation Roadmap (4 Phased Milestones: Foundation, Pilot, Scale, Optimize)
 // 14. Expected Impact & Next Steps (4 Executive Stat Cards + 3 Actionable Engagement Steps)
@@ -187,8 +187,8 @@ function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platfor
   // Prominent Apexon Logo on Top Right
   addBrandLogo(slide, { x: SLIDE_W - MARGIN - 2.2, y: 0.65, h: 0.55 });
 
-  // Top Kicker
-  const kicker = `${pptSafe(companyName).toUpperCase()}  ×  MICROSOFT FABRIC`;
+  // Top Kicker — Completely clean & vendor-neutral
+  const kicker = `${pptSafe(companyName).toUpperCase()}  ·  STRATEGIC PROPOSAL`;
   slide.addText(kicker, {
     x: MARGIN,
     y: 0.85,
@@ -204,8 +204,23 @@ function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platfor
   const compCleanRegex = new RegExp(`^${companyName}['s]*\\s*`, 'i');
   domainFocus = domainFocus.replace(compCleanRegex, "").trim();
 
-  let mainTitle = `Unifying ${pptSafe(domainFocus)} with Real-Time Data and AI`;
-  if (/^unifying|^transforming/i.test(domainFocus)) {
+  // If domainFocus is a slogan, tactical requirement, or very short, formulate a proper executive domain title
+  if (/^win the bed|cut the|reduce|optimize|improve|detect|lower|eliminate|real-time payment/i.test(domainFocus) || domainFocus.length < 5) {
+    if (/health|hospital|clinical|bed/i.test(domain + " " + requirement)) {
+      domainFocus = "Hospital Operations & Patient Flow";
+    } else if (/bank|fraud|payment|financial/i.test(domain + " " + requirement)) {
+      domainFocus = "Enterprise Fraud Detection & Risk Intelligence";
+    } else if (/retail|inventory|store/i.test(domain + " " + requirement)) {
+      domainFocus = "Omnichannel Inventory & Demand Fulfillment";
+    } else if (/manufactur|quality|assembly|plant/i.test(domain + " " + requirement)) {
+      domainFocus = "Smart Manufacturing & Operations Quality";
+    } else {
+      domainFocus = `${domain} Operations Modernization`;
+    }
+  }
+
+  let mainTitle = `Transforming ${pptSafe(domainFocus)} with Real-Time Data and AI`;
+  if (/^unifying|^transforming|^modernizing/i.test(domainFocus)) {
     mainTitle = `${pptSafe(domainFocus)} with Real-Time Data and AI`;
   }
 
@@ -281,11 +296,12 @@ function addAgendaSlide(slide, palette, { companyName, domain, pitchPlan, page }
     subtitle: `A structured executive walkthrough tailored to ${pptSafe(companyName)}'s operational priorities and business value.`,
   });
 
+  const domainName = pitchPlan.primary_business_domain || domain;
   const sections = [
-    { num: "01", title: "Operational Challenges", desc: `Where fragmented data and manual triage slow ${pptSafe(pitchPlan.primary_business_domain || domain).toLowerCase()} operations today` },
-    { num: "02", title: "Solution Vision", desc: `A unified Microsoft Fabric + AI operational platform delivering sub-second intelligence` },
-    { num: "03", title: "Data Landscape", desc: `Bringing core operational, clinical/transactional, and device data together into OneLake` },
-    { num: "04", title: "Reference Architecture", desc: `How Fabric ingests, unifies, analyzes, and activates real-time action across systems` },
+    { num: "01", title: "Operational Challenges", desc: `Where fragmented data and manual triage slow ${pptSafe(domainName).toLowerCase()} operations today` },
+    { num: "02", title: "Solution Vision", desc: `A unified real-time data & AI operational platform delivering sub-second intelligence` },
+    { num: "03", title: "Data Landscape", desc: `Bringing core operational feeds, telemetry, and historical records together into a governed lakehouse` },
+    { num: "04", title: "Reference Architecture", desc: `How modern data & AI pipelines ingest, unify, analyze, and activate real-time action across systems` },
     { num: "05", title: "Priority Use Cases", desc: `Five high-impact, demo-ready operational scenarios tailored to ${pptSafe(companyName)}` },
     { num: "06", title: "Technical Feasibility", desc: `Effort, data readiness, complexity, and non-disruptive integration for each use case` },
     { num: "07", title: "Roadmap & Expected Impact", desc: `Phased 4-stage delivery timeline and measurable network-wide ROI metrics` },
@@ -370,14 +386,14 @@ function addSolutionVisionSlide(slide, palette, { companyName, domain, pitchPlan
   addSectionHeader(slide, palette, {
     kicker: vm.kicker || "THE SOLUTION",
     title: vm.title || "One Unified Data & AI Operations Platform",
-    subtitle: vm.subtitle || `Microsoft Fabric brings operational, telemetry, and transactional data into a single governed lakehouse with real-time AI intelligence.`,
+    subtitle: vm.subtitle || `Modern enterprise data architecture brings operational, telemetry, and transactional data into a single governed lakehouse with real-time AI intelligence.`,
   });
 
   const stages = (pitchPlan.vision_stages && pitchPlan.vision_stages.length === 4)
     ? pitchPlan.vision_stages
     : [
         { num: "01", step: "Ingest", desc: `Stream operational feeds, transactions, and IoT telemetry the instant events occur with sub-second latency.`, color: THEME.accent },
-        { num: "02", step: "Correlate", desc: `OneLake unified storage connects disparate records into a single multi-domain operational source of truth.`, color: "38BDF8" },
+        { num: "02", step: "Correlate", desc: `Unified lakehouse storage connects disparate records into a single multi-domain operational source of truth.`, color: "38BDF8" },
         { num: "03", step: "Score & Detect", desc: `Transparent ML models evaluate risk scores in real time and pinpoint exact anomaly drivers instantly.`, color: THEME.accentGreen },
         { num: "04", step: "Prioritize & Act", desc: `Deliver live command dashboards, automated alerts, and prioritized queues directly to frontline teams.`, color: THEME.accentOrange },
       ];
@@ -410,7 +426,7 @@ function addSolutionVisionSlide(slide, palette, { companyName, domain, pitchPlan
     x: MARGIN, y: 5.65, w: 12.33, h: 0.95, rectRadius: 0.08,
     fill: { color: THEME.cardInner }, line: { color: THEME.accent, width: 1 },
   });
-  slide.addText(`Outcome:  ${outcomes || "Sub-Second Risk Scoring  ·  Fewer False Positives  ·  3x Faster Triage  ·  Measurable Loss Reduction"}`, {
+  slide.addText(`Outcome:  ${outcomes || "Sub-Second Evaluation  ·  Fewer False Positives  ·  3x Faster Triage  ·  Measurable Loss Reduction"}`, {
     x: MARGIN + 0.2, y: 5.95, w: 11.93, h: 0.35,
     fontSize: 11.5, bold: true, color: THEME.textPrimary, fontFace: THEME.fontTitle, align: "center",
   });
@@ -428,7 +444,7 @@ function addDataFoundationSlide(slide, palette, { companyName, domain, pitchPlan
   addSectionHeader(slide, palette, {
     kicker: fdm.kicker || "DATA LANDSCAPE",
     title: fdm.title || `${countLabel} Data Domains, One Governed Lakehouse`,
-    subtitle: fdm.subtitle || `Every domain lands in OneLake in its native form — no rip-and-replace of existing ${pptSafe(companyName)} systems.`,
+    subtitle: fdm.subtitle || `Every domain lands in the unified lakehouse in its native form — no rip-and-replace of existing ${pptSafe(companyName)} systems.`,
   });
 
   const cardW = feeds.length === 3 ? 3.98 : 2.94;
@@ -480,12 +496,12 @@ function addDataFoundationSlide(slide, palette, { companyName, domain, pitchPlan
     });
   });
 
-  // Purview Governance Banner
+  // Governance Banner
   slide.addShape("roundRect", {
     x: MARGIN, y: 5.95, w: 12.33, h: 0.75, rectRadius: 0.06,
     fill: { color: THEME.cardInner }, line: { color: THEME.cardBorder, width: 1 },
   });
-  slide.addText(`Unified under Microsoft Purview governance: role-based access control, PHI / PII data masking, and end-to-end audit trails across every domain`, {
+  slide.addText(`Unified under enterprise data governance: role-based access control, PHI / PII data masking, and end-to-end audit trails across every domain`, {
     x: MARGIN + 0.2, y: 6.15, w: 11.93, h: 0.35,
     fontSize: 10.5, color: THEME.textMuted, fontFace: THEME.fontBody, align: "center",
   });
@@ -499,17 +515,17 @@ function addArchitectureSlide(slide, palette, { companyName, domain, pitchPlan, 
   const am = pitchPlan.architecture_meta || {};
   addSectionHeader(slide, palette, {
     kicker: am.kicker || "TECHNICAL ARCHITECTURE",
-    title: am.title || "Microsoft Fabric Reference Architecture",
+    title: am.title || "Enterprise Data & AI Reference Architecture",
     subtitle: am.subtitle || `An end-to-end governed pipeline from real-time stream ingestion to frontline decision intelligence.`,
   });
 
-  const arch = pitchPlan.solution_architecture || pitchPlan.fabric_architecture || {};
+  const arch = pitchPlan.solution_architecture || {};
   const tiers = [
     arch.ingestion || { title: "Source Systems", subtitle: "Core Feeds & Streams", items: ["Core HIS / Banking", "Event Feeds (Kafka)", "Device & IoT Telemetry", "Audit & Logs"] },
-    { title: "Ingestion", subtitle: "Real-Time & Batch", items: ["Eventstream (Real-Time)", "Data Factory Pipelines", "SaaS DB Mirroring", "REST & CDC Feeds"] },
-    arch.storage || { title: "OneLake Storage", subtitle: "Unified Lakehouse", items: ["Delta Lake (Bronze/Silver/Gold)", "Entity Feature Store", "12-Month Operational History", "Purview Governance"] },
-    arch.ai_layer || { title: "Analytics & AI", subtitle: "Real-Time & ML", items: ["Real-Time Intelligence", "Fabric Data Science (ML)", "Copilot in Fabric", "Risk Scoring Engine"] },
-    arch.action || { title: "Consumption", subtitle: "Frontline Apps", items: ["Power BI Dashboards", "Automated Teams Alerts", "Prioritized Work Queues", "Clinician & Ops Apps"] },
+    { title: "Ingestion Engine", subtitle: "Real-Time & Batch", items: ["Real-Time Event Streams", "Batch ETL Pipelines", "CDC Change Capture", "REST API Gateways"] },
+    arch.storage || { title: "Unified Lakehouse", subtitle: "Delta Lake Storage", items: ["Bronze / Silver / Gold Layers", "Entity Feature Store", "12-Month History", "Governance & Catalog"] },
+    arch.ai_layer || { title: "Analytics & AI", subtitle: "Real-Time & ML", items: ["Stream Processing Engine", "ML Anomaly Models", "Copilot AI Assistants", "Risk Scoring Engine"] },
+    arch.action || { title: "Frontline Action", subtitle: "Applications & Queues", items: ["Operational Dashboards", "Automated Teams Alerts", "Prioritized Work Queues", "Clinician & Ops Apps"] },
   ];
 
   tiers.forEach((tier, idx) => {
@@ -576,8 +592,8 @@ function addUseCaseDeepDiveSlide(slide, palette, { companyName, domain, pitchPla
     fontSize: 11, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
   });
 
-  // Solution Section
-  slide.addText("THE FABRIC + AI APPROACH", {
+  // Solution Section — Clean AI & Data Approach
+  slide.addText("THE AI & DATA APPROACH", {
     x: leftX + 0.25, y: 3.25, w: leftW - 0.5, h: 0.26,
     fontSize: 10, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
   });
@@ -605,17 +621,17 @@ function addUseCaseDeepDiveSlide(slide, palette, { companyName, domain, pitchPla
     fontSize: 10, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
   });
 
-  // Left Bottom Box 2: Fabric Components
+  // Left Bottom Box 2: AI & Platform Capabilities
   const box2X = leftX + boxW + 0.26;
   slide.addShape("roundRect", {
     x: box2X, y: boxY, w: boxW, h: boxH, rectRadius: 0.06,
     fill: { color: THEME.cardInner }, line: { color: THEME.cardBorderSubtle, width: 1 },
   });
-  slide.addText("FABRIC COMPONENTS", {
+  slide.addText("AI & PLATFORM CAPABILITIES", {
     x: box2X + 0.2, y: boxY + 0.12, w: boxW - 0.4, h: 0.22,
     fontSize: 9, bold: true, color: THEME.accentGreen, fontFace: THEME.fontTitle,
   });
-  const techText = Array.isArray(uc.techComponents) && uc.techComponents.length ? uc.techComponents.join(" • ") : "Eventstream • Lakehouse • Fabric Data Science • Power BI";
+  const techText = Array.isArray(uc.techComponents) && uc.techComponents.length ? uc.techComponents.join(" • ") : "Event Streaming • Delta Lakehouse • ML Anomaly Models • Executive Dashboards";
   slide.addText(truncate(techText, 110), {
     x: box2X + 0.2, y: boxY + 0.36, w: boxW - 0.4, h: 0.85,
     fontSize: 10, color: THEME.textMuted, fontFace: THEME.fontBody, wrap: true,
@@ -675,7 +691,7 @@ function addDataReadinessSlide(slide, palette, { companyName, domain, pitchPlan,
   addSectionHeader(slide, palette, {
     kicker: rm.kicker || "TECHNICAL FEASIBILITY",
     title: rm.title || "Feasible on Existing Systems — No Rip-and-Replace",
-    subtitle: rm.subtitle || `Each use case connects to ${pptSafe(companyName)}'s current systems through standard connectors and layers Fabric on top.`,
+    subtitle: rm.subtitle || `Each use case connects to ${pptSafe(companyName)}'s current systems through standard connectors and layers real-time AI on top.`,
   });
 
   const headers = ["Use Case", "Data Readiness", "Technical Complexity", "Time to Value", "Feasibility Note"];
@@ -743,7 +759,7 @@ function addRoadmapSlide(slide, palette, { companyName, domain, pitchPlan, page 
   const phases = (pitchPlan.roadmap_phases && pitchPlan.roadmap_phases.length >= 4)
     ? pitchPlan.roadmap_phases.slice(0, 4)
     : [
-        { title: "Foundation", time: "Weeks 1–8", items: ["Stand up Fabric workspace & OneLake", "Connect core transactional & telemetry feeds", "Configure Purview governance & security", "Validate ingestion latency (<500ms)"] },
+        { title: "Foundation", time: "Weeks 1–8", items: ["Stand up secure enterprise cloud lakehouse", "Connect core transactional & telemetry feeds", "Configure governance & security policies", "Validate ingestion latency (<500ms)"] },
         { title: "Pilot", time: "Weeks 8–16", items: ["Launch 2 priority high-value use cases", "Validate with flagship operational units", "Measure baseline KPI lift vs historical", "Refine user alerts and dashboards"] },
         { title: "Scale", time: "Months 4–9", items: ["Roll out remaining use cases across enterprise", "Extend to all departments and channels", "Introduce Copilot for frontline operators", "Conduct user training & adoption"] },
         { title: "Optimize", time: "Months 9+", items: ["Continuous ML model retraining & fine-tuning", "Cross-facility performance benchmarking", "Expand predictive autonomous actions", "Ongoing architecture optimization"] },
@@ -826,7 +842,7 @@ function addNextStepsSlide(slide, palette, { companyName, domain, pitchPlan, pag
     : [
         { num: "01", title: "Pilot Scope Alignment", desc: `Confirm 2–3 priority pilot operational units and focus use cases with leadership team.` },
         { num: "02", title: "4-Week Discovery Assessment", desc: `Run discovery and data-readiness assessment across source systems, APIs, and security requirements.` },
-        { num: "03", title: "Stand Up Fabric & Pilot Launch", desc: `Stand up the Fabric workspace and launch the initial live operational dashboard within 8 weeks.` },
+        { num: "03", title: "Architecture Setup & Pilot Launch", desc: `Stand up the data & AI environment and launch the initial live operational dashboard within 8 weeks.` },
       ];
 
   steps.forEach((st, idx) => {
