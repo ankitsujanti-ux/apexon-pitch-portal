@@ -21,6 +21,7 @@ import { slugify } from "../lib/slugify.js";
 import { LOGO_PATH } from "../lib/templateTheme.js";
 import { platformFromRequirement } from "../lib/briefFirst.js";
 import { buildPitchPlan } from "../lib/pitchStrategist.js";
+import { fallbackUseCases } from "../lib/fallbacks.js";
 
 const SLIDE_W = 13.33;
 const SLIDE_H = 7.5;
@@ -990,10 +991,22 @@ export async function buildDeck({
     page += 1;
   }
 
-  // Slides 7–11: 5 Dedicated Use Case Deep-Dive Slides
-  const useCasesList = (plan.use_cases && plan.use_cases.length >= 1)
-    ? plan.use_cases.slice(0, 5)
-    : (useCases && Array.isArray(useCases.useCases) ? useCases.useCases.slice(0, 5) : []);
+  // Slides 7–11: Exactly 5 Dedicated Use Case Deep-Dive Slides
+  const rawList = (plan.use_cases && plan.use_cases.length >= 1)
+    ? plan.use_cases
+    : (useCases && Array.isArray(useCases.useCases) ? useCases.useCases : []);
+
+  let useCasesList = [...rawList];
+
+  if (useCasesList.length < 5) {
+    const fallbackPack = fallbackUseCases({ companyName, domain, requirement, numUseCases: 5 });
+    (fallbackPack.useCases || []).forEach((fUc) => {
+      if (useCasesList.length < 5 && !useCasesList.some((u) => (u.title || "").toLowerCase().includes((fUc.title || "").toLowerCase().slice(0, 10)))) {
+        useCasesList.push(fUc);
+      }
+    });
+  }
+  useCasesList = useCasesList.slice(0, 5);
 
   useCasesList.forEach((uc, idx) => {
     const slide = pres.addSlide();
