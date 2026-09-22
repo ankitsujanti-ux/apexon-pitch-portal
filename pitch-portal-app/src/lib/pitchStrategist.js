@@ -1135,15 +1135,125 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       };
     }
 
+function generateDistinctBusinessValue(uc, companyName, domain, index) {
+  if (Array.isArray(uc.businessValue) && uc.businessValue.length >= 3 && uc.businessValue[0].length > 25) {
+    if (!uc.businessValue[0].includes("Eliminates operational blind spots by evaluating operational risk and capacity")) {
+      return uc.businessValue.slice(0, 3);
+    }
+  }
+
+  const title = (uc.title || "").toLowerCase();
+  const shortTitle = uc.title ? uc.title.replace(/[:\u2014\u2013|]/g, " — ").split(" — ")[0].trim() : `Capability ${index + 1}`;
+
+  // 1. Throughput & Operational Flow
+  let opVal = "";
+  if (title.includes("bed") || title.includes("capacity") || title.includes("patient flow") || title.includes("census")) {
+    opVal = `Accelerates inpatient bed turnaround and eliminates emergency boarding delays by synchronizing discharge predictions with housekeeping queues.`;
+  } else if (title.includes("triage") || title.includes("emergency") || title.includes("arrival")) {
+    opVal = `Forecasts emergency department patient arrival surges 8–12 hours ahead, optimizing clinician shift staffing and reducing door-to-doctor times.`;
+  } else if (title.includes("surgical") || title.includes("operating") || title.includes("theatre") || title.includes("ot")) {
+    opVal = `Predicts surgical case durations and audits pre-op clearances 48h early, maximizing operating theatre block utilization.`;
+  } else if (title.includes("prior auth") || title.includes("authorization")) {
+    opVal = `Automates clinical chart note extraction and maps diagnostic evidence directly to payer portals, cutting authorization turnaround from days to hours.`;
+  } else if (title.includes("claim") || title.includes("denial") || title.includes("billing")) {
+    opVal = `Pre-audits 100% of claims against live payer policy rules prior to clearinghouse filing, eliminating expensive billing rework cycles.`;
+  } else if (title.includes("transaction") || title.includes("scoring") || title.includes("risk") || title.includes("auth")) {
+    opVal = `Evaluates incoming transaction payloads in under 40ms during authorization without adding customer checkout friction.`;
+  } else if (title.includes("biometric") || title.includes("device") || title.includes("fingerprint") || title.includes("takeover")) {
+    opVal = `Analyzes typing cadence, touch velocity, and device hardware telemetry to intercept account takeover attacks before funds transfer.`;
+  } else if (title.includes("travel") || title.includes("velocity") || title.includes("geo")) {
+    opVal = `Calculates speed-over-ground spatial deltas across physical ATMs and digital logins to neutralize cloned card attacks in real time.`;
+  } else if (title.includes("graph") || title.includes("mule") || title.includes("network") || title.includes("ring")) {
+    opVal = `Maps multi-hop entity relationships across shared devices, phone numbers, and recipient accounts to uncover coordinated mule fraud rings.`;
+  } else if (title.includes("queue") || title.includes("dossier") || title.includes("investigat")) {
+    opVal = `Cuts analyst investigation cycle time by 60% by automatically assembling unified evidence dossiers and prioritized case work queues.`;
+  } else if (title.includes("replenish") || title.includes("stockout") || title.includes("inventory") || title.includes("shelf")) {
+    opVal = `Senses real-time POS checkout velocity and shelf scans to trigger automatic backroom picks and warehouse replenishment before stockouts occur.`;
+  } else if (title.includes("markdown") || title.includes("pricing") || title.includes("elasticity")) {
+    opVal = `Replaces blanket regional markdowns with localized dynamic price elasticity models, protecting gross margins across retail categories.`;
+  } else if (title.includes("fulfillment") || title.includes("order routing") || title.includes("dark store")) {
+    opVal = `Directs omnichannel ship-from-store and BOPIS routing based on customer proximity, margin, and aged inventory levels.`;
+  } else if (title.includes("oee") || title.includes("defect") || title.includes("yield") || title.includes("plant")) {
+    opVal = `Correlates machine sensor telemetry in real time to catch thermal and vibration anomalies before defects occur on the assembly line.`;
+  } else {
+    opVal = `Compresses operational cycle times and eliminates manual handoff friction for ${shortTitle} across ${companyName}'s operating units.`;
+  }
+
+  // 2. Financial Impact & Risk Mitigation
+  let finVal = "";
+  if (title.includes("fraud") || title.includes("risk") || title.includes("mule") || title.includes("takeover") || title.includes("scoring")) {
+    finVal = `Significantly lowers direct fraud loss write-offs and intercepts illicit capital before interbank clearinghouse settlement.`;
+  } else if (title.includes("bed") || title.includes("triage") || title.includes("surgical") || title.includes("hospital")) {
+    finVal = `Maximizes billable licensed bed capacity, prevents emergency diversion penalties, and recaptures thousands of lost clinical hours annually.`;
+  } else if (title.includes("claim") || title.includes("denial") || title.includes("billing")) {
+    finVal = `Drastically reduces avoidable claim denial write-offs and accelerates cash flow by lowering average Days in Accounts Receivable (A/R).`;
+  } else if (title.includes("inventory") || title.includes("stockout") || title.includes("markdown") || title.includes("retail")) {
+    finVal = `Captures lost revenue opportunities during peak foot-traffic hours and prevents working capital lockup from excess safety stock.`;
+  } else if (title.includes("oee") || title.includes("defect") || title.includes("manufacturing")) {
+    finVal = `Prevents scrap, rework, and unplanned downtime penalties by maintaining equipment within optimal operating tolerance bands.`;
+  } else {
+    finVal = `Prevents revenue leakage, reduces avoidable operational overhead, and ensures strict regulatory compliance across all workflows.`;
+  }
+
+  // 3. Frontline Empowerment & Decision Speed
+  let frontVal = "";
+  if (title.includes("fraud") || title.includes("investigat") || title.includes("risk") || title.includes("mule")) {
+    frontVal = `Equips fraud analysts and investigators with transparent risk factor weights and one-click account freeze capabilities.`;
+  } else if (title.includes("bed") || title.includes("triage") || title.includes("patient")) {
+    frontVal = `Delivers proactive bed reservation cues and automated cleaning task dispatches to charge nurses and housekeeping staff.`;
+  } else if (title.includes("prior auth") || title.includes("claim")) {
+    frontVal = `Empowers care coordinators and billing specialists with automated submission packets and real-time payer status tracking.`;
+  } else if (title.includes("replenish") || title.includes("stockout") || title.includes("inventory")) {
+    frontVal = `Sends store department associates targeted mobile alerts to restock high-demand aisles before shelves deplete.`;
+  } else if (title.includes("markdown") || title.includes("pricing")) {
+    frontVal = `Transmits approved dynamic price adjustments directly to electronic shelf tags and digital storefronts without manual delay.`;
+  } else {
+    frontVal = `Empowers frontline operators and coordinators with prioritized 1-click decision queues and proactive exception warnings.`;
+  }
+
+  return [opVal, finVal, frontVal];
+}
+
+function generateDistinctTechComponents(uc, domain, index) {
+  const title = (uc.title || "").toLowerCase();
+  if (title.includes("fraud") || title.includes("scoring") || title.includes("transaction")) {
+    return ["Sub-50ms Stream Processing", "Delta Lakehouse", "Real-Time Anomaly Scoring", "Switch Action Webhooks"];
+  } else if (title.includes("biometric") || title.includes("device") || title.includes("takeover")) {
+    return ["Behavioral SDK Telemetry", "Device Fingerprint DB", "Keystroke ML Models", "Step-Up 2FA Triggers"];
+  } else if (title.includes("travel") || title.includes("velocity") || title.includes("geo")) {
+    return ["Spatial Distance Engine", "IP Geo-ASN Feeds", "Speed-Over-Ground Models", "Automated Channel Locks"];
+  } else if (title.includes("graph") || title.includes("mule") || title.includes("ring")) {
+    return ["Graph Neural Networks", "Delta Lakehouse", "Cyclic Layering Detection", "1-Click Cluster Freezing"];
+  } else if (title.includes("queue") || title.includes("dossier") || title.includes("investigat")) {
+    return ["Prioritized Case Engine", "Explainable AI (SHAP)", "1-Click Dossier Builder", "Audit Trail Repository"];
+  } else if (title.includes("bed") || title.includes("capacity") || title.includes("census")) {
+    return ["HL7 / FHIR Ingestion", "Occupancy Markov Models", "Live Ward Command Board", "Mobile EVS Triggers"];
+  } else if (title.includes("triage") || title.includes("emergency") || title.includes("arrival")) {
+    return ["Time-Series Arrival ML", "Triage Acuity Engine", "Staffing Optimization Model", "Clinician Alert Dispatch"];
+  } else if (title.includes("surgical") || title.includes("ot") || title.includes("theatre")) {
+    return ["SIS Schedule Connectors", "Case Duration Predictor", "Pre-Op Clearance Tracker", "Block Time Reallocator"];
+  } else if (title.includes("claim") || title.includes("denial") || title.includes("billing")) {
+    return ["EDI 837/835 Stream Ingestion", "Payer Policy Rule Engine", "Pre-Bill Validation Model", "Auto-Appeal Dossiers"];
+  } else if (title.includes("replenish") || title.includes("stockout") || title.includes("inventory")) {
+    return ["POS Stream Ingestion", "Shelf Velocity Sensing", "Omnichannel Lakehouse", "Automated DC Reorder Triggers"];
+  } else if (title.includes("markdown") || title.includes("pricing") || title.includes("elasticity")) {
+    return ["Price Elasticity ML", "Competitor Scrape Pipeline", "Store Clustering Engine", "Electronic Shelf Tag API"];
+  } else if (title.includes("fulfillment") || title.includes("order")) {
+    return ["OMS Ingestion Stream", "Dynamic Routing Optimizer", "Store Inventory Ledger", "Carrier Rate Engine"];
+  }
+  return ["Real-Time Event Streaming", "Delta Lakehouse", "Predictive Machine Learning", "Automated Action Orchestration"];
+}
+
     // Dynamic 5 Dedicated Use Cases (Slides 7-11)
     plan.use_cases = ucs.slice(0, 5).map((uc, i) => {
       const title = uc.title ? uc.title.replace(/[:\u2014\u2013|]/, " — ") : `Operational Capability ${i + 1}`;
       const subtitle = uc.subtitle || uc.tagline || (uc.proofPoint ? `Delivering ${uc.proofPoint}` : "Real-time stream intelligence & automated action");
-      const challenge = uc.challenge || uc.businessProblem || `Operational friction and delayed telemetry in ${domain} create settlement and service bottlenecks.`;
+      const challenge = uc.challenge || uc.businessProblem || `Operational friction and delayed telemetry across legacy systems create settlement and service bottlenecks.`;
       const solutionFit = uc.solutionFit || uc.benefit || uc.insight || (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length ? uc.solutionMoves.map(m => m.detail || m.lead).join(". ") : `Real-time stream intelligence unifies telemetry feeds into automated frontline action.`);
       const worksWith = (Array.isArray(uc.worksWith) && uc.worksWith.length) ? uc.worksWith : (candidateSystems.slice(0, 3).map(s => s.name));
-      const techComponents = (Array.isArray(uc.techComponents) && uc.techComponents.length) ? uc.techComponents : ["Eventstream", "Delta Lakehouse", "Predictive AI Models", "Real-Time Dashboards", "Frontline Action"];
-      
+      const techComponents = (Array.isArray(uc.techComponents) && uc.techComponents.length >= 2) ? uc.techComponents : generateDistinctTechComponents(uc, domain, i);
+      const businessValue = generateDistinctBusinessValue(uc, companyName, domain, i);
+
       let impactStats = [];
       if (Array.isArray(uc.impactStats) && uc.impactStats.length >= 3) {
         impactStats = uc.impactStats;
@@ -1171,14 +1281,6 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       const timeToValue = ttvOptions[i % ttvOptions.length];
       const feasibilityNote = uc.difficultyWhy || (i === 0 ? `Reuses existing ${worksWith[0] || 'core'} stream & event telemetry` : i === 1 ? `Standard connector and baseline modeling` : `Integrates with existing ${worksWith[0] || 'enterprise'} systems without rip-and-replace`);
 
-      const businessValue = (Array.isArray(uc.businessValue) && uc.businessValue.length >= 2)
-        ? uc.businessValue
-        : [
-            `Eliminates operational blind spots, accelerates turnaround cycle times, and maximizes resource utilization across departments.`,
-            `Prevents revenue leakage, reduces false escalations, and ensures strict regulatory compliance across all live transactions.`,
-            `Equips frontline coordinators and domain specialists with prioritized 1-click work queues and proactive exception warnings.`
-          ];
-      
       const solutionMoves = (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length >= 2)
         ? uc.solutionMoves
         : [
