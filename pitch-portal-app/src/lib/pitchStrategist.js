@@ -1171,11 +1171,29 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       const timeToValue = ttvOptions[i % ttvOptions.length];
       const feasibilityNote = uc.difficultyWhy || (i === 0 ? `Reuses existing ${worksWith[0] || 'core'} stream & event telemetry` : i === 1 ? `Standard connector and baseline modeling` : `Integrates with existing ${worksWith[0] || 'enterprise'} systems without rip-and-replace`);
 
+      const businessValue = (Array.isArray(uc.businessValue) && uc.businessValue.length >= 2)
+        ? uc.businessValue
+        : [
+            `Eliminates operational blind spots, accelerates turnaround cycle times, and maximizes resource utilization across departments.`,
+            `Prevents revenue leakage, reduces false escalations, and ensures strict regulatory compliance across all live transactions.`,
+            `Equips frontline coordinators and domain specialists with prioritized 1-click work queues and proactive exception warnings.`
+          ];
+      
+      const solutionMoves = (Array.isArray(uc.solutionMoves) && uc.solutionMoves.length >= 2)
+        ? uc.solutionMoves
+        : [
+            { lead: "Live Stream Ingestion", detail: `Captures and correlates live ${worksWith[0] || domain} event streams without batch latency.` },
+            { lead: "Intelligent ML Scoring", detail: "Continuously evaluates capacity, risk, and anomaly patterns." },
+            { lead: "Frontline Orchestration", detail: "Dispatches prioritized 1-click queues and automated alerts to staff." }
+          ];
+
       return {
         title,
         subtitle,
         challenge,
         solutionFit,
+        solutionMoves,
+        businessValue,
         worksWith,
         techComponents,
         impactStats,
