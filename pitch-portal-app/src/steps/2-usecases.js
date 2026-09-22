@@ -108,9 +108,9 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
     ? uc.solutionFit
     : (benefit || fallbackUc?.solutionFit || "");
 
-  const challenge = (uc.challenge && uc.challenge.split(" ").length >= 10)
+  const challenge = (uc.challenge && uc.challenge.split(" ").length >= 8)
     ? uc.challenge
-    : (fallbackUc?.challenge || `${businessProblem} Telemetry exists across distributed enterprise feeds, but legacy batch workflows diagnose bottlenecks hours after the window to intervene has closed.`);
+    : (fallbackUc?.challenge || businessProblem || uc.businessProblem || `Operational latency and disconnected telemetry across legacy systems cause manual bottlenecks and service delays.`);
 
   const kpis = Array.isArray(uc.kpis) && uc.kpis.length >= 2
     ? uc.kpis.slice(0, 4).map((k, ki) => ({
@@ -143,11 +143,7 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
     worksWith,
     businessValue: Array.isArray(uc.businessValue) && uc.businessValue.length >= 2
       ? uc.businessValue
-      : (fallbackUc?.businessValue || [
-          "Eliminates operational blind spots by evaluating risk and capacity in sub-second streaming latency.",
-          "Reduces manual triage overhead and false alarms through explainable machine learning models.",
-          "Empowers frontline coordinators and analysts with prioritized work queues and automated 1-click dossiers."
-        ]),
+      : (fallbackUc?.businessValue || []),
     proofPoint: kpis[0]?.value || uc.proofPoint || fallbackUc?.proofPoint || "25–35%",
     kpis,
     dataPointer: {
