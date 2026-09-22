@@ -293,7 +293,9 @@ Design the BUSINESS STORY first, then the copy. For every use case: who uses it,
 
 WRITE IN FULL SENTENCES. This is the most important instruction. Label fragments like "Payment success", "Ask clarifier", or "Less time to pay" are a FAILED answer — a reader who knows nothing about this project must understand the use case from your text alone. Explain, do not label.
 
-Reject generic titles (dashboard, chatbot, 360, insights, predictive analytics). Name the decision. Titles: max 8 words, a complete phrase a VP can say out loud — never cut off on "the" or "before".
+Reject generic titles (dashboard, chatbot, 360, insights, predictive analytics) and NEVER write slogan fragments (e.g. "Win the Bed Back", "Cut the wait", "Payment success"). Name the business capability with an executive boardroom title (e.g. "Real-Time Bed & Capacity Management", "OT & Surgical Schedule Optimization", "Sub-Second Transaction Risk Scoring"). Titles: max 8 words, a complete phrase a VP can say out loud.
+
+Never mention Microsoft Fabric, Fabric, or specific vendor products unless the mandate above explicitly names them. Describe all capabilities in modern, vendor-neutral enterprise architecture terms (Event Streaming, Delta Lakehouse, Machine Learning Anomaly Models, Real-Time Decision Triggers, Executive Dashboards).
 
 Never start a sentence with "An industry-typical hypothesis is that". Put evidence labels in the evidence strip, not in the body. KPI why is: if this number moves the wrong way, what breaks. Not a to-do for the client to establish a baseline.
 
