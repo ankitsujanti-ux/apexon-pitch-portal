@@ -916,7 +916,9 @@ export function buildPitchPlan({ companyName, domain, requirement, useCases, res
       let cleanTitle = useCases.deckTitle;
       const compRegex = new RegExp(`^${companyName}['s]*\\s*`, 'i');
       cleanTitle = cleanTitle.replace(compRegex, "").trim();
-      if (cleanTitle && cleanTitle.length > 3) {
+      
+      // If cleanTitle is not a slogan/tactical phrase, assign it; otherwise keep domain-based name
+      if (cleanTitle && cleanTitle.length > 3 && !/^(win the|cut the|reduce|optimize|improve|detect|lower|eliminate)/i.test(cleanTitle)) {
         plan.primary_business_domain = cleanTitle;
       }
     }
