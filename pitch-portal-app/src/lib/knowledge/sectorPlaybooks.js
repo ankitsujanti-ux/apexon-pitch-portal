@@ -36,63 +36,163 @@ export const SECTOR_PLAYBOOKS = {
     ],
     useCaseLibrary: [
       {
-        id: "hc_patient_flow",
-        name: "Predictive Bed Capacity & Flow Radar",
-        keywords: ["bed", "capacity", "patient flow", "waiting time", "emergency", "ed", "discharge", "occupancy", "crowding", "admissions"],
-        businessProblem: "Delayed discharges and unpredictable emergency arrivals cause ED boarding and severe bed shortages.",
-        benefit: "Forecasting bed demand 8-12 hours in advance enables proactive transfer and discharge staffing.",
-        dataFeeds: ["ADT feeds", "ED tracker telemetry", "Nurse staffing logs"],
-        aiCapabilities: ["Time-series demand forecasting", "Discharge barrier NLP classification"],
+        id: "hc_bed_capacity",
+        name: "Live Bed Capacity & Inpatient Flow Command Center",
+        keywords: ["bed", "capacity", "patient flow", "census", "occupancy", "inpatient", "house supervisor", "admissions", "ward"],
+        businessProblem: "Bed availability state is fragmented across ADT feeds, dirty room queues, and nurse station whiteboards, causing 4+ hour boarding delays.",
+        benefit: "Unifies real-time ADT telemetry, housekeeping status, and pending transfer orders into a live network-wide bed capacity command center.",
+        dataFeeds: ["HL7 ADT feeds (A01/A02/A03/A08)", "Bed management telemetry", "Nurse call logs"],
+        aiCapabilities: ["Real-time bed census reconciliation", "Dynamic room allocation optimization"],
         kpis: [
-          { name: "Bed wait time", why: "Minutes patients wait in ED after admission order is signed." },
-          { name: "Forecast accuracy (8h)", why: "Variance between predicted and actual bed vacancies per unit." },
-          { name: "Discharge turnaround time", why: "Hours from physician discharge order to actual room turnover." },
-          { name: "ED boarding rate", why: "Percentage of ED bays occupied by admitted patients awaiting inpatient beds." }
+          { name: "Effective Bed Utilization %", why: "Maximizes occupancy of licensed inpatient beds without bottlenecking admissions." },
+          { name: "Discharge-to-Occupancy TAT", why: "Minutes from physician discharge order to room cleaning and next patient placement." },
+          { name: "ED Boarding Hours", why: "Hours admitted emergency patients wait in ED bays awaiting inpatient bed transfer." },
+          { name: "Inter-Facility Transfer Time", why: "Turnaround time to route high-acuity patients to available network beds." }
         ],
         solutionMoves: [
-          { lead: "Predict surges", detail: "Machine learning models forecast unit-level bed demand across 8-hour shift windows." },
-          { lead: "Spot barriers", detail: "NLP identifies uncompleted lab tests or physical therapy consults delaying discharge." },
-          { lead: "Coordinate beds", detail: "Bed placement coordinators receive automated room assignment suggestions." }
+          { lead: "Ingest ADT stream", detail: "Connects HL7 ADT message streams in real time to capture admissions, transfers, and discharges in <100ms." },
+          { lead: "Unify bed ledger", detail: "Maintains a live occupancy ledger per bed, unit, and facility across the hospital network." },
+          { lead: "Automate EVS dispatch", detail: "Dispatches mobile cleaning tasks to housekeeping immediately upon physician discharge order." }
+        ]
+      },
+      {
+        id: "hc_ed_triage_flow",
+        name: "Predictive ED Triage & Arrival Surge Forecasting",
+        keywords: ["ed", "emergency", "triage", "surge", "waiting room", "arrival", "boarding", "left without being seen", "lwbs"],
+        businessProblem: "Emergency departments react to arrival surges after the waiting room is already overloaded, leading to extended wait times and walkouts.",
+        benefit: "Combines EMS arrival feeds, community weather/influenza signals, and triage acuity scores to forecast ED patient volume 8–12 hours ahead.",
+        dataFeeds: ["ED tracking board / EHR triage module", "EMS dispatch telemetry", "Nurse staffing rosters"],
+        aiCapabilities: ["Emergency arrival time-series forecasting", "Triage acuity progression models"],
+        kpis: [
+          { name: "Door-to-Doctor Time", why: "Median minutes emergency patients wait before initial physician evaluation." },
+          { name: "Left Without Being Seen (LWBS) %", why: "Percentage of emergency walk-in patients who leave prior to receiving medical care." },
+          { name: "Surge Forecast Accuracy (12h)", why: "Precision of machine learning models predicting shift arrival volumes." },
+          { name: "Triage-to-Bed Placement TAT", why: "Minutes from admission decision to physical bed occupancy." }
+        ],
+        solutionMoves: [
+          { lead: "Forecast shift volume", detail: "Predicts emergency patient arrivals by acuity level across upcoming 8- to 12-hour shift windows." },
+          { lead: "Balance nursing ratios", detail: "Recommends nurse and physician shift allocation based on predicted acuity distribution." },
+          { lead: "Fast-track low acuity", detail: "Automatically routes ESI Level 4 and 5 patients to rapid-treatment bays to preserve acute capacity." }
+        ]
+      },
+      {
+        id: "hc_surgical_ot_optimization",
+        name: "Operating Theatre (OT) & Surgical Schedule Optimization",
+        keywords: ["ot", "surgical", "operating room", "surgery", "theatre", "block time", "cancellation", "surgeon", "anesthesia"],
+        businessProblem: "Operating theatres suffer from unpredictable procedure overruns, last-minute cancellations, and underutilized surgical block times.",
+        benefit: "Predicts surgical case durations based on patient comorbidities and surgeon history, dynamically packing OR schedules to maximize throughput.",
+        dataFeeds: ["Surgical scheduling system (SIS)", "EHR pre-op clearance notes", "PACU recovery telemetry"],
+        aiCapabilities: ["Case duration machine learning estimation", "Dynamic block time schedule optimizer"],
+        kpis: [
+          { name: "Operating Theatre Utilization %", why: "Proportion of staffed surgical theatre hours actively utilized for procedures." },
+          { name: "Case Duration Variance", why: "Reduction in scheduling variance between estimated and actual surgical duration." },
+          { name: "Same-Day Cancellation Rate %", why: "Proportion of elective surgeries cancelled due to missing pre-op clearances." },
+          { name: "First-Case On-Time Start %", why: "Share of morning surgical procedures beginning at scheduled incision time." }
+        ],
+        solutionMoves: [
+          { lead: "Estimate real case duration", detail: "Machine learning models predict actual procedure minutes based on surgeon and patient profile." },
+          { lead: "Audit pre-op clearance", detail: "Flags missing lab tests, anesthesia sign-offs, or cardiac clearances 48 hours prior to surgery." },
+          { lead: "Reallocate idle block time", detail: "Automatically releases unbooked surgeon block time to elective waitlists 72 hours in advance." }
+        ]
+      },
+      {
+        id: "hc_clinical_copilot",
+        name: "AI Clinical Decision Support & Nurse Care Assistant (Copilot)",
+        keywords: ["clinical", "nurse", "physician", "copilot", "decision support", "vitals", "alert", "rounds", "ehr", "deterioration"],
+        businessProblem: "Clinicians spend 3+ hours per shift navigating dense EHR charts, while subtle early signs of patient deterioration go unnoticed.",
+        benefit: "Continuous stream scoring analyzes patient vitals, lab trends, and nursing notes to flag early deterioration and synthesize shift handoff dossiers.",
+        dataFeeds: ["EHR clinical notes & lab results", "Bedside vital sign telemetry", "Medication administration records (MAR)"],
+        aiCapabilities: ["Clinical deterioration risk scoring (MEWS/NEWS2)", "Generative AI clinical handoff summarization"],
+        kpis: [
+          { name: "Early Deterioration Detection Lead Time", why: "Hours before clinical decompensation that nursing teams receive advance risk alerts." },
+          { name: "Nurse Charting Time Reduction", why: "Hours saved per shift through automated clinical note drafting and structured data entry." },
+          { name: "Code Blue Event Reduction", why: "Decrease in unplanned ICU transfers and emergency cardiac arrest activations." },
+          { name: "Shift Handoff Completeness %", why: "Ensures critical clinical handoff items are communicated across nursing shift changes." }
+        ],
+        solutionMoves: [
+          { lead: "Continuous vitals monitoring", detail: "Evaluates bedside telemetry and lab values to compute real-time deterioration trajectories." },
+          { lead: "Generate shift handoff brief", detail: "Synthesizes concise, structured patient summaries for incoming shift physicians and nurses." },
+          { lead: "Contextual alert triage", detail: "Suppresses non-actionable alarm fatigue while escalating genuine high-risk clinical events." }
+        ]
+      },
+      {
+        id: "hc_discharge_barrier_radar",
+        name: "Early Discharge Barrier Resolution & Length-of-Stay Radar",
+        keywords: ["discharge", "barrier", "los", "length of stay", "turnaround", "evs", "housekeeping", "pharmacy clearance", "transport"],
+        businessProblem: "Discharge delays compound throughout the afternoon because pharmacy orders, physical therapy consults, and transport are addressed late.",
+        benefit: "Identifies clinical and administrative discharge barriers 24 hours in advance, orchestrating multidisciplinary care teams for morning discharge.",
+        dataFeeds: ["EHR discharge orders & milestones", "Hospital pharmacy dispensation feeds", "Physical therapy & social work consult logs"],
+        aiCapabilities: ["Discharge milestone barrier NLP", "Predicted Length of Stay (pLOS) estimation"],
+        kpis: [
+          { name: "Morning Discharge % (Before 11 AM)", why: "Share of daily discharges completed before noon to free beds for incoming ED admissions." },
+          { name: "Average Length of Stay (ALOS) Reduction", why: "Overall reduction in unnecessary inpatient hospital stay days." },
+          { name: "Discharge Order to Departure TAT", why: "Minutes elapsed from physician discharge signature to patient exit." },
+          { name: "30-Day Readmission Rate %", why: "Ensures early discharge initiatives maintain patient safety and post-acute coordination." }
+        ],
+        solutionMoves: [
+          { lead: "Predict discharge readiness", detail: "Scans patient trajectory 24 hours ahead to predict probability of next-day discharge." },
+          { lead: "Highlight pending barriers", detail: "Identifies outstanding discharge requirements (take-home meds, transport, DME equipment)." },
+          { lead: "Trigger automated checklist", detail: "Alerts case managers, pharmacy, and transport coordinators to clear items before morning rounds." }
+        ]
+      },
+      {
+        id: "hc_smart_supply_equipment",
+        name: "Medical Equipment Tracking & Smart Clinical Supply Chain",
+        keywords: ["equipment", "telemetry", "infusion pump", "ventilator", "supply chain", "asset tracking", "inventory", "rfid", "par level"],
+        businessProblem: "Nurses waste 20+ minutes per shift searching for infusion pumps, telemetry units, and critical surgical supplies.",
+        benefit: "RTLS asset tracking and RFID inventory telemetry track equipment location and predict floor restocking needs in real time.",
+        dataFeeds: ["RTLS equipment tag telemetry", "Pyxis / Omnicell supply cabinets", "Biomedical maintenance work orders"],
+        aiCapabilities: ["Dynamic par level optimization", "Asset utilization & preventative maintenance analytics"],
+        kpis: [
+          { name: "Equipment Search Time Reduction", why: "Minutes saved per nurse per shift locating clean IV pumps, telemetry packs, and wheelchairs." },
+          { name: "Supply Stockout Frequency", why: "Reduction in critical medical consumables reaching zero stock in floor supply rooms." },
+          { name: "Biomedical Asset Utilization %", why: "Optimizes total fleet size of high-cost biomedical devices across hospital wings." },
+          { name: "Expired Consumable Waste Reduction", why: "Prevents clinical inventory from expiring on shelves through FEFO automated tracking." }
+        ],
+        solutionMoves: [
+          { lead: "Live asset tracking", detail: "Monitors real-time location and clean/dirty status of all mobile biomedical devices." },
+          { lead: "Predict unit restocking", detail: "Forecasts supply consumption based on scheduled surgical cases and patient acuity." },
+          { lead: "Automate replenishment runs", detail: "Dispatches optimized picking routes to central supply technicians before bins run dry." }
         ]
       },
       {
         id: "hc_claim_denials",
         name: "Pre-Submission Claim Denial Prevention",
-        keywords: ["denial", "claim", "billing", "revenue cycle", "coding", "payer", "prior auth", "reimbursement", "cash flow"],
-        businessProblem: "Hospitals discover coding omissions and authorization mismatches only after payers reject the claim.",
-        benefit: "Streaming claim scrub checks 837 EDI records against payer policy rules before batch submission.",
+        keywords: ["denial", "claim", "billing", "revenue cycle", "coding", "payer", "prior auth", "reimbursement", "cash flow", "837", "835"],
+        businessProblem: "Hospitals discover coding omissions and authorization mismatches only after payers reject the claim 30–45 days later.",
+        benefit: "Streaming claim scrub checks 837 EDI records against payer policy rules before batch submission to eliminate preventable denials.",
         dataFeeds: ["837/835 EDI feeds", "EHR clinical documentation", "Payer contract rules"],
         aiCapabilities: ["Payer policy rule engine", "Semantic clinical code validation"],
         kpis: [
-          { name: "First-pass clean claim %", why: "Proportion of claims settled on initial submission without appeals." },
-          { name: "Denial dollar volume", why: "Monthly gross revenue delayed in dispute or lost to write-offs." },
-          { name: "Days in AR", why: "Velocity of cash collection from procedure date to bank settlement." },
-          { name: "Appeal turnaround time", why: "Hours spent by billing teams preparing secondary appeals." }
+          { name: "First-Pass Clean Claim %", why: "Proportion of claims settled on initial submission without billing appeals." },
+          { name: "Denial Rate Reduction %", why: "Monthly gross revenue saved from billing disputes and technical write-offs." },
+          { name: "Days in AR (Accounts Receivable)", why: "Velocity of cash collection from procedure date to bank settlement." },
+          { name: "Appeal Overturn Success Rate", why: "Win rate on unavoidable complex clinical appeals using automated dossiers." }
         ],
         solutionMoves: [
-          { lead: "Audit pre-bill", detail: "Every claim encounters automated rules verification before filing to clearinghouses." },
-          { lead: "Flag missing auth", detail: "System flags procedures lacking payer prior authorization prior to submission." },
-          { lead: "Auto-generate appeals", detail: "Generates evidence packets from EHR clinical notes for unavoidable denials." }
+          { lead: "Audit pre-bill stream", detail: "Every claim undergoes automated policy rules verification before filing to clearinghouses." },
+          { lead: "Flag missing documentation", detail: "System flags procedures lacking required clinical attachments or prior authorization numbers." },
+          { lead: "Auto-generate appeal dossier", detail: "Generates structured clinical evidence packets from EHR notes for disputed claims." }
         ]
       },
       {
         id: "hc_prior_auth",
-        name: "Prior Authorization Clinical Assistant",
-        keywords: ["prior auth", "authorization", "payer approval", "clinical review", "coverage", "precertification"],
-        businessProblem: "Physicians and coordinators spend 14+ hours weekly assembling medical necessity documentation for payers.",
-        benefit: "Extracts required chart notes and maps them directly to specific payer criteria for instant packet completion.",
-        dataFeeds: ["EHR chart notes", "Diagnostic radiology reports", "Payer authorization APIs"],
+        name: "Prior Authorization Turnaround Acceleration",
+        keywords: ["prior auth", "authorization", "payer approval", "clinical review", "coverage", "precertification", "278"],
+        businessProblem: "Physicians and care coordinators spend 14+ hours weekly assembling medical necessity documentation for payer portals.",
+        benefit: "Extracts required chart notes and maps them directly to specific payer coverage criteria for rapid electronic authorization.",
+        dataFeeds: ["EHR chart notes", "Diagnostic radiology reports", "278 prior authorization EDI transactions"],
         aiCapabilities: ["Medical necessity NLP extraction", "Payer guideline semantic matcher"],
         kpis: [
-          { name: "Auth submission TAT", why: "Hours elapsed between physician order and complete packet submission." },
-          { name: "Approval rate (first attempt)", why: "Percentage of requests approved without peer-to-peer appeals." },
-          { name: "Coordinator hours saved", why: "Weekly administrative burden redirected to direct patient care." },
-          { name: "Procedure delay reduction", why: "Days reduced from diagnosis to scheduled operating room slot." }
+          { name: "Prior Auth Turnaround TAT", why: "Hours elapsed between physician order and complete payer approval." },
+          { name: "First-Attempt Approval Rate %", why: "Percentage of requests approved without peer-to-peer reviews or re-submissions." },
+          { name: "Coordinator Admin Hours Saved", why: "Weekly administrative burden redirected from faxing to direct patient care." },
+          { name: "Rescheduled Procedure Reduction", why: "Prevents surgical and diagnostic cancellations caused by pending payer approvals." }
         ],
         solutionMoves: [
-          { lead: "Extract criteria", detail: "Reads payer medical policies and identifies required clinical justifications." },
-          { lead: "Assemble packet", detail: "Gathers diagnostic lab values and notes into formatted insurer submissions." },
-          { lead: "Track status", detail: "Polls payer portals and alerts teams immediately upon approval or query." }
+          { lead: "Extract coverage criteria", detail: "Parses payer medical policy guidelines and identifies required clinical justifications." },
+          { lead: "Assemble evidence packet", detail: "Gathers diagnostic lab values, imaging reports, and physician notes into formatted submissions." },
+          { lead: "Real-time status tracking", detail: "Monitors 278 EDI responses and payer portals to alert coordinators upon instant approval." }
         ]
       }
     ]
@@ -100,69 +200,170 @@ export const SECTOR_PLAYBOOKS = {
 
   banking: {
     sector: "Banking & Financial Services",
-    aliases: ["bank", "banking", "finance", "payment", "payments", "card", "lending", "credit", "fintech", "wealth", "treasury"],
+    aliases: ["bank", "banking", "finance", "payment", "payments", "card", "lending", "credit", "fintech", "wealth", "treasury", "fraud"],
     businessAreas: [
       "Real-Time Fraud & Anomaly Detection",
-      "Intraday Liquidity & Treasury Management",
-      "AML / KYC Regulatory Compliance & Triage",
-      "Dispute & Chargeback Resolution",
-      "Credit Risk & Dynamic Underwriting",
-      "Customer Churn & Wealth Advisory Intelligence"
+      "Behavioral Biometrics & Device Intelligence",
+      "Graph Network & Link Analysis for Fraud Rings",
+      "AI-Prioritized Fraud Investigation Queues",
+      "Intraday Liquidity & Real-Time Treasury",
+      "AML / KYC Regulatory Compliance & Triage"
     ],
     commonKpis: [
-      { name: "Fraud False Positive Ratio", why: "Measures legitimate transactions blocked by risk rules, preserving customer trust." },
-      { name: "Detection-to-Action Latency", why: "Milliseconds between transaction auth stream ingestion and decision." },
-      { name: "Chargeback Settlement Velocity", why: "Days to resolve cardholder dispute representments with scheme operators." },
-      { name: "Intraday Liquidity Buffer", why: "Cushion maintained above clearing house threshold obligations." },
-      { name: "AML Alert Review Cycle Time", why: "Days required by compliance analysts to adjudicate SAR filings." }
+      { name: "Confirmed Fraud Loss Reduction %", why: "Net capital protected by intercepting unauthorized card, UPI, and wire transactions." },
+      { name: "Fraud False Positive Ratio", why: "Ratio of false alerts to genuine fraud, preserving customer trust during payments." },
+      { name: "Decisioning Latency (p99)", why: "Milliseconds required to evaluate risk score before transaction authorization timeout." },
+      { name: "Account Takeover (ATO) Catch Rate", why: "Percentage of credential stuffing and SIM-swap takeovers stopped before transfer." },
+      { name: "Investigator Review Cycle Time", why: "Minutes required by fraud operations analysts to adjudicate high-risk alerts." },
+      { name: "Intraday Liquidity Buffer Adherence", why: "Cushion maintained above clearing house threshold obligations." }
     ],
     dataSystems: [
-      { name: "Core Banking Ledger", role: "Deposit accounts, transaction history, and account balances" },
-      { name: "Payment Switch / Auth Stream", role: "Real-time ISO 8583 / ISO 20022 card and wire messaging" },
-      { name: "AML / Sanctions Watchlist", role: "OFAC, PEP, and negative news feeds" },
-      { name: "Credit Bureau Webhooks", role: "FICO updates, delinquency signals, and inquiry records" },
-      { name: "Dispute Portals", role: "Visa Resolve Online (VROL) and Mastercard MasterCom feeds" },
-      { name: "Treasury Management System", role: "Correspondent account balances, repo positions, and FX hedges" }
+      { name: "Payment Switch / Auth Stream (ISO 8583 / 20022)", role: "Real-time card, UPI, IMPS, and wire authorization messaging" },
+      { name: "Core Banking Ledger", role: "Deposit accounts, transaction history, customer profiles, and ledger balances" },
+      { name: "Mobile & Web SDK Telemetry", role: "Device fingerprints, behavioral biometrics, IP ASN, and emulator detection" },
+      { name: "AML / Watchlist Feeds", role: "OFAC, PEP, and negative news compliance screening databases" },
+      { name: "Card Scheme Portals (VROL / MasterCom)", role: "Visa Resolve Online and Mastercard dispute feeds" },
+      { name: "Treasury Management System", role: "Correspondent account balances, repo positions, and central bank RTGS feeds" }
     ],
     complianceGuards: [
-      { n: "01", title: "PCI-DSS & Tokenization", body: "Cardholder primary account numbers (PAN) masked and tokenized at ingestion." },
-      { n: "02", title: "Explainable AI (SR 11-7)", body: "Model risk governance with feature importance explanations for every credit or risk decision." },
-      { n: "03", title: "SOX & Regulatory Lineage", body: "Immutable ledger lineage tracing every balance and calculated ratio back to source feeds." }
+      { n: "01", title: "PCI-DSS & PAN Tokenization", body: "Cardholder primary account numbers (PAN) masked and tokenized at ingestion boundary." },
+      { n: "02", title: "Explainable AI Governance (SR 11-7)", body: "Every algorithmic decision provides transparent SHAP/lime feature weights for regulatory compliance." },
+      { n: "03", title: "SOX & Regulatory Audit Lineage", body: "Immutable ledger lineage tracing every balance and calculated risk score back to source feeds." }
     ],
     useCaseLibrary: [
       {
-        id: "bfsi_fraud_radar",
-        name: "Real-Time Transaction Fraud & Anomaly Radar",
-        keywords: ["fraud", "anomaly", "suspicious", "card", "transaction", "payment", "unauthorized", "wire", "settlement"],
-        businessProblem: "Sophisticated cross-border fraud and account takeovers bypass static rules and settle before detection.",
-        benefit: "Streaming machine learning scores behavioral anomalies in under 40 milliseconds at the point of authorization.",
-        dataFeeds: ["Auth switch telemetry", "Device fingerprinting", "Historical transaction graph"],
-        aiCapabilities: ["Graph neural networks", "Real-time behavioral anomaly scoring"],
+        id: "bfsi_transaction_fraud",
+        name: "Sub-Second Omnichannel Transaction Risk Scoring",
+        keywords: ["fraud", "transaction", "scoring", "risk", "card", "upi", "pos", "atm", "authorization", "sub-second", "payment"],
+        businessProblem: "Fraud rules are fragmented across card switches, UPI hubs, and net banking, allowing sophisticated attacks to bypass static threshold limits.",
+        benefit: "Streaming machine learning evaluates composite risk scores in under 40ms at the point of authorization across all digital and card channels.",
+        dataFeeds: ["Payment Switch ISO 8583/20022 stream", "NPCI UPI feeds", "ATM transaction logs"],
+        aiCapabilities: ["Sub-50ms ensemble risk scoring", "Real-time velocity and spend pattern anomaly detection"],
         kpis: [
-          { name: "Fraud loss reduction %", why: "Net dollars saved from intercepted fraudulent payment flows." },
-          { name: "False positive ratio", why: "Ratio of false alerts to true fraud, minimizing merchant friction." },
-          { name: "Scoring latency (p99)", why: "Milliseconds to evaluate risk before authorization timeout." },
-          { name: "Account takeover catch rate", why: "Percentage of hijacked credentials intercepted prior to transfer." }
+          { name: "Gross Fraud Loss Reduction %", why: "Net dollars saved from intercepted fraudulent payment flows." },
+          { name: "False Decline Rate Reduction", why: "Minimizes legitimate customer transactions erroneously blocked at checkout." },
+          { name: "Decisioning Latency (p99)", why: "Sub-50ms evaluation time adhering to strict payment switch SLAs." },
+          { name: "Zero-Day Attack Interception Rate", why: "Catches novel fraud patterns that static boolean rules overlook." }
         ],
         solutionMoves: [
-          { lead: "Ingest stream", detail: "Consumes payment auth requests via real-time message brokers in milliseconds." },
-          { lead: "Graph scoring", detail: "Evaluates device, geolocation, velocity, and recipient network risk in real time." },
-          { lead: "Automated step-up", detail: "Triggers biometric 2FA or temporary hold without human analyst delay." }
+          { lead: "Stream auth requests", detail: "Consumes payment authorization requests via real-time message brokers in <15ms." },
+          { lead: "Score multi-channel risk", detail: "Evaluates historical spend baseline, velocity limits, and recipient risk simultaneously." },
+          { lead: "Execute instant action", detail: "Returns Approve, Step-Up (2FA), or Block decision back to switch before timeout." }
+        ]
+      },
+      {
+        id: "bfsi_behavioral_biometrics",
+        name: "Behavioral Biometrics & Dynamic Device Fingerprinting",
+        keywords: ["behavioral", "biometrics", "device", "fingerprint", "sim swap", "account takeover", "typing", "emulator", "ato"],
+        businessProblem: "Account takeover and SIM-swap attacks bypass OTP authentication, while legacy device binding relies on easily spoofed static IDs.",
+        benefit: "Continuous SDK telemetry analyzes typing cadence, swipe velocity, device hardware attributes, and emulator flags to verify genuine user identity.",
+        dataFeeds: ["Mobile & Web SDK telemetry", "Telco SIM-swap notification APIs", "IP ASN threat intelligence"],
+        aiCapabilities: ["Behavioral biometric keystroke dynamics", "Dynamic device trust graph modeling"],
+        kpis: [
+          { name: "Account Takeover Catch Rate %", why: "Percentage of hijacked user credentials blocked before money movement." },
+          { name: "SIM-Swap Fraud Interception", why: "Stops instant fund draining following unauthorized cellular SIM swaps." },
+          { name: "User Authentication Friction", why: "Reduces unnecessary OTP prompts for trusted customer device sessions." },
+          { name: "Emulator Detection Accuracy", why: "Identifies automated bot farms and rooted emulator environments." }
+        ],
+        solutionMoves: [
+          { lead: "Capture session telemetry", detail: "Streams behavioral touch dynamics, gyro sensors, and hardware hashes passively." },
+          { lead: "Compute device trust score", detail: "Compares current session attributes against 12-month historical user profile." },
+          { lead: "Step up on anomaly", detail: "Triggers facial liveness biometric verification when behavioral deviation is detected." }
+        ]
+      },
+      {
+        id: "bfsi_geo_velocity",
+        name: "Geo-Velocity & Impossible Travel Anomaly Interception",
+        keywords: ["geo-velocity", "travel", "location", "gps", "ip", "velocity", "impossible travel", "distance", "atm"],
+        businessProblem: "Fraud rings exploit geographical separation by executing card-present ATM withdrawals in one city seconds after online transactions in another.",
+        benefit: "Calculates physical speed-over-ground between sequential customer events, intercepting impossible physical travel patterns across cards and digital channels.",
+        dataFeeds: ["ATM / POS geo-coordinates", "Mobile app GPS telemetry", "Geo-IP ASN location streams"],
+        aiCapabilities: ["Geospatial velocity calculation", "Location clustering & habitual route modeling"],
+        kpis: [
+          { name: "Impossible Travel Detection %", why: "Catches cloned card and credential attacks across geographically distant locations." },
+          { name: "Card-Present Clone Interception", why: "Stops fraudulent magnetic stripe / EMV fallback replay attacks at ATMs." },
+          { name: "Legitimate Traveler False Alerts", why: "Learns frequent flyer and travel booking patterns to avoid blocking vacation spend." },
+          { name: "Detection-to-Lock Latency", why: "Restricts compromised card rails within seconds of first suspicious geo-event." }
+        ],
+        solutionMoves: [
+          { lead: "Correlate geo-points", detail: "Calculates spatial distance and time delta between sequential transactions." },
+          { lead: "Evaluate travel feasibility", detail: "Flags transactions requiring physical travel speeds exceeding commercial flight velocities." },
+          { lead: "Temporary rail lock", detail: "Places automated temporary restriction on high-risk channel while alerting cardholder." }
+        ]
+      },
+      {
+        id: "bfsi_graph_fraud_rings",
+        name: "Graph Network & Link Analysis for Coordinated Fraud Rings",
+        keywords: ["network", "graph", "ring", "mule", "link analysis", "coordinated fraud", "circular flow", "synthetic identity"],
+        businessProblem: "Coordinated fraud rings use synthetic identities and hundreds of linked mule accounts to disperse stolen funds in tiny, undetectable increments.",
+        benefit: "Graph neural networks map relationships across shared device IDs, phone numbers, beneficiary accounts, and rapid circular fund flows in real time.",
+        dataFeeds: ["Core banking transfer records", "Beneficiary account master tables", "Device and IP shared registry"],
+        aiCapabilities: ["Graph Neural Network (GNN) community detection", "Circular fund flow cycle detection"],
+        kpis: [
+          { name: "Mule Network Interception %", why: "Discovers and freezes coordinated multi-account mule networks before cash-out." },
+          { name: "Synthetic Identity Ring Catch Rate", why: "Identifies clusters of bogus accounts sharing common physical or digital attributes." },
+          { name: "Recovered Stolen Capital", why: "Gross dollar amount preserved by halting downstream payout sweeps." },
+          { name: "Ring Entity Resolution Speed", why: "Seconds required to link a new suspicious account to an existing known fraud cluster." }
+        ],
+        solutionMoves: [
+          { lead: "Build real-time graph", detail: "Links accounts, devices, phone numbers, and beneficiary IBANs/UPI handles in a live graph store." },
+          { lead: "Detect cyclic layering", detail: "Algorithms scan multi-hop transaction paths to detect rapid circular layering and dispersion." },
+          { lead: "Freeze mule cluster", detail: "Automates coordinated restrictions across all linked nodes in the identified syndicate." }
+        ]
+      },
+      {
+        id: "bfsi_investigation_queue",
+        name: "AI-Prioritized Fraud Investigation Case Queues & Dossiers",
+        keywords: ["queue", "investigation", "investigator", "analyst", "triage", "dossier", "case management", "copilot", "sar"],
+        businessProblem: "Fraud operations teams drown in 10,000+ daily alerts worked largely in first-in-first-out order, missing the highest-exposure cases.",
+        benefit: "Ranks fraud cases dynamically by financial exposure and recoverability, generating complete Copilot incident dossiers for 3x faster analyst adjudication.",
+        dataFeeds: ["Alert outputs from risk models", "Core customer transaction history", "Third-party identity intelligence"],
+        aiCapabilities: ["Dynamic exposure-based case triage", "Generative AI SAR narrative & evidence synthesizer"],
+        kpis: [
+          { name: "Analyst Case Triage Productivity", why: "Cases adjudicated per fraud operations analyst per shift." },
+          { name: "High-Loss Incident SLA Adherence", why: "Percentage of critical alerts reviewed within 15 minutes of occurrence." },
+          { name: "SAR / Regulatory Filing Prep Time", why: "Hours saved drafting Suspicious Activity Reports using automated AI narratives." },
+          { name: "Analyst Decision Quality %", why: "Accuracy of fraud dispositions backed by explainable factor evidence." }
+        ],
+        solutionMoves: [
+          { lead: "Prioritize by exposure", detail: "Ranks investigator queues continuously by confirmed loss potential and recovery probability." },
+          { lead: "Generate instant dossier", detail: "Assembles transaction timelines, device history, and geo-maps into a single screen." },
+          { lead: "1-Click disposition & SAR", detail: "Enables one-click fund recovery holds and auto-drafts regulatory filing packets." }
+        ]
+      },
+      {
+        id: "bfsi_mule_cashout",
+        name: "Mule Account & Rapid Cash-Out Interception",
+        keywords: ["mule", "cash-out", "layering", "rapid movement", "p2p sweep", "structuring", "dormant account"],
+        businessProblem: "Fraudsters activate dormant accounts to receive stolen funds and immediately drain the balance via ATM cash-out or P2P sweeps within 90 seconds.",
+        benefit: "Monitors sudden velocity changes in previously dormant accounts, intercepting high-velocity inflows followed by immediate outbound sweep attempts.",
+        dataFeeds: ["Core banking balance ledgers", "P2P payment messaging", "ATM cash withdrawal feeds"],
+        aiCapabilities: ["Dormancy-to-velocity surge anomaly detection", "Outbound cash-out risk scoring"],
+        kpis: [
+          { name: "Cash-Out Interception Rate %", why: "Share of stolen funds halted before physical ATM withdrawal or crypto conversion." },
+          { name: "Dormant Mule Account Detection", why: "Identifies compromised dormant accounts before initial illicit fund transfer." },
+          { name: "Average Inflow-to-Lock Time", why: "Seconds required to restrict outbound withdrawals upon suspicious inbound credit." },
+          { name: "P2P Payment Sweep Prevention", why: "Stops instant micro-transfer dispersion across third-party wallet apps." }
+        ],
+        solutionMoves: [
+          { lead: "Detect dormancy spike", detail: "Flags accounts with months of inactivity suddenly receiving high-value credits." },
+          { lead: "Evaluate sweep velocity", detail: "Scores outbound transfer requests created within minutes of inbound fund arrival." },
+          { lead: "Automated withdrawal hold", detail: "Applies immediate outbound restriction while initiating verified customer contact." }
         ]
       },
       {
         id: "bfsi_treasury_pulse",
-        name: "Intraday Liquidity & Cash Ladder Pulse",
-        keywords: ["liquidity", "treasury", "cash", "settlement", "clearing", "intraday", "overdraft", "fedwire", "swift"],
+        name: "Intraday Liquidity & Real-Time Cash Ladder",
+        keywords: ["liquidity", "treasury", "cash", "settlement", "clearing", "intraday", "overdraft", "fedwire", "swift", "rtgs"],
         businessProblem: "Treasury teams monitor multi-currency clearing balances on overnight reports, risking daylight overdraft penalties.",
         benefit: "Unifies RTGS, Fedwire, and currency corridor obligations into a live real-time liquidity ladder.",
         dataFeeds: ["SWIFT / Fedwire streams", "General ledger balances", "Open repo & securities positions"],
         aiCapabilities: ["Cash flow predictive forecasting", "Dynamic buffer optimization"],
         kpis: [
-          { name: "Daylight overdraft fees", why: "Penalty dollars avoided by proactively rebalancing correspondent accounts." },
-          { name: "Idle buffer reduction", why: "Capital freed from trapped buffer reserves for overnight investment." },
-          { name: "Settlement failure rate", why: "Percentage of outgoing transfers delayed due to local currency shortfalls." },
-          { name: "Real-time visibility %", why: "Share of global correspondent balances updated in sub-minute latency." }
+          { name: "Daylight Overdraft Penalties", why: "Penalty dollars avoided by proactively rebalancing correspondent accounts." },
+          { name: "Idle Buffer Capital Reduction", why: "Capital freed from trapped buffer reserves for overnight investment." },
+          { name: "Settlement Failure Rate %", why: "Percentage of outgoing transfers delayed due to local currency shortfalls." },
+          { name: "Real-Time Visibility %", why: "Share of global correspondent balances updated in sub-minute latency." }
         ],
         solutionMoves: [
           { lead: "Live balance feed", detail: "Continuously aggregates inflows and outflows across global correspondent banks." },
