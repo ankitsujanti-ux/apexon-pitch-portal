@@ -445,6 +445,66 @@ export const SECTOR_PLAYBOOKS = {
           { lead: "Model localized demand", detail: "Calculates optimal discount percentage per store cluster." },
           { lead: "Push electronic tags", detail: "Transmits approved price updates directly to digital shelf labels." }
         ]
+      },
+      {
+        id: "retail_omnichannel_fulfillment",
+        name: "Omnichannel Order Routing & Dark Store Allocation",
+        keywords: ["fulfillment", "oms", "order routing", "bopis", "dark store", "ship from store", "last mile", "delivery"],
+        businessProblem: "Online orders are routed to distant fulfillment hubs while nearby store inventory expires or incurs markdown write-downs.",
+        benefit: "Dynamic order orchestration calculates proximity, shipping cost, and aged store stock to route fulfillment from optimal dark stores or retail locations.",
+        dataFeeds: ["OMS order streams", "Store-level inventory ledgers", "Carrier real-time rate cards"],
+        aiCapabilities: ["Multi-echelon inventory allocation", "Dynamic shipping cost minimization"],
+        kpis: [
+          { name: "Order Fulfillment Cycle Time", why: "Hours from customer click to parcel carrier handoff." },
+          { name: "Average Shipping Cost per Order", why: "Direct transportation dollars saved through proximity routing." },
+          { name: "Same-Day Delivery Eligibility %", why: "Share of customer orders eligible for sub-4-hour delivery." },
+          { name: "Aged Inventory Sell-Through Lift", why: "Reduction in end-of-season markdown liability via store fulfillment." }
+        ],
+        solutionMoves: [
+          { lead: "Evaluate proximity & margin", detail: "Calculates total delivery cost and aged inventory margin benefit across all candidate nodes." },
+          { lead: "Dispatch store pick task", detail: "Transmits optimized picking path directly to store associate handheld terminals." },
+          { lead: "Synchronize local ledger", detail: "Updates available-to-promise (ATP) inventory ledger in real time across digital storefronts." }
+        ]
+      },
+      {
+        id: "retail_shrink_prevention",
+        name: "Shrinkage & Store Loss Prevention Anomaly Radar",
+        keywords: ["shrink", "theft", "loss prevention", "pos anomaly", "sweethearting", "scanner", "checkout"],
+        businessProblem: "Organized retail crime, cashier sweethearting, and self-checkout scan avoidance cause millions in inventory shrink annually.",
+        benefit: "Computer vision and real-time POS scan correlation flag unscanned items, weight mismatches, and abnormal refund patterns instantly.",
+        dataFeeds: ["Self-checkout scanner streams", "Overhead camera telemetry", "POS cashier transaction logs"],
+        aiCapabilities: ["Scan vs item computer vision matcher", "Cashier exception pattern classifier"],
+        kpis: [
+          { name: "Shrinkage Dollar Reduction", why: "Net inventory write-off capital saved across store network." },
+          { name: "Self-Checkout Interception Rate", why: "Percentage of unscanned items detected before customer exits terminal." },
+          { name: "False Alarm Friction %", why: "Minimizes unnecessary attendant interventions on legitimate customer checkouts." },
+          { name: "Investigator Case Assembly Time", why: "Minutes required for loss prevention teams to review flagged cashier incidents." }
+        ],
+        solutionMoves: [
+          { lead: "Correlate scan & vision", detail: "Matches item placed in bagging area against active barcode scanner payload in real time." },
+          { lead: "Prompt friendly assist", detail: "Displays gentle rescanning prompt on customer screen without calling security." },
+          { lead: "Compile incident dossier", detail: "Assembles repeated exception video clips for store asset protection review." }
+        ]
+      },
+      {
+        id: "retail_supplier_leadtime",
+        name: "Supplier Lead-Time & Inbound PO Intelligence",
+        keywords: ["supplier", "vendor", "purchase order", "lead time", "inbound", "freight", "dock", "receiving"],
+        businessProblem: "Supplier delivery variances and delayed container shipments create unexpected stockouts at regional distribution centers.",
+        benefit: "Analyzes vendor historical fulfillment reliability, port dwell times, and EDI 856 advance ship notices to predict PO delivery dates.",
+        dataFeeds: ["EDI 850/856 purchase order feeds", "Carrier GPS & port tracking APIs", "DC receiving dock schedules"],
+        aiCapabilities: ["Vendor delivery reliability scoring", "Inbound shipment ETA prediction"],
+        kpis: [
+          { name: "Inbound PO On-Time Delivery %", why: "Proportion of supplier purchase orders arriving on scheduled delivery date." },
+          { name: "Safety Stock Buffer Reduction", why: "Working capital freed by removing excess buffer days for reliable vendors." },
+          { name: "Stockout Warning Lead Time", why: "Days of advance notice before a delayed vendor PO impacts store inventory." },
+          { name: "DC Receiving Labor Efficiency", why: "Labor hours saved by scheduling dock appointments based on accurate truck ETAs." }
+        ],
+        solutionMoves: [
+          { lead: "Ingest ASN telemetry", detail: "Parses EDI advance shipping notices and container pings as soon as freight departs factory." },
+          { lead: "Forecast actual arrival", detail: "Recalculates delivery ETA taking into account port congestion and carrier transit history." },
+          { lead: "Rebalance regional supply", detail: "Triggers cross-dock transfers from adjacent DCs before local inventory drops below threshold." }
+        ]
       }
     ]
   },
@@ -520,6 +580,66 @@ export const SECTOR_PLAYBOOKS = {
           { lead: "Auto-isolate bad lots", detail: "Diverts out-of-tolerance units automatically before secondary packing." },
           { lead: "Tune tooling offset", detail: "Feeds tool wear compensation offsets directly back to CNC controllers." }
         ]
+      },
+      {
+        id: "mfg_takt_bottleneck",
+        name: "Assembly Line Bottleneck & Takt Time Tracker",
+        keywords: ["takt time", "bottleneck", "line balancing", "throughput", "cycle time", "workstation", "assembly"],
+        businessProblem: "Micro-stoppages and uneven workstation cycle times starve downstream stations and reduce shift throughput.",
+        benefit: "Live sensor telemetry calculates takt time adherence per workstation, alerting supervisors to station starvation in real time.",
+        dataFeeds: ["MES station cycle timestamps", "RFID part carrier tracking", "Operator console event logs"],
+        aiCapabilities: ["Real-time takt time variance analyzer", "Dynamic line balancing recommender"],
+        kpis: [
+          { name: "Shift Throughput Volume", why: "Units completed per shift meeting quality standards." },
+          { name: "Workstation Idle Starvation %", why: "Reduction in lost station hours caused by upstream line bottlenecks." },
+          { name: "Takt Time Compliance Rate", why: "Percentage of assembly cycles completed within designated takt window." },
+          { name: "Line Rebalancing Lead Time", why: "Minutes required to adjust worker station allocation during model changeovers." }
+        ],
+        solutionMoves: [
+          { lead: "Monitor station cycle", detail: "Tracks part entry and exit timestamps across all automated and manual workstations." },
+          { lead: "Isolate micro-delay", detail: "Flags stations running 15% slower than takt time before line buffer empties." },
+          { lead: "Suggest buffer adjustment", detail: "Recommends temporary pacing adjustments to maintain continuous line flow." }
+        ]
+      },
+      {
+        id: "mfg_batch_traceability",
+        name: "Batch Genealogy & Automated Quality Hold Ledger",
+        keywords: ["traceability", "genealogy", "lot", "recall", "compliance", "supplier part", "hold", "audit"],
+        businessProblem: "Tracing defective supplier components across finished goods takes days of manual spreadsheet audits during quality holds.",
+        benefit: "Maintains an immutable digital genealogy linking supplier raw material lots to machine process logs and customer serial numbers.",
+        dataFeeds: ["ERP lot master records", "MES recipe execution logs", "Warehouse shipping manifests"],
+        aiCapabilities: ["Multi-tier batch graph traversal", "Automated quality hold scoping engine"],
+        kpis: [
+          { name: "Traceability Audit TAT", why: "Minutes required to generate complete component-to-customer genealogy report." },
+          { name: "Quarantined Inventory Accuracy", why: "Precision in isolating only affected lots, avoiding broad production shutdowns." },
+          { name: "Regulatory Compliance Audit Score", why: "Passing rate on ISO 9001 and industry safety audit inspections." },
+          { name: "Supplier Warranty Chargeback Rate", why: "Percentage of defect costs successfully recovered from component vendors." }
+        ],
+        solutionMoves: [
+          { lead: "Link component genealogy", detail: "Builds real-time relationship graph connecting raw supplier lots to finished serial numbers." },
+          { lead: "Instant scope hold", detail: "Identifies every affected assembly within seconds of supplier defect notification." },
+          { lead: "Auto-lock warehouse bins", detail: "Locks ERP inventory records and blocks affected lots from warehouse dispatch." }
+        ]
+      },
+      {
+        id: "mfg_energy_efficiency",
+        name: "Plant Energy Telemetry & Peak Demand Shaving",
+        keywords: ["energy", "carbon", "power", "kilowatt", "peak demand", "sustainability", "furnace", "utility"],
+        businessProblem: "High-power manufacturing processes spike simultaneously, triggering severe utility peak demand penalty surcharges.",
+        benefit: "Correlates machine power draw in real time to stagger high-energy heating cycles and optimize plant-wide electricity costs.",
+        dataFeeds: ["Sub-meter power telemetry", "Utility tariff dynamic rate feeds", "MES production shift schedule"],
+        aiCapabilities: ["Peak power demand forecasting", "Thermal load staging optimizer"],
+        kpis: [
+          { name: "Peak Demand Charge Reduction", why: "Dollars saved on monthly utility capacity surcharge penalties." },
+          { name: "Kilowatt-Hours per Unit Produced", why: "Energy efficiency improvement per finished manufactured assembly." },
+          { name: "Carbon Intensity Metric", why: "Scope 1 and Scope 2 greenhouse gas emissions per production run." },
+          { name: "Off-Peak Production Scheduling %", why: "Share of energy-intensive processes scheduled during lower-cost power windows." }
+        ],
+        solutionMoves: [
+          { lead: "Ingest smart meters", detail: "Monitors kilowatt draw per production cell and furnace in 1-second intervals." },
+          { lead: "Predict peak threshold", detail: "Forecasts facility power demand exceeding monthly tariff penalty limits." },
+          { lead: "Stagger heating cycles", detail: "Automates micro-delays in non-critical heating cycles to shave peak electrical spikes." }
+        ]
       }
     ]
   },
@@ -574,6 +694,86 @@ export const SECTOR_PLAYBOOKS = {
           { lead: "Detect cell imbalance", detail: "Flags modules where impedance rises faster than fleet peer benchmarks." },
           { lead: "Pre-order module", detail: "Dispatches replacement battery submodule directly to nearest certified dealer." }
         ]
+      },
+      {
+        id: "auto_assembly_torque",
+        name: "Assembly Line Torque & Fastener Quality Radar",
+        keywords: ["torque", "fastener", "assembly line", "chassis", "powertrain", "quality", "tightening", "bolting"],
+        businessProblem: "Improperly torqued critical chassis and powertrain fasteners cause expensive factory rework and safety recall risks.",
+        benefit: "Captures angle and torque telemetry from 100% of DC tightening tools in real time, stopping defective chassis before leaving the station.",
+        dataFeeds: ["Smart tool torque controller telemetry", "Chassis VIN RFID scans", "MES work order tracking"],
+        aiCapabilities: ["Fastener torque-angle curve anomaly detection", "Tool wear predictive calibration"],
+        kpis: [
+          { name: "Fastener Defect Escape Rate", why: "Zero-defect target for critical safety fasteners shipped to dealerships." },
+          { name: "In-Plant Rework Hours", why: "Labor hours saved by fixing torquing issues at the active station." },
+          { name: "Safety Recall Liability Prevention", why: "Mitigates multi-million dollar federal NHTSA safety recall exposure." },
+          { name: "Tool Calibration Accuracy %", why: "Adherence of assembly tools to certified ISO torque tolerance bands." }
+        ],
+        solutionMoves: [
+          { lead: "Stream torque curves", detail: "Captures 1,000 data points per fastener tightening cycle directly from smart tool controllers." },
+          { lead: "Validate tolerance window", detail: "Verifies final torque and tightening angle against vehicle engineering specifications." },
+          { lead: "Station interlock hold", detail: "Blocks assembly line conveyor index if a safety fastener fails verification." }
+        ]
+      },
+      {
+        id: "auto_dealership_recall",
+        name: "Dealership Service Capacity & Recall Remediation Dispatch",
+        keywords: ["dealership", "recall", "service", "dms", "repair order", "technician", "parts availability"],
+        businessProblem: "Safety recall campaigns overwhelm dealership service bays, resulting in parts stockouts and extended customer wait times.",
+        benefit: "Matches vehicle VIN recall eligibility, dealer technician capacity, and replacement parts inventory to schedule repairs smoothly.",
+        dataFeeds: ["DMS repair order schedules", "Parts distribution warehouse stock", "OEM warranty campaign registry"],
+        aiCapabilities: ["Service bay capacity load balancer", "Recall completion velocity predictor"],
+        kpis: [
+          { name: "Recall Campaign Completion Rate %", why: "Percentage of affected vehicles repaired within 90 days of recall launch." },
+          { name: "Dealership Service Bay Utilization", why: "Optimizes technician billable hours across regular and recall repairs." },
+          { name: "Owner Service NPS", why: "Customer satisfaction score during warranty and recall repair visits." },
+          { name: "Parts Stockout Delay Days", why: "Elimination of customer vehicle hold days caused by missing recall kits." }
+        ],
+        solutionMoves: [
+          { lead: "Map eligible VINs", detail: "Identifies customer vehicle locations and pre-allocates replacement parts to regional dealers." },
+          { lead: "Dynamic appointment booking", detail: "Invites vehicle owners when certified technicians and parts are confirmed in stock." },
+          { lead: "Auto-file warranty claims", detail: "Submits validated repair documentation to OEM warranty systems for instant dealer reimbursement." }
+        ]
+      },
+      {
+        id: "auto_fleet_telematics",
+        name: "Connected Fleet Telematics & Predictive Breakdown Radar",
+        keywords: ["fleet", "telematics", "commercial vehicle", "breakdown", "dtc", "fault code", "engine health", "uptime"],
+        businessProblem: "Commercial fleet operators suffer costly unexpected roadside breakdowns and missed customer delivery commitments.",
+        benefit: "Continuous telematics analysis evaluates engine fault codes, coolant temperatures, and oil pressure to predict component failures.",
+        dataFeeds: ["Fleet telematics GPS/OBD streams", "Diagnostic trouble code (DTC) logs", "Maintenance history records"],
+        aiCapabilities: ["Multi-signal component failure prediction", "Optimal maintenance window recommender"],
+        kpis: [
+          { name: "Fleet Vehicle Uptime %", why: "Percentage of commercial fleet vehicles operating without unexpected maintenance." },
+          { name: "Roadside Towing Cost Savings", why: "Eliminates expensive highway towing and emergency field repair calls." },
+          { name: "Fuel Economy Optimization %", why: "Fuel savings achieved by keeping engine sensors and emissions systems calibrated." },
+          { name: "Asset Useful Life (Miles)", why: "Extended operating mileage achieved before commercial vehicle fleet retirement." }
+        ],
+        solutionMoves: [
+          { lead: "Stream DTC alerts", detail: "Consumes vehicle diagnostic trouble codes and sensor data in real time." },
+          { lead: "Predict failure timeline", detail: "Calculates miles remaining before minor sensor fault causes complete engine derate." },
+          { lead: "Route to depot", detail: "Schedules vehicle into nearest maintenance hub along driver's planned route." }
+        ]
+      },
+      {
+        id: "auto_ota_campaign",
+        name: "Over-the-Air (OTA) Firmware Rollout & Telemetry Integrity",
+        keywords: ["ota", "firmware", "software update", "ecu", "connected vehicle", "flash", "rollout ring"],
+        businessProblem: "Software updates across millions of connected vehicles risk ECU bricking, battery drain, and failed flash installations.",
+        benefit: "Monitors ECU flash progression, battery charge state, and cellular signal strength across staged deployment rollout rings.",
+        dataFeeds: ["OTA server flash status telemetry", "Vehicle battery state of charge", "Cellular modem signal strength"],
+        aiCapabilities: ["Firmware flash anomaly early-warning classifier", "Staged rollout risk optimizer"],
+        kpis: [
+          { name: "First-Attempt Flash Success %", why: "Percentage of vehicles completing firmware updates without dealer intervention." },
+          { name: "Rollout Velocity (Days to 100%)", why: "Speed of deploying critical security patches across entire connected fleet." },
+          { name: "Dealership Service Visit Avoidance", why: "Dollars saved by resolving vehicle software bugs over-the-air." },
+          { name: "Vehicle 12V Battery Health during Update", why: "Prevents low-voltage battery depletion during multi-gigabyte software flashes." }
+        ],
+        solutionMoves: [
+          { lead: "Pre-condition vehicle", detail: "Verifies battery charge >70% and vehicle parked before triggering firmware installation." },
+          { lead: "Monitor canary ring", detail: "Analyzes telemetry from initial 1% vehicle ring to detect unintended ECU DTC faults." },
+          { lead: "Automated rollback trigger", detail: "Halts fleet campaign automatically if anomaly threshold exceeds 0.05%." }
+        ]
       }
     ]
   },
@@ -627,6 +827,86 @@ export const SECTOR_PLAYBOOKS = {
           { lead: "Monitor ramp milestones", detail: "Computer vision tracks bridge docking, fueling hookup, and baggage belt state." },
           { lead: "Spot service delay", detail: "Flags catering or cleaning delays 20 minutes before scheduled pushback." },
           { lead: "Re-sequence boarding", detail: "Coordinates gate agent boarding pace to match exact ramp completion time." }
+        ]
+      },
+      {
+        id: "air_engine_health",
+        name: "Jet Engine Health Monitoring & Predictive Maintenance",
+        keywords: ["engine", "ehm", "turbofan", "maintenance", "aog", "vibration", "exhaust gas", "acars", "aircraft on ground"],
+        businessProblem: "Unexpected engine exhaust gas temperature (EGT) margins and blade vibration cause sudden aircraft on ground (AOG) cancellations.",
+        benefit: "Streaming ACARS sensor feeds analyze thermodynamic EGT margins and spool vibration during climb to schedule maintenance before faults.",
+        dataFeeds: ["ACARS engine cruise & takeoff reports", "Turbofan vibration sensors", "Maintenance log history"],
+        aiCapabilities: ["Thermodynamic EGT margin degradation modeling", "Turbine blade vibration FFT classifier"],
+        kpis: [
+          { name: "Unscheduled Engine Removal Reduction", why: "Overhaul savings achieved by scheduling off-wing maintenance proactively." },
+          { name: "AOG Grounded Aircraft Hours", why: "Costly flight cancellation hours avoided through planned component changes." },
+          { name: "Fuel Burn Efficiency Lift", why: "Fuel saved by maintaining compressor and turbine wash cycles on schedule." },
+          { name: "Maintenance Lead Time (Days)", why: "Advance notice provided to hub maintenance base to pre-position replacement parts." }
+        ],
+        solutionMoves: [
+          { lead: "Ingest cruise ACARS", detail: "Processes engine takeoff and cruise telemetry reports in real time (<30s)." },
+          { lead: "Track EGT margin decay", detail: "Calculates thermodynamic degradation slope across thousands of flight cycles." },
+          { lead: "Pre-position parts at hub", detail: "Dispatches replacement sensor and maintenance team to aircraft's overnight layover station." }
+        ]
+      },
+      {
+        id: "air_baggage_transfer",
+        name: "Mishandled Baggage & Hub Transfer Risk Radar",
+        keywords: ["baggage", "luggage", "bhs", "transfer", "connection", "rfid", "mishandled", "ramp tug"],
+        businessProblem: "Tight flight connection windows at hub airports result in lost luggage and expensive courier delivery expenses.",
+        benefit: "Continuous RFID scan tracking calculates luggage transfer feasibility and automatically dispatches dedicated hot-bag expediting tugs.",
+        dataFeeds: ["BHS RFID scan streams", "Inbound flight touchdown times", "Outbound flight gate assignments"],
+        aiCapabilities: ["Tight-connection luggage transfer risk model", "Dynamic ramp tug dispatch optimizer"],
+        kpis: [
+          { name: "Mishandled Baggage Rate (per 1k pax)", why: "DOT luggage satisfaction metric driving airline operational quality." },
+          { name: "Lost Luggage Courier Delivery Cost", why: "Direct operational dollars saved by eliminating delayed bag deliveries." },
+          { name: "Tight-Connection Bag Transfer Success %", why: "Share of transfer bags making connection windows under 45 minutes." },
+          { name: "Passenger Delay Claim Reduction", why: "Mitigates statutory compensation claims for delayed international baggage." }
+        ],
+        solutionMoves: [
+          { lead: "Track RFID gate scans", detail: "Monitors individual bag container unload and sorting belt timestamps in real time." },
+          { lead: "Flag hot connections", detail: "Identifies bags connecting to outbound flights departing within 35 minutes." },
+          { lead: "Dispatch direct ramp tug", detail: "Routes dedicated hot-bag vehicle directly between inbound and outbound aircraft gates." }
+        ]
+      },
+      {
+        id: "air_crew_recovery",
+        name: "Flight Crew Pairing & IROPS Disruption Recovery",
+        keywords: ["crew", "pilot", "flight attendant", "irops", "disruption", "duty time", "part 117", "deadhead", "weather"],
+        businessProblem: "Severe weather events cause pilot duty time expirations, triggering cascading cancellations across the airline network.",
+        benefit: "AI optimization recalculates crew pairings and reserve pilot activations to minimize flight cancellations during disruptions.",
+        dataFeeds: ["Crew management rosters", "Flight radar position feeds", "National Weather Service airspace forecasts"],
+        aiCapabilities: ["FAA Part 117 legal duty time validator", "Disruption network crew re-pairing optimizer"],
+        kpis: [
+          { name: "Crew-Caused Flight Cancellations", why: "Disruption cancellations avoided through rapid reserve pilot mobilization." },
+          { name: "Network Recovery Velocity (Hours)", why: "Speed of restoring scheduled flight operations following severe weather." },
+          { name: "Crew Hotel & Deadhead Expense", why: "Operational lodging and repositioning dollars saved during irregular operations." },
+          { name: "Part 117 Duty Violation Rate", why: "Zero-violation compliance with federal flight crew rest regulations." }
+        ],
+        solutionMoves: [
+          { lead: "Forecast duty timeouts", detail: "Predicts pilot duty hour limits based on air traffic control holding patterns." },
+          { lead: "Optimize reserve pairings", detail: "Identifies qualified standby crews at connecting hubs within legal rest guidelines." },
+          { lead: "Automate reassignment", detail: "Transmits updated flight pairing schedules directly to crew mobile devices." }
+        ]
+      },
+      {
+        id: "air_fuel_optimization",
+        name: "Dynamic Fuel Burn & Flight Route Optimization",
+        keywords: ["fuel", "flight plan", "climb", "cruise", "altitude", "wind", "jet fuel", "carbon", "atc"],
+        businessProblem: "Airplanes fly standard static flight plans, burning millions of extra pounds of jet fuel against variable headwinds.",
+        benefit: "Analyzes live upper-atmosphere wind telemetry and weight-and-balance data to recommend optimal step-climb altitudes and speeds.",
+        dataFeeds: ["High-altitude wind & turbulence feeds", "FMC avionics telemetry", "ACARS position reports"],
+        aiCapabilities: ["Thermodynamic flight trajectory optimizer", "Dynamic step-climb altitude recommender"],
+        kpis: [
+          { name: "Jet Fuel Consumption Reduction %", why: "Millions in direct operating fuel expenditure saved annually." },
+          { name: "Flight Plan Variance", why: "Precision in matching planned versus actual block-to-block fuel burn." },
+          { name: "Flight Carbon Footprint (Tons CO2)", why: "Direct reduction in airline greenhouse gas emissions." },
+          { name: "On-Time Arrival En-Route Compensation", why: "Speed adjustments en route to recover departure delays without excess fuel burn." }
+        ],
+        solutionMoves: [
+          { lead: "Ingest jet stream data", detail: "Processes real-time wind and temperature grids along active flight corridors." },
+          { lead: "Calculate optimal FL", detail: "Recommends fuel-efficient flight level (FL) climb points to cockpit crew." },
+          { lead: "Submit ATC reroute", detail: "Pre-formats optimized oceanic or domestic route adjustments for ATC clearance." }
         ]
       }
     ]
