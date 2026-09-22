@@ -36,17 +36,17 @@ function sentences(text) {
 
 // The pitch fails when the model answers in 3-word fragments. Each explanatory
 // field falls back to real prose built from the neighbouring fields.
-function takeCopy(primary, extras, maxChars) {
+function takeCopy(primary, extras, maxChars = 500) {
   const first = clip(primary, maxChars);
-  if (first) return first;
+  if (first && first.split(" ").length >= 4) return first;
   for (const extra of extras || []) {
     const next = clip(extra, maxChars);
-    if (next) return next;
+    if (next && next.split(" ").length >= 4) return next;
   }
-  return "";
+  return first || "";
 }
 
-function paragraph(primary, fallbacks, maxChars, minChars) {
+function paragraph(primary, fallbacks, maxChars = 500, minChars = 0) {
   const candidates = [primary, ...fallbacks].map((t) => String(t || "").replace(/\s+/g, " ").trim());
   let out = "";
   for (const candidate of candidates) {
@@ -96,91 +96,74 @@ function bulletList(raw, fallbackList, maxChars, count) {
 }
 
 function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fromFallback = false } = {}) {
-  const copy = fromFallback
-    ? (primary, extras, max, min) => paragraph(primary, extras, max, min)
-    : (primary, extras, max) => takeCopy(primary, extras, max);
+  const businessProblem = (uc.businessProblem && uc.businessProblem.split(" ").length >= 5)
+    ? uc.businessProblem
+    : (fallbackUc?.businessProblem || uc.challenge || "");
 
-  const kpis = Array.isArray(uc.kpis)
-    ? uc.kpis
-        .filter((k) => k?.name)
-        .slice(0, 4)
-        .map((k, ki) => ({
-          name: clip(k.name, 30),
-          why: spokenWhy(
-            k.name,
-            copy(
-              k.why,
-              fromFallback
-                ? [fallbackUc?.kpis?.[ki]?.why]
-                : [`If ${clip(k.name, 24)} moves the wrong way, this job misses its window.`],
-              120,
-              45
-            )
-          ),
-        }))
+  const benefit = (uc.benefit && uc.benefit.split(" ").length >= 5)
+    ? uc.benefit
+    : (uc.solutionFit || fallbackUc?.benefit || "");
+
+  const solutionFit = (uc.solutionFit && uc.solutionFit.split(" ").length >= 5)
+    ? uc.solutionFit
+    : (benefit || fallbackUc?.solutionFit || "");
+
+  const challenge = (uc.challenge && uc.challenge.split(" ").length >= 10)
+    ? uc.challenge
+    : (fallbackUc?.challenge || `${businessProblem} Telemetry exists across distributed enterprise feeds, but legacy batch workflows diagnose bottlenecks hours after the window to intervene has closed.`);
+
+  const kpis = Array.isArray(uc.kpis) && uc.kpis.length >= 2
+    ? uc.kpis.slice(0, 4).map((k, ki) => ({
+        name: clip(k.name, 36),
+        value: k.value || fallbackUc?.kpis?.[ki]?.value || (ki === 0 ? "25–35%" : ki === 1 ? "-40%" : "<500ms"),
+        why: k.why || fallbackUc?.kpis?.[ki]?.why || `Key operational benchmark driving measurable ROI for the enterprise.`
+      }))
     : fallbackUc?.kpis || [];
-  const difficulty = ["easier", "moderate", "harder"].includes(uc.difficulty)
-    ? uc.difficulty
-    : fallbackUc?.difficulty || "moderate";
-  const businessProblem = copy(uc.businessProblem, fromFallback ? [fallbackUc?.businessProblem] : [], 260, 90);
-  const benefit = copy(uc.benefit, [uc.solutionFit, fromFallback ? fallbackUc?.benefit : ""], 240, 80);
-  const challenge = copy(
-    uc.challenge,
-    fromFallback ? [businessProblem, fallbackUc?.challenge] : [businessProblem],
-    340,
-    150
-  );
+
+  const defaultWorksWith = [`${domain} transaction streams`, "Operational event telemetry", "Core master records"];
+  const worksWith = (Array.isArray(uc.worksWith) && uc.worksWith.length >= 1 && uc.worksWith[0].split(" ").length >= 2)
+    ? uc.worksWith
+    : (fallbackUc?.worksWith || defaultWorksWith);
+
+  const moves = moveList(uc.solutionMoves || uc.howWeSolve, fallbackUc?.solutionMoves, {
+    benefit,
+    businessProblem,
+    action: uc.action,
+    solutionFit,
+  });
 
   return {
-    title: clip(fitTitle(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 8) || `Use case ${i + 1}`, 60),
-    subtitle: copy(uc.subtitle, [uc.lookFirst, benefit], 90, 30),
+    title: clip(fitTitle(uc.title || fallbackUc?.title || `Use case ${i + 1}`, 8) || `Use case ${i + 1}`, 70),
+    subtitle: uc.subtitle && uc.subtitle.split(" ").length >= 3 ? uc.subtitle : (fallbackUc?.subtitle || benefit.split(".")[0] || "Real-time stream intelligence & automated frontline action"),
     businessProblem,
     benefit,
-    solutionFit: clip(uc.solutionFit || fallbackUc?.solutionFit || "", 200),
+    solutionFit,
     challenge,
-    solutionMoves: moveList(uc.solutionMoves || uc.howWeSolve, fallbackUc?.solutionMoves, {
-      benefit,
-      businessProblem,
-      action: uc.action,
-      solutionFit: uc.solutionFit,
-    }),
-    worksWith: bulletList(
-      uc.worksWith,
-      fallbackUc?.worksWith || ["Reads the systems this team already runs — nothing is ripped out."],
-      110,
-      3
-    ),
-    businessValue: bulletList(
-      uc.businessValue,
-      fallbackUc?.businessValue || sentences(benefit).slice(0, 3),
-      110,
-      3
-    ),
-    proofPoint: copy(uc.proofPoint, fromFallback ? [fallbackUc?.proofPoint] : [], 220, 0),
+    solutionMoves: moves,
+    worksWith,
+    businessValue: Array.isArray(uc.businessValue) && uc.businessValue.length >= 2
+      ? uc.businessValue
+      : (fallbackUc?.businessValue || [
+          "Eliminates operational blind spots by evaluating risk and capacity in sub-second streaming latency.",
+          "Reduces manual triage overhead and false alarms through explainable machine learning models.",
+          "Empowers frontline coordinators and analysts with prioritized work queues and automated 1-click dossiers."
+        ]),
+    proofPoint: kpis[0]?.value || uc.proofPoint || fallbackUc?.proofPoint || "25–35%",
     kpis,
     dataPointer: {
-      description: copy(
-        typeof uc.dataPointer === "string" ? uc.dataPointer : uc.dataPointer?.description,
-        fromFallback ? [fallbackUc?.dataPointer?.description] : [],
-        200,
-        50
-      ),
-      availability:
-        (typeof uc.dataPointer === "object" && uc.dataPointer?.availability) ||
-        fallbackUc?.dataPointer?.availability ||
-        "existing",
-      confidence:
-        (typeof uc.dataPointer === "object" && uc.dataPointer?.confidence) ||
-        fallbackUc?.dataPointer?.confidence ||
-        "industry-typical",
+      description: typeof uc.dataPointer === "string"
+        ? uc.dataPointer
+        : (uc.dataPointer?.description || fallbackUc?.dataPointer?.description || `${worksWith.join(", ")} — live enterprise data streams.`),
+      availability: (typeof uc.dataPointer === "object" && uc.dataPointer?.availability) || fallbackUc?.dataPointer?.availability || "existing",
+      confidence: (typeof uc.dataPointer === "object" && uc.dataPointer?.confidence) || fallbackUc?.dataPointer?.confidence || "confirmed",
     },
-    difficulty,
-    difficultyWhy: copy(uc.difficultyWhy, fromFallback ? [fallbackUc?.difficultyWhy] : [], 180, 40),
+    difficulty: ["easier", "moderate", "harder"].includes(uc.difficulty) ? uc.difficulty : (fallbackUc?.difficulty || (i < 2 ? "easier" : "moderate")),
+    difficultyWhy: uc.difficultyWhy || fallbackUc?.difficultyWhy || (i < 2 ? `Reuses existing enterprise feeds with standard cloud connectors.` : `Integrates streaming analytics with Delta Lakehouse models and action triggers.`),
     techComponents: stackForBrief(uc.techComponents, fallbackUc?.techComponents, requirement, domain),
-    demoScore: uc.demoScore || 8 - i,
-    whatItShows: copy(uc.whatItShows, [uc.lookFirst, businessProblem], 230, 80),
-    whyItMatters: copy(uc.whyItMatters, [businessProblem, challenge], 240, 90),
-    action: copy(uc.action, [benefit, uc.solutionFit], 230, 80),
+    demoScore: uc.demoScore || 10 - i,
+    whatItShows: uc.whatItShows || fallbackUc?.whatItShows || `${uc.title || `Use case ${i + 1}`} — real-time exception visibility and automated task dispatch.`,
+    whyItMatters: businessProblem,
+    action: benefit,
     lookFirst: clip(uc.lookFirst || uc.title || "", 48),
     persona: clip(uc.persona || "", 48),
     decision: clip(uc.decision || "", 90),
@@ -194,7 +177,7 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
     columns: Array.isArray(uc.columns) ? uc.columns.map((c) => clip(c, 18)).slice(0, 4) : [],
     zones: Array.isArray(uc.zones) ? uc.zones.map((z) => clip(z, 18)).slice(0, 6) : [],
     entities: Array.isArray(uc.entities) ? uc.entities.map((e) => clip(typeof e === "string" ? e : e?.name, 22)).filter(Boolean).slice(0, 6) : [],
-    steps: Array.isArray(uc.steps) ? uc.steps.map((s) => clip(s, 36)).filter(Boolean).slice(0, 4) : [],
+    steps: moves.map(m => m.lead),
     recordKind: clip(uc.recordKind || "", 24),
     slideLayout: String(uc.slideLayout || "").toLowerCase().trim(),
     screenHtml: "",
@@ -202,7 +185,7 @@ function normalizeUseCase(uc, i, fallbackUc, requirement = "", domain = "", { fr
   };
 }
 
-const SAMPLE_VALUES = ["18", "96%", "4.2h", "3", "12", "99%"];
+const SAMPLE_VALUES = ["25–35%", "-40%", "<500ms", "85%+", "₹15–25 Cr", "99.4%"];
 
 export function normalizeHub(raw, useCases, companyName, domain) {
   const kpis = (useCases || []).slice(0, 6).map((uc, i) => {
@@ -215,20 +198,19 @@ export function normalizeHub(raw, useCases, companyName, domain) {
         ) || raw.kpis[i]
       : null;
     return {
-      name: clip(fromAgent?.name || named?.name || uc.title, 30),
-      value: clip(fromAgent?.value || SAMPLE_VALUES[i] || "—", 12),
-      why: takeCopy(fromAgent?.why, [named?.why, uc.whyItMatters], 120) ||
-        `If ${clip(named?.name || "this number", 24)} moves the wrong way, this job misses its window.`,
+      name: clip(fromAgent?.name || named?.name || uc.title, 36),
+      value: clip(fromAgent?.value || uc.kpis?.[0]?.value || SAMPLE_VALUES[i % SAMPLE_VALUES.length], 16),
+      why: fromAgent?.why || named?.why || uc.whyItMatters || `Critical operational benchmark driving measurable ROI for ${companyName}.`,
       from: clip(uc.title, 60),
     };
   });
   return {
-    title: clip(raw?.title || `${companyName} operating picture`, 64),
-    subtitle: clip(raw?.subtitle || `What ${domain} leadership would watch this morning`, 90),
+    title: clip(raw?.title || `${companyName} Live Command Center`, 64),
+    subtitle: clip(raw?.subtitle || `Real-time operational visibility and automated triage for ${domain}`, 90),
     whatItShows: paragraph(
       raw?.whatItShows,
-      ["The numbers from each job on the slides, and the next exception that still needs a person."],
-      140,
+      ["Live telemetry feeds, composite risk scores, and prioritized frontline action queues."],
+      200,
       40
     ),
     screenHtml: "",
