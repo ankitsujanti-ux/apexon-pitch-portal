@@ -7,7 +7,7 @@
 import fs from "fs";
 import path from "path";
 import pptxgen from "pptxgenjs";
-import { toLabel, fitLine, fitTitle } from "../lib/text.js";
+import { toLabel, fitLine, fitTitle, toSentences } from "../lib/text.js";
 import { getPalette } from "../lib/palette.js";
 import { slugify } from "../lib/slugify.js";
 import { LOGO_PATH, MASTER_BG_PATH } from "../lib/templateTheme.js";
@@ -72,14 +72,20 @@ function pptSafe(text) {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, "-")
+    .replace(/\u2192/g, "->")
+    .replace(/\u2191/g, "+")
+    .replace(/\u2193/g, "-")
+    .replace(/\u20b9/g, "INR ")
     .replace(/\u2026/g, "...")
     .replace(/&/g, "and")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function truncate(text, maxChars) {
-  return fitLine(pptSafe(text), maxChars);
+function truncate(text, maxChars = 600) {
+  const safe = pptSafe(text);
+  if (!maxChars || safe.length <= maxChars) return safe;
+  return toSentences(safe, maxChars);
 }
 
 function applyMaster(slide, palette, { page, wave = false }) {
@@ -107,7 +113,7 @@ function applyMaster(slide, palette, { page, wave = false }) {
 }
 
 function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
-  slide.addText(truncate(kicker.toUpperCase(), 52), {
+  slide.addText(pptSafe(kicker.toUpperCase()), {
     x: MARGIN,
     y: 0.38,
     w: 12.48,
@@ -117,7 +123,7 @@ function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
     color: palette.accent,
     fontFace: palette.fontTitle,
   });
-  slide.addText(truncate(title, 64), {
+  slide.addText(pptSafe(title), {
     x: MARGIN,
     y: 0.65,
     w: 12.48,
@@ -128,7 +134,7 @@ function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
     fontFace: palette.fontTitle,
   });
   if (subtitle) {
-    slide.addText(truncate(subtitle, 130), {
+    slide.addText(pptSafe(subtitle), {
       x: MARGIN,
       y: 1.12,
       w: 12.48,
@@ -136,6 +142,7 @@ function addSectionHeader(slide, palette, { kicker, title, subtitle }) {
       fontSize: 12,
       color: "CBD5E1",
       fontFace: palette.fontBody,
+      wrap: true,
     });
   }
 }
@@ -177,8 +184,16 @@ function addTitleSlide(slide, palette, { companyName, domain, pitchPlan, platfor
     fontFace: palette.fontTitle,
   });
 
-  const domainFocus = pitchPlan.primary_business_domain || `${domain} Operations`;
-  slide.addText(`Transforming ${pptSafe(domainFocus)} with Real-Time Data and AI`, {
+  let domainFocus = pitchPlan.primary_business_domain || `${domain} Operations`;
+  const compCleanRegex = new RegExp(`^${companyName}['s]*\\s*`, 'i');
+  domainFocus = domainFocus.replace(compCleanRegex, "").trim();
+
+  let mainTitle = `Transforming ${pptSafe(domainFocus)} with Real-Time Data and AI`;
+  if (/^transforming/i.test(domainFocus)) {
+    mainTitle = `${pptSafe(domainFocus)} with Real-Time Data and AI`;
+  }
+
+  slide.addText(mainTitle, {
     x: MARGIN,
     y: 2.3,
     w: 12.2,
@@ -836,11 +851,9 @@ export async function buildDeck({
   }
 
   // Slides 7–11: 5 Dedicated Use Case Deep-Dive Slides
-  const useCasesList = (plan.use_cases && plan.use_cases.length >= 5)
+  const useCasesList = (plan.use_cases && plan.use_cases.length >= 1)
     ? plan.use_cases.slice(0, 5)
-    : (useCases && Array.isArray(useCases.useCases) && useCases.useCases.length >= 1)
-      ? useCases.useCases.slice(0, 5)
-      : (plan.use_cases || []);
+    : (useCases && Array.isArray(useCases.useCases) ? useCases.useCases.slice(0, 5) : []);
 
   useCasesList.forEach((uc, idx) => {
     const slide = pres.addSlide();
