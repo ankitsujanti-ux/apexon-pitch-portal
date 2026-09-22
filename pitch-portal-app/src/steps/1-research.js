@@ -114,7 +114,7 @@ Hard rules:
 - If a system is not publicly confirmed for ${companyName}, set confidence to "industry-typical" and say so in basis. Never write it as if they confirmed it.
 - reporting: how THIS industry typically reports today. Same confidence rule.
 - Do not invent metrics, plant names, vendor contracts, or headcount.
-- Do not assume they already run any named platform unless that is public or named in the mandate.
+- Do not assume they run or want Microsoft Fabric or any specific vendor platform unless that is explicitly named in the mandate. Frame everything from their business domain perspective.
 - requirementFit: one or two sentences on how the mandate would show up in their day-to-day operations.
 - JSON must parse with JSON.parse. No markdown, no citation tokens, no markdown links inside values.
 - confidence must be exactly "confirmed" or "industry-typical".`,
