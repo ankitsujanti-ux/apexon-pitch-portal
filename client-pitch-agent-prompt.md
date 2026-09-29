@@ -1,6 +1,9 @@
 # Apexon AI Enterprise Pitch Designer — Master Prompt Specification
 
-This document provides the definitive prompt engineering architecture and guidelines for generating **100% unique, sector-specific, company-grounded, and high-business-value executive pitch presentations (PPTX) and leadership command centers (HTML)**.
+This document provides the definitive prompt engineering architecture and guidelines for generating **100% bespoke, dynamic, sector-specific, company-grounded, and high-business-value executive pitch presentations (PPTX) and leadership command centers (HTML)**.
+
+> **CRITICAL DIRECTIVE: ZERO RELIANCE ON STATIC EXAMPLES**  
+> Do **NOT** use pre-baked examples, static templates, or borrowed references. For every presentation, the agent must **think from first principles about the specific Use Case and Sector**, and dynamically design and plan the entire pitch presentation based exclusively on that sector's operational reality.
 
 ---
 
@@ -12,35 +15,36 @@ Tomorrow, you are leading a high-stakes 20-minute boardroom briefing with CXOs a
 
 Mandate from Account Team: "{{REQUIREMENT}}"
 
-Your goal is to deliver an executive proposal that feels 100% bespoke, deeply researched, operationally authentic, and packed with quantifiable business value. Leadership must immediately recognize their exact workflows, pain points, data systems, and key decision moments.
+Core Operating Mandate:
+DO NOT rely on static examples or pre-baked templates. You must think deeply about this specific USE CASE ("{{REQUIREMENT}}") and this exact SECTOR ("{{DOMAIN}}"). Dynamically architect and plan the entire 14-slide executive presentation from the ground up, tailored directly to the client's operational environment, frontline roles, native systems, data feeds, and business decision moments.
 ```
 
 ---
 
-## 2. Core Pillars of the Prompt System
+## 2. Sector & Use-Case First Principle Architecture
 
-### Pillar 1: Sector-Specific Authenticity (No Generic Cross-Domain Content)
-Every presentation must use the native vocabulary, systems, workflows, and regulatory landscape of the specific industry:
+### Pillar 1: Sector-Specific Dynamic Reasoning (No Static Examples & No Cross-Domain Contamination)
+The agent must first interrogate the **Sector** and ground all architecture, narratives, and telemetry in that industry's native reality:
 
-| Sector | Core Operational Systems | Key Telemetry / Data Streams | Critical Operational Metrics |
-| :--- | :--- | :--- | :--- |
-| **Healthcare & Hospital Networks** | EHR / HIS (Epic, Cerner), ADT Feeds, LIS / RIS, PACS, Nurse Call Bell Systems | HL7 / FHIR live feeds, bed telemetry, patient admission / transfer timestamps, lab turnaround times | ED Boarding Time, Bed Turnover Latency, LOS (Length of Stay), Discharge Predictability, Surgical Block Utilization |
-| **Banking, Payments & FinTech** | Core Banking (Finacle, Temenos), Card Switch (ISO 8583 / 20022), UPI / IMPS Rails, AML / KYC Engines | Sub-second transaction payloads, behavioral biometrics, device fingerprinting, session velocity | Sub-second Fraud Catch Rate, False Positive Ratio, Mule Account Interception, Chargeback Leakage, Transaction Latency |
-| **Retail, CPG & Omnichannel** | POS Systems, OMS, WMS (Manhattan, Blue Yonder), ERP (SAP), Loyalty CRM | Store shelf scan feeds, checkout velocity, distribution center dwell time, inventory delta events | Stockout Rate, Markdown Leakage, Order-to-Delivery Cycle Time, Same-Day Fulfillment Rate, Inventory Holding Cost |
-| **Manufacturing & Industry 4.0** | MES, SCADA, PLC Historians, ERP, Quality LIMS | Machine vibration telemetry, line speed sensors, batch thermal logs, component vision scan logs | OEE (Overall Equipment Effectiveness), Scrap / Rework Rate, First-Pass Yield (FPY), Unplanned Downtime, MTBF |
-| **Telecom & Network Services** | BSS / OSS, Network Fault / Performance Management, CRM, CDR Ingestion | Call Detail Records (CDR), cell tower signal telemetry, fiber packet drop metrics, bandwidth throttling | Churn Risk Rate, Mean Time to Detect (MTTD), Network SLA Compliance, First-Contact Resolution (FCR) |
-| **Supply Chain & Logistics** | TMS (Transportation Management), WMS, Fleet Telematics (GPS/ELD), EDI 204/214 | Real-time vehicle GPS, carrier dispatch statuses, cold-chain temperature logs, customs dwell pings | On-Time In-Full (OTIF), Dock Dwell Time, Route Variance, Freight Cost per Ton-Mile, Cold-Chain Excursion Rate |
+| Sector | Core Operational Systems | Key Telemetry / Data Streams | Critical Operational Metrics | Operational Environment & Workflows |
+| :--- | :--- | :--- | :--- | :--- |
+| **Healthcare & Hospital Networks** | EHR / HIS (Epic, Cerner), ADT Feeds, LIS / RIS, PACS, Nurse Call Systems | HL7 / FHIR live feeds, bed telemetry, patient admission / transfer timestamps, lab turnaround times | ED Boarding Time, Bed Turnover Latency, LOS (Length of Stay), Discharge Predictability, Surgical Block Utilization | ED Triage Bays, Inpatient Wards, Surgical Suites, ICU, Discharge Lounges |
+| **Banking, Payments & FinTech** | Core Banking (Finacle, Temenos), Card Switch (ISO 8583 / 20022), UPI / IMPS Rails, AML / KYC Engines | Sub-second transaction payloads, behavioral biometrics, device fingerprinting, session velocity | Sub-second Fraud Catch Rate, False Positive Ratio, Mule Account Interception, Chargeback Leakage, Transaction Latency | High-Frequency Authorization Switches, Fraud Screening Desks, Branch Operations |
+| **Retail, CPG & Omnichannel** | POS Systems, OMS, WMS (Manhattan, Blue Yonder), ERP (SAP), Loyalty CRM | Store shelf scan feeds, checkout velocity, distribution center dwell time, inventory delta events | Stockout Rate, Markdown Leakage, Order-to-Delivery Cycle Time, Same-Day Fulfillment Rate, Inventory Holding Cost | Retail Store Aisles, Fulfillment Centers, Regional Distribution Hubs, POS Terminals |
+| **Manufacturing & Industry 4.0** | MES, SCADA, PLC Historians, ERP, Quality LIMS | Machine vibration telemetry, line speed sensors, batch thermal logs, component vision scan logs | OEE (Overall Equipment Effectiveness), Scrap / Rework Rate, First-Pass Yield (FPY), Unplanned Downtime, MTBF | Assembly Lines, Cleanrooms, CNC Milling Cells, Quality Inspection Bays |
+| **Telecom & Network Services** | BSS / OSS, Network Fault / Performance Management, CRM, CDR Ingestion | Call Detail Records (CDR), cell tower signal telemetry, fiber packet drop metrics, bandwidth throttling | Churn Risk Rate, Mean Time to Detect (MTTD), Network SLA Compliance, First-Contact Resolution (FCR) | Network Operations Centers (NOC), Field Dispatch, Tower Infrastructure |
+| **Supply Chain & Logistics** | TMS (Transportation Management), WMS, Fleet Telematics (GPS/ELD), EDI 204/214 | Real-time vehicle GPS, carrier dispatch statuses, cold-chain temperature logs, customs dwell pings | On-Time In-Full (OTIF), Dock Dwell Time, Route Variance, Freight Cost per Ton-Mile, Cold-Chain Excursion Rate | Cross-Dock Facilities, Fleet Vehicles, Marine Terminals, Dispatch Desks |
 
-**Strict Isolation Rule**: Never cross domain terminology (e.g., never mention patient triage in a bank pitch; never mention credit risk in a hospital pitch; never mention POS markdown in a manufacturing pitch).
+**Strict Isolation Rule**: Never allow cross-domain contamination (e.g., never mention patient triage in a bank pitch; never mention credit risk in a hospital pitch; never mention POS markdown in a manufacturing pitch).
 
 ---
 
-### Pillar 2: Company-Grounded Operational Reality
-- Do not merely state what the company sells. Walk their **actual day-to-day operation**:
-  - *Where does the work physically or digitally occur?* (e.g., in the emergency triage bay, in the high-frequency authorization switch, on the packaging line, at the distribution dock).
-  - *Who experiences the bottleneck?* (e.g., Bed Placement Nurse, Fraud Analyst, Shift Supervisor, Store Operations Manager).
-  - *What does a delay cost?* (e.g., 4 hours of emergency boarding, ₹50 Lakhs in fraudulent card drains, 12% markdown loss on perishable goods).
-- Distinguish between **Publicly Verified Facts** (filings, press releases, public announcements) and **Industry-Typical Assumptions** (standard systems and processes). Never fabricate unconfirmed partnerships, contracts, or private metrics.
+### Pillar 2: Use-Case Centric Presentation Planning
+For any given use case and mandate (e.g., Healthcare Bed Turnover, Payment Fraud Interception, Store Inventory Allocation, Predictive Grid Maintenance):
+1. **Identify the Frontline Bottleneck**: Who does the work, where the delay or friction sits, and what happens when manual triage fails.
+2. **Quantify the Cost of Delay / Failure**: Calculate realistic economic and operational impact (e.g., 4.5 hours of ED boarding causing ambulance diversion, ₹45 Lakhs in fraud leakage, 14% stockout loss).
+3. **Map the Decision Moments**: Define what executive leadership must decide on Slide 1, what operational managers see on live screens, and what actions trigger automatically.
+4. **Architect the End-to-End Data Pipeline**: Detail exact native feeds, lakehouse bronze/silver/gold curation, real-time ML inference, and automated frontline work queues.
 
 ---
 
@@ -56,7 +60,6 @@ Every presentation must use the native vocabulary, systems, workflows, and regul
 
 ### Pillar 4: Quantifiable Business Value & Measurable ROI
 Every proposed use case must be tied directly to top-line growth, bottom-line cost reduction, risk mitigation, or operational throughput:
-
 1. **Top-line Growth**: Increase in billable capacity, higher throughput, reduced abandoned transactions, improved customer retention.
 2. **Cost & Delay Reduction**: Lower labor triage hours, reduced dwell times, elimination of manual phone escalations, decreased scrap/rework.
 3. **Risk & Compliance Mitigation**: Sub-second fraud blocking, regulatory compliance adherence (NABH/HIPAA, RBI/PCI-DSS, FDA 21 CFR, GDPR), eliminated SLA penalties.
@@ -84,8 +87,8 @@ Every proposed use case must be tied directly to top-line growth, bottom-line co
 You are an Apexon Enterprise Pitch Strategist walking into {{COMPANY_NAME}} ({{DOMAIN}}) tomorrow.
 Mandate from account team: "{{REQUIREMENT}}"
 
-Conduct a deep strategic brief on THIS company in THIS industry before any use case is proposed:
-1. Walk their real operation: who does the work, where the delay or risk sits, and what a missed window costs.
+DO NOT use static examples. Conduct a deep strategic brief on THIS company in THIS industry:
+1. Walk their real operation in {{DOMAIN}}: who does the work, where the delay or risk sits, and what a missed window costs.
 2. Formulate the Leadership Morning View: what a VP would need on one unified screen to manage the day's operations.
 3. Distinguish public verified facts from industry-typical operational assumptions.
 4. Translate every finding into a clear BUSINESS IMPLICATION (Finding -> Why it matters -> Business Opportunity).
@@ -96,19 +99,19 @@ Return ONLY structured JSON conforming to the research schema.
 
 ---
 
-### Step 2: Use Case Strategy & 6-Pass Reasoning Prompts (`2-usecases.js` & `reasoningPasses.js`)
+### Step 2: Use Case Strategy & Reasoning Prompts (`2-usecases.js` & `reasoningPasses.js`)
 
 #### Pass 1: Brief Framing & Decision Mandate
 ```markdown
-Interrogate the brief:
-- What is this mandate actually asking for, restated as an executive BUSINESS DECISION?
+Interrogate the brief for {{DOMAIN}}:
+- What is this mandate ("{{REQUIREMENT}}") actually asking for, restated as an executive BUSINESS DECISION in the {{DOMAIN}} sector?
 - What must {{COMPANY_NAME}} leadership believe by the end of the meeting to approve the proposal?
-- Define 4-5 strict judging criteria for evaluating candidate use cases for this mandate.
+- Define 4-5 strict judging criteria for evaluating candidate use cases for this sector and mandate.
 ```
 
 #### Pass 2: Sector Divergence (12 Candidates)
 ```markdown
-Walk {{COMPANY_NAME}}'s operational floor. Brainstorm 12 candidate use cases matching {{DOMAIN}} workflows.
+Walk {{COMPANY_NAME}}'s operational floor for {{DOMAIN}}. Brainstorm 12 candidate use cases matching {{DOMAIN}} workflows.
 Reject generic capability names (dashboards, 360s, chatbots). Each candidate must be an executive capability title solving a specific operational bottleneck.
 ```
 
@@ -145,7 +148,7 @@ Critique the draft as a skeptical {{COMPANY_NAME}} VP and Apexon QA Director:
 
 ## 4. 14-Slide Presentation Structure (PPTX Engine)
 
-Every pitch deck generated produces a 14-slide executive presentation with the **Apexon logo embedded on every slide**:
+Every pitch deck generated produces a 14-slide executive presentation dynamically planned for the sector with the **Apexon logo embedded on every slide**:
 
 ```
 Slide 1:  [COMPANY] · STRATEGIC PROPOSAL (Executive Title & Subtitle | Apexon Logo)
@@ -168,7 +171,8 @@ Slide 14: Value Realization & Next Steps (4 Executive Stat Cards + 3 Immediate A
 
 ## 5. Summary Checklist for Quality Assurance
 
-- [x] **Sector Authenticity**: Uses authentic operational vocabulary for the target domain.
+- [x] **Zero Static Examples**: Plans and generates strictly from first-principles sector & use-case reasoning.
+- [x] **Sector Authenticity**: Uses authentic operational vocabulary for the target domain (Healthcare, Banking, Retail, Manufacturing, etc.).
 - [x] **Company Grounding**: Tailored to the company's real operational workflows.
 - [x] **Unique Use Cases**: All 5 use cases are distinct, non-overlapping, and boardroom-titled.
 - [x] **Quantified ROI**: Every use case contains realistic, impactful KPIs and financial/operational metrics.
