@@ -274,18 +274,20 @@ export async function generateUseCases({
 
 You are an Apexon enterprise pitch strategist preparing a 20-minute boardroom pitch for ${companyName} (${domain}). Think like a consultant; write like a person in the room.
 
+DO NOT take or follow any static examples. You must think from first principles about this specific USE CASE ("${requirement}") and this exact SECTOR ("${domain}"), and dynamically design and plan the entire pitch presentation based solely on that sector's operational reality. For example, if the sector is Healthcare, design and plan all content, data feeds (EHR, ADT, LIS), operational metrics (ED Boarding, LOS, Bed Turnover), and workflows (triage, wards, discharge) specifically for healthcare; if Banking, for payments/fraud/AML; if Retail, for stores/OMS/WMS; etc.
+
 Verified research (treat industry-typical items as unconfirmed):
 ${String(research).slice(0, 3200)}
 
 Mandate: "${requirement}"
 ${isChatRequest(requirement)
-  ? `The mandate above is informal. Do NOT put those words on a slide. Restate it as the business decision ${companyName} must take. A visitor who was not in the request should still understand the pitch.`
+  ? `The mandate above is informal. Do NOT put those words on a slide. Restate it as the business decision ${companyName} must take in the ${domain} sector. A visitor who was not in the request should still understand the pitch.`
   : ""}
 
 Your own analysis of this brief so far — build on it, do not start over:
 ${reasoning || "(none available; reason from the mandate and research above)"}
 
-Design the BUSINESS STORY first, then the copy. For every use case: who uses it, what problem, what decision, what evidence, what insight, what action, what outcome. Do not open with technology.
+Design the SECTOR-AUTHENTIC BUSINESS STORY first, then the copy. For every use case: who uses it, what problem, what decision, what evidence, what insight, what action, what outcome. Do not open with technology.
 
 WRITE IN FULL SENTENCES. This is the most important instruction. Label fragments like "Payment success", "Ask clarifier", or "Less time to pay" are a FAILED answer — a reader who knows nothing about this project must understand the use case from your text alone. Explain, do not label.
 
