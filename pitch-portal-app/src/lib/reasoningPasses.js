@@ -166,11 +166,11 @@ function designScoreDefects(critique) {
 export function framePrompt({ companyName, domain, requirement, research, ragGrounding }) {
   return `${BRIEF_FIRST_RULE}
 
-You are an Apexon enterprise pitch strategist. Before proposing anything, interrogate the brief using our Sector Playbook knowledge base. Do not design slides yet.
+You are an Apexon enterprise pitch strategist. DO NOT rely on static examples or templates. Before proposing anything, deeply analyze and interrogate the specific SECTOR (${domain}) and USE CASE ("${requirement}"). Do not design slides yet.
 
 Company: ${companyName}
-Industry: ${domain}
-Mandate: "${requirement}"
+Industry / Sector: ${domain}
+Mandate / Use Case: "${requirement}"
 
 Verified Research:
 ${String(research).slice(0, 2400)}
@@ -178,10 +178,10 @@ ${String(research).slice(0, 2400)}
 ${ragGrounding?.formattedText ? `Sector Grounding & Playbook Intelligence:\n${ragGrounding.formattedText}\n` : ""}
 
 Do not propose solutions yet. Answer only these questions:
-1. What is this mandate actually asking for, restated as the BUSINESS DECISION behind it — not a restatement of the request?
+1. What is this mandate actually asking for, restated as the BUSINESS DECISION behind it in the ${domain} sector — not a restatement of the request?
 2. What must ${companyName} leadership believe by the end of the meeting for this to be a win?
-3. Split what we know: knownFacts (public), assumptions (industry-typical), hypotheses (to test). Do not treat gaps as facts.
-4. What criteria should we use to judge whether a use case is worth putting on a slide for THIS mandate?
+3. Split what we know: knownFacts (public), assumptions (industry-typical for ${domain}), hypotheses (to test). Do not treat gaps as facts.
+4. What criteria should we use to judge whether a use case is worth putting on a slide for THIS sector and THIS mandate?
 5. What would make this pitch fail, feel generic, or sound like a dashboard catalogue?
 
 ${NO_PROSE}
@@ -194,7 +194,8 @@ mandateRestated: 25-40 words, the decision not the dashboard. leadershipMustBeli
 export function divergePrompt({ companyName, domain, requirement, research, frame, ragGrounding }) {
   return `${BRIEF_FIRST_RULE}
 
-You are walking ${companyName}'s operation in your head — the clinical ward, trading floor, store aisle, warehouse dock, or plant floor for ${domain}.
+You are walking ${companyName}'s actual operation in your head — the clinical ward/emergency triage (if Healthcare), trading floor/fraud desk (if Banking), store aisle/distribution center (if Retail), assembly line/plant floor (if Manufacturing), or network operations center (if Telecom) for ${domain}.
+DO NOT take generic examples. Think strictly about the operational reality of ${domain} and the specific use case "${requirement}".
 
 Mandate: "${requirement}"
 Mandate restated: ${frame?.mandateRestated || requirement}
@@ -208,9 +209,9 @@ ${ragGrounding?.formattedText ? `Sector Playbook Reference Use Cases & Systems:\
 
 Generate 12 CANDIDATE use cases directly aligned with ${companyName}'s mandate and ${domain} operations. Cast wide: immediate operational priorities, strategic moves, and high-impact interventions.
 
-Reject titles that are capabilities, not decisions: Sales Dashboard, Inventory Dashboard, AI Chatbot, Predictive Analytics, Customer 360, Operational Dashboard. Convert those into the specific decision this company must take.
+Reject titles that are capabilities, not decisions: Sales Dashboard, Inventory Dashboard, AI Chatbot, Predictive Analytics, Customer 360, Operational Dashboard. Convert those into the specific decision this company must take in the ${domain} sector.
 
-For each candidate: who feels the pain, the business decision, why THIS client, the data, and the honest weakness.
+For each candidate: who feels the pain, the business decision, why THIS client in ${domain}, the data, and the honest weakness.
 
 ${NO_PROSE}
 {"candidates":[{"title":"","job":"","whoFeelsIt":"","decision":"","whyThisClient":"","whyItFitsMandate":"","dataNeeded":"","kpis":"","weakness":""}]}
